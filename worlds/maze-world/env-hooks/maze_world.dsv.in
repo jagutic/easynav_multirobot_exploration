@@ -1,0 +1,4 @@
+prepend-non-duplicate;GZ_SIM_MODEL_PATH;share/maze_world/models
+prepend-non-duplicate;GZ_SIM_MODEL_PATH;share/maze_world/worlds
+prepend-non-duplicate;GZ_SIM_RESOURCE_PATH;share/maze_world/models
+prepend-non-duplicate;GZ_SIM_RESOURCE_PATH;share/maze_world/worlds

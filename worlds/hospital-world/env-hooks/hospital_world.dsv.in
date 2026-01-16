@@ -1,0 +1,5 @@
+prepend-non-duplicate;GZ_SIM_MODEL_PATH;share/hospital_world/models
+prepend-non-duplicate;GZ_SIM_MODEL_PATH;share/hospital_world/worlds
+prepend-non-duplicate;GZ_SIM_RESOURCE_PATH;share/hospital_world/models
+prepend-non-duplicate;GZ_SIM_RESOURCE_PATH;share/hospital_world/photos
+prepend-non-duplicate;GZ_SIM_RESOURCE_PATH;share/hospital_world/worlds
