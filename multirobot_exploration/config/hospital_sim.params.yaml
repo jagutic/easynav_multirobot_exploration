@@ -23,6 +23,7 @@ robots:
   namespace: r1
   camera: 'false'
   lidar: 'true'
+  use_sim_time: 'true'
   x: 3.0
   y: -1.0
   Y: 0.0
@@ -31,6 +32,7 @@ robots:
   namespace: r2
   camera: 'false'
   lidar: 'true'
+  use_sim_time: 'true'
   x: -8.0
   y: -5.0
   Y: 0.0
@@ -39,6 +41,7 @@ robots:
   namespace: r3
   camera: 'false'
   lidar: 'true'
+  use_sim_time: 'true'
   x: 7.0
   y: 6.0
   Y: 0.0

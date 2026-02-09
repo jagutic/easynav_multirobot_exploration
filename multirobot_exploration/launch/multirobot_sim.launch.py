@@ -87,7 +87,7 @@ def generate_launch_description():
     ])
     config_file = PathJoinSubstitution([
         pkg, 'config', 
-        [ world, '_sim_params.yaml' ]
+        [ world, '_sim.params.yaml' ]
     ])
 
     robots_config_arg = DeclareLaunchArgument(
@@ -135,34 +135,23 @@ def generate_launch_description():
         name='bridge_ros_gz',
         parameters=[
             {
-                'config_file': join(
-                    pkg,
-                    'config', 'bridge', 'clock_bridge.yaml'
-                ),
                 'use_sim_time': True,
+                'config_file': join(pkg,
+                                    'config',
+                                    'bridge',
+                                    'clock_bridge.yaml'),
             }
         ],
         output='screen',
     )
 
-    # start_slam_toolbox = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(os.path.join(
-    #         get_package_share_directory('slam_toolbox'),
-    #         'launch', 
-    #         'online_async_launch.py')),
-    #     launch_arguments={
-    #         'use_sim_time': 'true',
-    #     }.items()
-    # )
-
     ld = LaunchDescription()
     ld.add_action(world_arg)
     ld.add_action(gui_arg)
     ld.add_action(robots_config_arg)
-    ld.add_action(declare_do_tf_remapping_arg)
+    ld.add_action(ros_gz_bridge)
     ld.add_action(gazebo_server)
     ld.add_action(gazebo_client)
+    ld.add_action(declare_do_tf_remapping_arg)
     ld.add_action(OpaqueFunction(function=spawn_robots))
-    ld.add_action(ros_gz_bridge)
-
     return ld

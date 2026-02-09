@@ -30,22 +30,22 @@ r1/localizer_node:
         std_dev_xy: 0.1
         std_dev_yaw: 0.01
 
-r1/maps_manager_node:
-  ros__parameters:
-    use_sim_time: true
-    map_types: [costmap]
-    costmap:
-      freq: 10.0 
-      plugin: easynav_costmap_maps_manager/CostmapMapsManager
-      package: easynav_indoor_testcase
-      map_path_file: maps/home2.yaml
-      filters: [obstacles, inflation]
-      obstacles:
-        plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
-      inflation:
-        plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 1.3
-        cost_scaling_factor: 3.0
+# r1/maps_manager_node:
+#   ros__parameters:
+#     use_sim_time: true
+#     map_types: [costmap]
+#     costmap:
+#       freq: 10.0 
+#       plugin: easynav_costmap_maps_manager/CostmapMapsManager
+#       package: easynav_indoor_testcase
+#       map_path_file: maps/home2.yaml
+#       filters: [obstacles, inflation]
+#       obstacles:
+#         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
+#       inflation:
+#         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
+#         inflation_radius: 1.3
+#         cost_scaling_factor: 3.0
 
 r1/planner_node:
   ros__parameters:
@@ -112,22 +112,22 @@ r2/localizer_node:
         std_dev_xy: 0.1
         std_dev_yaw: 0.01
 
-r2/maps_manager_node:
-  ros__parameters:
-    use_sim_time: true
-    map_types: [costmap]
-    costmap:
-      freq: 10.0 
-      plugin: easynav_costmap_maps_manager/CostmapMapsManager
-      package: easynav_indoor_testcase
-      map_path_file: maps/home2.yaml
-      filters: [obstacles, inflation]
-      obstacles:
-        plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
-      inflation:
-        plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 1.3
-        cost_scaling_factor: 3.0
+# r2/maps_manager_node:
+#   ros__parameters:
+#     use_sim_time: true
+#     map_types: [costmap]
+#     costmap:
+#       freq: 10.0 
+#       plugin: easynav_costmap_maps_manager/CostmapMapsManager
+#       package: easynav_indoor_testcase
+#       map_path_file: maps/home2.yaml
+#       filters: [obstacles, inflation]
+#       obstacles:
+#         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
+#       inflation:
+#         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
+#         inflation_radius: 1.3
+#         cost_scaling_factor: 3.0
 
 r2/planner_node:
   ros__parameters:
@@ -194,22 +194,22 @@ r3/localizer_node:
         std_dev_xy: 0.1
         std_dev_yaw: 0.01
 
-r3/maps_manager_node:
-  ros__parameters:
-    use_sim_time: true
-    map_types: [costmap]
-    costmap:
-      freq: 10.0 
-      plugin: easynav_costmap_maps_manager/CostmapMapsManager
-      package: easynav_indoor_testcase
-      map_path_file: maps/home2.yaml
-      filters: [obstacles, inflation]
-      obstacles:
-        plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
-      inflation:
-        plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 1.3
-        cost_scaling_factor: 3.0
+# r3/maps_manager_node:
+#   ros__parameters:
+#     use_sim_time: true
+#     map_types: [costmap]
+#     costmap:
+#       freq: 10.0 
+#       plugin: easynav_costmap_maps_manager/CostmapMapsManager
+#       package: easynav_indoor_testcase
+#       map_path_file: maps/home2.yaml
+#       filters: [obstacles, inflation]
+#       obstacles:
+#         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
+#       inflation:
+#         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
+#         inflation_radius: 1.3
+#         cost_scaling_factor: 3.0
 
 r3/planner_node:
   ros__parameters:

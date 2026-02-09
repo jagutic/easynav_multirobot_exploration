@@ -19,7 +19,7 @@ Use ```world:=hospital``` or ```world:=maze``` to use different simulations.
 # Terminal 1 (robot r1)
 ros2 run easynav_system system_main \
 --ros-args \
---params-file ./src/easynav_multirobot_exploration/config/costmap_params.yaml \
+--params-file ./src/easynav_multirobot_exploration/multirobot_exploration/config/costmap.params.yaml \
 -r __ns:=/r1 \
 -r /tf:=tf -r /tf_static:=tf_static
 
@@ -27,7 +27,7 @@ ros2 run easynav_system system_main \
 ros2 run easynav_system system_main \
 -r __ns:=/r2 \
 --ros-args \
---params-file ./src/easynav_multirobot_exploration/config/costmap_params.yaml \
+--params-file ./src/easynav_multirobot_exploration/multirobot_exploration/config/costmap.params.yaml \
 -r /tf:=tf -r /tf_static:=tf_static
 ```
 
@@ -35,10 +35,10 @@ ros2 run easynav_system system_main \
 ### Launch RViz instances, one per robot
 
 ```bash
-ros2 launch easynav_multirobot_exploration rviz_namespaced.launch.py \
+ros2 launch multirobot_exploration rviz_namespaced.launch.py \
 namespace:=r1 use_sim_time:=true
 
-ros2 launch easynav_multirobot_exploration rviz_namespaced.launch.py \
+ros2 launch multirobot_exploration rviz_namespaced.launch.py \
 namespace:=r2 use_sim_time:=true
 ```
 
