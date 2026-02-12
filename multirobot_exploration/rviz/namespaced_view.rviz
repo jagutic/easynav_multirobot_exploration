@@ -52,7 +52,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/robot_description
+        Value: /<robot_namespace>/robot_description
       Enabled: false
       Links:
         All Links Enabled: true
@@ -72,131 +72,75 @@ Visualization Manager:
       Enabled: true
       Filter (blacklist): ""
       Filter (whitelist): ""
+      Filter Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
         <robot_namespace>/base_footprint:
           Value: true
         <robot_namespace>/base_link:
-          Value: true
+          Value: false
         <robot_namespace>/caster_back_link:
-          Value: true
+          Value: false
         <robot_namespace>/caster_front_link:
-          Value: true
+          Value: false
         <robot_namespace>/cliff_sensor_front_link:
-          Value: true
+          Value: false
         <robot_namespace>/cliff_sensor_left_link:
-          Value: true
+          Value: false
         <robot_namespace>/cliff_sensor_right_link:
-          Value: true
+          Value: false
         <robot_namespace>/gyro_link:
-          Value: true
+          Value: false
         <robot_namespace>/laser_link:
-          Value: true
+          Value: false
         <robot_namespace>/map:
           Value: true
         <robot_namespace>/odom:
           Value: true
         <robot_namespace>/plate_bottom_link:
-          Value: true
+          Value: false
         <robot_namespace>/plate_middle_link:
-          Value: true
+          Value: false
         <robot_namespace>/plate_top_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_1in_0_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_1in_1_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_1in_2_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_1in_3_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_1in_4_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_1in_5_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_2in_0_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_2in_1_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_2in_2_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_2in_3_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_8in_0_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_8in_1_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_8in_2_link:
-          Value: true
+          Value: false
         <robot_namespace>/standoff_8in_3_link:
-          Value: true
+          Value: false
         <robot_namespace>/wheel_left_link:
-          Value: true
+          Value: false
         <robot_namespace>/wheel_right_link:
-          Value: true
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: false
-      Tree:
-        <robot_namespace>/map:
-          <robot_namespace>/odom:
-            <robot_namespace>/base_footprint:
-              <robot_namespace>/base_link:
-                <robot_namespace>/caster_back_link:
-                  {}
-                <robot_namespace>/caster_front_link:
-                  {}
-                <robot_namespace>/cliff_sensor_front_link:
-                  {}
-                <robot_namespace>/cliff_sensor_left_link:
-                  {}
-                <robot_namespace>/cliff_sensor_right_link:
-                  {}
-                <robot_namespace>/gyro_link:
-                  {}
-                <robot_namespace>/laser_link:
-                  {}
-                <robot_namespace>/plate_bottom_link:
-                  {}
-                <robot_namespace>/plate_middle_link:
-                  {}
-                <robot_namespace>/plate_top_link:
-                  {}
-                <robot_namespace>/standoff_1in_0_link:
-                  {}
-                <robot_namespace>/standoff_1in_1_link:
-                  {}
-                <robot_namespace>/standoff_1in_2_link:
-                  {}
-                <robot_namespace>/standoff_1in_3_link:
-                  {}
-                <robot_namespace>/standoff_1in_4_link:
-                  {}
-                <robot_namespace>/standoff_1in_5_link:
-                  {}
-                <robot_namespace>/standoff_2in_0_link:
-                  {}
-                <robot_namespace>/standoff_2in_1_link:
-                  {}
-                <robot_namespace>/standoff_2in_2_link:
-                  {}
-                <robot_namespace>/standoff_2in_3_link:
-                  {}
-                <robot_namespace>/standoff_8in_0_link:
-                  {}
-                <robot_namespace>/standoff_8in_1_link:
-                  {}
-                <robot_namespace>/standoff_8in_2_link:
-                  {}
-                <robot_namespace>/standoff_8in_3_link:
-                  {}
-                <robot_namespace>/wheel_left_link:
-                  {}
-                <robot_namespace>/wheel_right_link:
-                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -204,11 +148,11 @@ Visualization Manager:
       Class: rviz_default_plugins/Path
       Color: 25; 255; 0
       Enabled: true
-      Head Diameter: 0.30000001192092896
+      Head Diameter: 2.5
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Lines
-      Line Width: 0.029999999329447746
+      Line Width: 1.5
       Name: Path
       Offset:
         X: 0
@@ -225,7 +169,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/planner/path
+        Value: /<robot_namespace>/planner_node/simple/path
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -257,7 +201,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: <robot_namespace>/scan_raw
+        Value: /<robot_namespace>/scan_raw
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -275,19 +219,19 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/maps_manager_node/costmap/dynamic_map
+        Value: /<robot_namespace>/maps_manager_node/costmap/dynamic_map
       Update Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/maps_manager_node/costmap/dynamic_map_updates
+        Value: /<robot_namespace>/maps_manager_node/costmap/dynamic_map_updates
       Use Timestamp: false
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: <robot_namespace>/map
+    Fixed Frame: /<robot_namespace>/map
     Frame Rate: 30
   Name: root
   Tools:
@@ -307,7 +251,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/initialpose
+        Value: /<robot_namespace>/initialpose
     - Class: rviz_default_plugins/SetGoal
       Topic:
         Depth: 5

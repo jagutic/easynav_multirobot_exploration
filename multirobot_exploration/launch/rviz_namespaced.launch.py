@@ -67,7 +67,7 @@ def generate_launch_description():
     namespaced_rviz_config_file = ReplaceString(
         condition=UnlessCondition(is_empty_namespace),
         source_file=rviz_config_file,
-        replacements={'<robot_namespace>': ('/', namespace)},
+        replacements={'<robot_namespace>': ('', namespace)},
     )
 
     default_rviz_config_file = ReplaceString(

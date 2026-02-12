@@ -1,0 +1,9 @@
+<class_libraries>
+  <library path="easynav_lazy_localizer">
+    <class name="easynav_lazy_localizer/LazyLocalizer"  type="easynav::LazyLocalizer" base_class_type="easynav::LocalizerMethodBase">
+      <description>
+      A default "costmap" implementation for lazy localizer (copies already published tf).
+      </description>
+    </class>
+  </library>
+</class_libraries>

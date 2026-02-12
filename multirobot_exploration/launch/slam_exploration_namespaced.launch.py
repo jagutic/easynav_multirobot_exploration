@@ -21,7 +21,6 @@ def generate_launch_description():
     slam_params_file = LaunchConfiguration('slam_params_file')
     namespace = LaunchConfiguration('namespace')
 
-
     declare_autostart_cmd = DeclareLaunchArgument(
         'autostart', default_value='true',
         description='Automatically startup the slamtoolbox. '
@@ -45,7 +44,7 @@ def generate_launch_description():
         description='Namespace for node and topics')
 
 
-    start_async_slam_toolbox_node = LifecycleNode(
+    start_sync_slam_toolbox_node = LifecycleNode(
         parameters=[
           slam_params_file,
           {
@@ -54,7 +53,7 @@ def generate_launch_description():
           }
         ],
         package='slam_toolbox',
-        executable='async_slam_toolbox_node',
+        executable='sync_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
         namespace=namespace,
@@ -63,7 +62,8 @@ def generate_launch_description():
         remappings=[
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static'),
-            ('/map', 'map'),
+            ('/map', 'maps_manager_node/costmap/incoming_map'),
+            # ('/map', 'map'),
             ('/map_metadata', 'map_metadata'),
             ('/scan_raw', 'scan_raw'),
         ]
@@ -71,21 +71,21 @@ def generate_launch_description():
 
     configure_event = EmitEvent(
         event=ChangeState(
-          lifecycle_node_matcher=matches_action(start_async_slam_toolbox_node),
-          transition_id=Transition.TRANSITION_CONFIGURE
+            lifecycle_node_matcher=matches_action(start_sync_slam_toolbox_node),
+            transition_id=Transition.TRANSITION_CONFIGURE
         ),
         condition=IfCondition(AndSubstitution(autostart, NotSubstitution(use_lifecycle_manager)))
     )
 
     activate_event = RegisterEventHandler(
         OnStateTransition(
-            target_lifecycle_node=start_async_slam_toolbox_node,
+            target_lifecycle_node=start_sync_slam_toolbox_node,
             start_state="configuring",
             goal_state="inactive",
             entities=[
                 LogInfo(msg="[LifecycleLaunch] Slamtoolbox node is activating."),
                 EmitEvent(event=ChangeState(
-                    lifecycle_node_matcher=matches_action(start_async_slam_toolbox_node),
+                    lifecycle_node_matcher=matches_action(start_sync_slam_toolbox_node),
                     transition_id=Transition.TRANSITION_ACTIVATE
                 ))
             ]
@@ -100,7 +100,7 @@ def generate_launch_description():
     ld.add_action(declare_use_lifecycle_manager)
     ld.add_action(declare_use_sim_time_argument)
     ld.add_action(declare_slam_params_file_cmd)
-    ld.add_action(start_async_slam_toolbox_node)
+    ld.add_action(start_sync_slam_toolbox_node)
     ld.add_action(configure_event)
     ld.add_action(activate_event)
 
