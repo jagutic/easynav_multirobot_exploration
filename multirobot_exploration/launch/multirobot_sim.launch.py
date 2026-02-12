@@ -71,23 +71,32 @@ def spawn_robots(context):
 def generate_launch_description():
     pkg = get_package_share_directory('multirobot_exploration')
 
+    world = LaunchConfiguration('world')
+    size = LaunchConfiguration('size')
+
     # Diferent simulation enviroments to test
     world_arg = DeclareLaunchArgument(
         'world',
         default_value='maze',
         description='Tipo de simulación: [maze, hospital]'
     )
-    world = LaunchConfiguration('world')
+
+    size_arg = DeclareLaunchArgument(
+        'size',
+        default_value='small',
+        description='Tamaño de la simulación: [small, big]'
+    )
+
 
     # Different files for each world
     world_file = PathJoinSubstitution([
         FindPackageShare([ world, "_world" ]),
         'worlds',
-        [ world, '.world' ]
+        [ world, '_', size, '.world' ]
     ])
     config_file = PathJoinSubstitution([
-        pkg, 'config', 
-        [ world, '_sim.params.yaml' ]
+        pkg, 'config', 'sim',
+        [ world, '_', size, '.params.yaml' ]
     ])
 
     robots_config_arg = DeclareLaunchArgument(
@@ -147,6 +156,7 @@ def generate_launch_description():
 
     ld = LaunchDescription()
     ld.add_action(world_arg)
+    ld.add_action(size_arg)
     ld.add_action(gui_arg)
     ld.add_action(robots_config_arg)
     ld.add_action(ros_gz_bridge)
