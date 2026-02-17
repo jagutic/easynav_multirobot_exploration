@@ -36,7 +36,7 @@ def generate_launch_description():
         'slam_params_file',
         default_value=os.path.join(
             get_package_share_directory("easynav_multirobot_exploration"),
-            'config', 'namespaced_slam.params.yaml'),
+            'config', 'slam_namespaced.params.yaml'),
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
     declare_namespace_argument = DeclareLaunchArgument(
         'namespace',
@@ -62,8 +62,8 @@ def generate_launch_description():
         remappings=[
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static'),
-            ('/map', 'maps_manager_node/costmap/incoming_map'),
-            # ('/map', 'map'),
+            # ('/map', 'maps_manager_node/costmap/incoming_map'),
+            ('/map', 'map'),
             ('/map_metadata', 'map_metadata'),
             ('/scan_raw', 'scan_raw'),
         ]

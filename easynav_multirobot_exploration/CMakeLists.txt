@@ -7,13 +7,55 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-install(DIRECTORY launch config rviz
-DESTINATION share/${PROJECT_NAME})
 
+
+# Library
+add_library(${PROJECT_NAME} SHARED
+  src/${PROJECT_NAME}/MapsMux.cpp
+)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  rclcpp::rclcpp
+  ${nav_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
+)
+
+# Executable
+add_executable(main src/main.cpp)
+target_link_libraries(main PUBLIC
+  ${PROJECT_NAME}
+)
+
+
+# Install
+install(TARGETS
+  main
+  ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY launch config rviz
+  DESTINATION share/${PROJECT_NAME}
+)
+
+
+# Test
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

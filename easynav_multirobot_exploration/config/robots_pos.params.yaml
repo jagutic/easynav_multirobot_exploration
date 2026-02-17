@@ -1,0 +1,47 @@
+r1/maps_multiplexor:
+  ros__parameters:
+    robot_ids: ["r1", "r2", "r3"]
+    r1:
+      x: 1.5
+      y: 0.0
+      Y: 0.0
+    r2:
+      x: -3.5
+      y: -2.0
+      Y: 0.0
+    r3:
+      x: 3.5
+      y: 3.0
+      Y: 0.0
+
+r2/maps_multiplexor:
+  ros__parameters:
+    robot_ids: ["r1", "r2", "r3"]
+    r1:
+      x: 1.5
+      y: 0.0
+      Y: 0.0
+    r2:
+      x: -3.5
+      y: -2.0
+      Y: 0.0
+    r3:
+      x: 3.5
+      y: 3.0
+      Y: 0.0
+
+r3/maps_multiplexor:
+  ros__parameters:
+    robot_ids: ["r1", "r2", "r3"]
+    r1:
+      x: 1.5
+      y: 0.0
+      Y: 0.0
+    r2:
+      x: -3.5
+      y: -2.0
+      Y: 0.0
+    r3:
+      x: 3.5
+      y: 3.0
+      Y: 0.0
