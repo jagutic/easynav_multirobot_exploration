@@ -30,20 +30,22 @@ class MapsMux : public rclcpp::Node
 public:
   MapsMux();
   OccupancyGrid mux();
+  void traslate_robot_coords(std::string origin_coord_id);
 
 private:
-  void map_callback(const OccupancyGrid::SharedPtr map);
-  void traslate_robot_coords(std::string origin_coord_id);
+  void control_cycle();
   BoundingBox get_global_bounds();
-
-  // Subs & Pubs
-  std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_;
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;
+  void map_callback(const OccupancyGrid::SharedPtr map);
 
   int n_robots_;
   std::string ns_;
   std::map<std::string, Pose2D> robots_coords_;
   std::map<std::string, OccupancyGrid::SharedPtr> maps_;
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  // Subs & Pubs
+  std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_;
+  rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;
 };
 
 }  // namespace easynav

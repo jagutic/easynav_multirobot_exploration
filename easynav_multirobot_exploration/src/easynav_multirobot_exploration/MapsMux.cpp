@@ -34,15 +34,15 @@ MapsMux::MapsMux() : Node("maps_multiplexer")
     robots_coords_[id].y = y;
     robots_coords_[id].theta = Y;
 
-    RCLCPP_INFO(get_logger(),
-          "ID: %s, X: %.2f, Y: %.2f, theta: %.2f",
-          id.c_str(), x, y, Y);
+    // RCLCPP_INFO(get_logger(),
+    //       "ID: %s, X: %.2f, Y: %.2f, theta: %.2f",
+    //       id.c_str(), x, y, Y);
 
     // Suscribe to every robot map topic
     std::string topic_name = "/" + id + "/map";
     map_subs_[id] = create_subscription<OccupancyGrid>(
         topic_name,
-        10,
+        rclcpp::QoS(1).transient_local().reliable(),
         std::bind(&MapsMux::map_callback, this, std::placeholders::_1)
     );
   }
@@ -50,10 +50,36 @@ MapsMux::MapsMux() : Node("maps_multiplexer")
   // My robot (ns), acts as origin
   ns_ = std::string(get_namespace());
   ns_ = ns_.substr(1);
-  muxed_map_pub_ = create_publisher<OccupancyGrid>("muxed_map", 10);
+  muxed_map_pub_ = create_publisher<OccupancyGrid>(
+        "muxed_map", rclcpp::QoS(1).transient_local().reliable());
 
   RCLCPP_INFO(get_logger(), "Setting origin at robot %s", ns_.c_str());
   traslate_robot_coords(ns_);
+
+  timer_ = this->create_wall_timer(
+      2s, std::bind(&MapsMux::control_cycle, this));
+}
+
+void
+MapsMux::control_cycle()
+{
+  OccupancyGrid muxed_map = mux();
+  muxed_map_pub_->publish(muxed_map);
+
+  RCLCPP_INFO(get_logger(),
+              "Publishing map with size %dx%d",
+              muxed_map.info.height, muxed_map.info.width);
+}
+
+void MapsMux::map_callback(const OccupancyGrid::SharedPtr map)
+{
+  // Get robot id (namespace) form frame id
+  std::string frame = map->header.frame_id;
+  size_t pos = frame.find('/');
+  std::string id = (pos != std::string::npos) ? frame.substr(0, pos) : frame;
+
+  // Save map with its id
+  maps_[id] = map;
 }
 
 void
@@ -171,17 +197,15 @@ OccupancyGrid MapsMux::mux()
 
   BoundingBox bounds = get_global_bounds();
   OccupancyGrid master_map;
-  master_map.header = maps_[ns_]->header;
+  master_map = *maps_[ns_];
   
-  double res = maps_[ns_]->info.resolution;
-  master_map.info.resolution = res;
+  double res = master_map.info.resolution;
+  double width_m = bounds.max_x - bounds.min_x;
+  double height_m = bounds.max_y - bounds.min_y;
+  
   master_map.info.origin.position.x = bounds.min_x;
   master_map.info.origin.position.y = bounds.min_y;
   master_map.info.origin.orientation.w = 1.0;
-
-  double width_m = bounds.max_x - bounds.min_x;
-  double height_m = bounds.max_y - bounds.min_y;
-
   master_map.info.width = static_cast<uint32_t>(std::ceil(width_m / res));
   master_map.info.height = static_cast<uint32_t>(std::ceil(height_m / res));
 
@@ -236,21 +260,6 @@ OccupancyGrid MapsMux::mux()
     }
   }
   return master_map;
-}
-
-void MapsMux::map_callback(const OccupancyGrid::SharedPtr map)
-{
-  // Get robot id (namespace) form frame id
-  std::string frame = map->header.frame_id;
-  size_t pos = frame.find('/');
-  std::string id = (pos != std::string::npos) ? frame.substr(0, pos) : frame;
-
-  // Save map with its id
-  maps_[id] = map;
-
-  OccupancyGrid muxed_map = mux();
-  muxed_map_pub_->publish(muxed_map);
-  RCLCPP_INFO(get_logger(), "Publishing muxed map");
 }
 
 }  // namespace easynav

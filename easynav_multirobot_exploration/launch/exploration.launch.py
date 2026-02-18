@@ -23,7 +23,10 @@ def generate_launch_description():
             name='maps_multiplexor',
             parameters=[os.path.join(pkg, 'config', 'robots_pos.params.yaml')],
             output='screen',
-            namespace=namespace
+            namespace=namespace,
+            remappings=[
+                ('muxed_map', 'maps_manager_node/costmap/incoming_map'),
+            ]
         )
 
     ld = LaunchDescription()
