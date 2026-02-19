@@ -54,7 +54,7 @@ MapsMux::MapsMux() : Node("maps_multiplexer")
         "muxed_map", rclcpp::QoS(1).transient_local().reliable());
 
   RCLCPP_INFO(get_logger(), "Setting origin at robot %s", ns_.c_str());
-  traslate_robot_coords(ns_);
+  translate_robot_coords(ns_);
 
   timer_ = this->create_wall_timer(
       2s, std::bind(&MapsMux::control_cycle, this));
@@ -83,7 +83,7 @@ void MapsMux::map_callback(const OccupancyGrid::SharedPtr map)
 }
 
 void
-MapsMux::traslate_robot_coords(std::string origin_coord_id)
+MapsMux::translate_robot_coords(std::string origin_coord_id)
 {
   if (robots_coords_.find(origin_coord_id) == robots_coords_.end()) {
     RCLCPP_ERROR(get_logger(), "%s not in robot list", origin_coord_id.c_str());
@@ -122,25 +122,6 @@ MapsMux::traslate_robot_coords(std::string origin_coord_id)
 
   // Update
   robots_coords_ = coords_transformed;
-}
-
-inline int8_t fuse_pixels(int8_t master, int8_t incoming, int8_t threshold)
-{
-  // Accept free space when having at most low noise
-  if (incoming == 0) {
-    return (master < threshold) ? incoming : master;
-  }
-
-  // Accept wall always
-  if (incoming == 100) return incoming;
-
-  // Accept high noise only if mine is not higher
-  if (incoming >= threshold) {
-    return (master < incoming) ? incoming : master;
-  }
-
-  // Accept low noise only when not knowing anything
-  return (master == -1) ? incoming : master;
 }
 
 BoundingBox
@@ -195,70 +176,84 @@ OccupancyGrid MapsMux::mux()
     return OccupancyGrid();
   }
 
+  OccupancyGrid::SharedPtr local_map = maps_[ns_];
   BoundingBox bounds = get_global_bounds();
-  OccupancyGrid master_map;
-  master_map = *maps_[ns_];
-  
-  double res = master_map.info.resolution;
-  double width_m = bounds.max_x - bounds.min_x;
-  double height_m = bounds.max_y - bounds.min_y;
-  
-  master_map.info.origin.position.x = bounds.min_x;
-  master_map.info.origin.position.y = bounds.min_y;
-  master_map.info.origin.orientation.w = 1.0;
-  master_map.info.width = static_cast<uint32_t>(std::ceil(width_m / res));
-  master_map.info.height = static_cast<uint32_t>(std::ceil(height_m / res));
 
-  size_t total_cells = master_map.info.width * master_map.info.height;
-  master_map.data.assign(total_cells, -1);
+  double res = local_map->info.resolution;
+  double local_x = local_map->info.origin.position.x;
+  double local_y = local_map->info.origin.position.y;
+  int w = local_map->info.width;
+  int h = local_map->info.height;
 
-  double m_orig_x = master_map.info.origin.position.x;
-  double m_orig_y = master_map.info.origin.position.y;
-  int m_w = static_cast<int>(master_map.info.width);
-  int m_h = static_cast<int>(master_map.info.height);
-  int8_t threshold = MUX_THRESHOLD; 
+  int pad_south = std::max(0, static_cast<int>(std::round((local_y - bounds.min_y) / res)));
+  int pad_north = std::max(0, static_cast<int>(std::round((bounds.max_y - (local_y + h * res)) / res)));
+  int pad_west  = std::max(0, static_cast<int>(std::round((local_x - bounds.min_x) / res)));
+  int pad_east  = std::max(0, static_cast<int>(std::round((bounds.max_x - (local_x + w * res)) / res)));
+
+  // Expand local mat so can mux other maps received
+  cv::Mat total_mat;
+  cv::Mat local_mat(h, w, CV_8SC1, reinterpret_cast<int8_t*>(local_map->data.data()));
+
+  cv::copyMakeBorder(local_mat, total_mat, 
+                     pad_south, pad_north, pad_west, pad_east, 
+                     cv::BORDER_CONSTANT, cv::Scalar(-1));
+  
+  double origin_x = local_x - (pad_west * res);
+  double origin_y = local_y - (pad_south * res);
+
+  cv::Mat warped;
+  cv::Point2f src[3], dst[3];
 
   for (const auto& [id, map] : maps_) {
-    if (robots_coords_.find(id) == robots_coords_.end()) continue;
+    if (id == ns_) continue;
     if (!map) continue;
+    if (robots_coords_.find(id) == robots_coords_.end()) continue;
 
     Pose2D pose = robots_coords_[id];
-    double c = std::cos(pose.theta);
-    double s = std::sin(pose.theta);
+    cv::Mat extra_mat(map->info.height, map->info.width, CV_8SC1, reinterpret_cast<int8_t*>(map->data.data()));
 
-    double n_res = map->info.resolution;
-    double n_orig_x = map->info.origin.position.x;
-    double n_orig_y = map->info.origin.position.y;
-    int n_w = static_cast<int>(map->info.width);
-    int n_h = static_cast<int>(map->info.height);
+    src[0] = {0.f, 0.f};
+    src[1] = {static_cast<float>(map->info.width), 0.f};
+    src[2] = {0.f, static_cast<float>(map->info.height)};
 
-    for (int i = 0; i < n_h; ++i) {
-      for (int j = 0; j < n_w; ++j) {
-        
-        int idx = j + (i * n_w);
-        int8_t map_value = map->data[idx];
+    float c = std::cos(pose.theta);
+    float s = std::sin(pose.theta);
+    float ox = map->info.origin.position.x;
+    float oy = map->info.origin.position.y;
+    float r = map->info.resolution;
 
-        if (map_value == -1) continue;
-
-        double x_local = n_orig_x + (j * n_res);
-        double y_local = n_orig_y + (i * n_res);
-
-        double x_global = pose.x + (x_local * c - y_local * s);
-        double y_global = pose.y + (x_local * s + y_local * c);
-
-        int gx = static_cast<int>(std::round((x_global - m_orig_x) / res));
-        int gy = static_cast<int>(std::round((y_global - m_orig_y) / res));
-
-        if (gx >= 0 && gx < m_w && gy >= 0 && gy < m_h) {
-          int m_idx = gx + (gy * m_w);
-          
-          int8_t current_val = master_map.data[m_idx];
-          int8_t fused = fuse_pixels(current_val, map_value, threshold);
-          master_map.data[m_idx] = fused;
-        }
-      }
+    for(int i = 0; i < 3; ++i) {
+        float mx = ox + src[i].x * r;
+        float my = oy + src[i].y * r;
+        float wx = pose.x + (mx * c - my * s);
+        float wy = pose.y + (mx * s + my * c);
+        dst[i].x = (wx - origin_x) / res;
+        dst[i].y = (wy - origin_y) / res;
     }
+
+    cv::Mat M = cv::getAffineTransform(src, dst);
+    cv::warpAffine(extra_mat, warped, M, total_mat.size(), cv::INTER_NEAREST, cv::BORDER_CONSTANT, cv::Scalar(-1));
+    
+    // If there were walls, do not change them
+    cv::max(total_mat, warped, total_mat);
   }
+
+  // Transform cvmat back to OccupancyGrid
+  OccupancyGrid master_map;
+
+  master_map.header = local_map->header;
+  master_map.header.stamp = this->now();
+  master_map.info.resolution = res;
+  master_map.info.width = total_mat.cols;
+  master_map.info.height = total_mat.rows;
+  master_map.info.origin.position.x = origin_x;
+  master_map.info.origin.position.y = origin_y;
+  master_map.info.origin.orientation.w = 1.0;
+
+  size_t size = total_mat.total() * total_mat.elemSize();
+  master_map.data.resize(size);
+  std::memcpy(master_map.data.data(), total_mat.data, size);
+
   return master_map;
 }
 

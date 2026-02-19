@@ -17,9 +17,21 @@ def generate_launch_description():
         default_value='',
         description='Namespace for node and topics')
 
+    # explorer = Node(
+    #         package='easynav_multirobot_exploration',
+    #         executable='explorer',
+    #         name='explorer',
+    #         # parameters=[os.path.join(pkg, 'config', 'robots_pos.params.yaml')],
+    #         output='screen',
+    #         namespace=namespace,
+    #         # remappings=[
+    #         #     ('muxed_map', 'maps_manager_node/costmap/incoming_map'),
+    #         # ]
+    #     )
+
     maps_mux = Node(
             package='easynav_multirobot_exploration',
-            executable='main',
+            executable='maps_multiplexor',
             name='maps_multiplexor',
             parameters=[os.path.join(pkg, 'config', 'robots_pos.params.yaml')],
             output='screen',
@@ -32,4 +44,5 @@ def generate_launch_description():
     ld = LaunchDescription()
     ld.add_action(declare_namespace_argument)
     ld.add_action(maps_mux)
+    # ld.add_action(explorer)
     return ld

@@ -3,10 +3,12 @@
 
 #include <vector>
 #include <string>
+#include <cstring>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
+#include <opencv2/opencv.hpp>
 
 #define MUX_THRESHOLD 50
 
@@ -23,17 +25,16 @@ struct BoundingBox {
   double max_y = std::numeric_limits<double>::lowest();
 };
 
-inline int8_t fuse_pixels(int8_t master, int8_t incoming, int8_t threshold);
 
 class MapsMux : public rclcpp::Node
 {
 public:
   MapsMux();
-  OccupancyGrid mux();
-  void traslate_robot_coords(std::string origin_coord_id);
-
+  void translate_robot_coords(std::string origin_coord_id);
+  
 private:
   void control_cycle();
+  OccupancyGrid mux();
   BoundingBox get_global_bounds();
   void map_callback(const OccupancyGrid::SharedPtr map);
 

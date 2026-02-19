@@ -10,33 +10,43 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-
-
+find_package(OpenCV REQUIRED)
 
 # Library
 add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/MapsMux.cpp
+  src/${PROJECT_NAME}/LinearExplorer.cpp
 )
+
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  ${OpenCV_INCLUDE_DIRS}
 )
+
 target_link_libraries(${PROJECT_NAME} PUBLIC
   rclcpp::rclcpp
   ${nav_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
+  ${OpenCV_LIBS}
 )
 
-# Executable
-add_executable(main src/main.cpp)
-target_link_libraries(main PUBLIC
+
+# Executables
+add_executable(maps_multiplexor src/maps_multiplexor.cpp)
+target_link_libraries(maps_multiplexor PUBLIC
   ${PROJECT_NAME}
 )
+# add_executable(linear_explorer src/linear_explorer.cpp)
+# target_link_libraries(linear_explorer PUBLIC
+#   ${PROJECT_NAME}
+# )
 
 
 # Install
 install(TARGETS
-  main
+  maps_multiplexor
+  # linear_explorer
   ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib

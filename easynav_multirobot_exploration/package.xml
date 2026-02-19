@@ -11,6 +11,7 @@
   <buildtool_depend>rclcpp</buildtool_depend>
   <buildtool_depend>nav_msgs</buildtool_depend>
   <buildtool_depend>geometry_msgs</buildtool_depend>
+  <buildtool_depend>OpenCV REQUIRED</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
