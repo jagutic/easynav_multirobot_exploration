@@ -1,6 +1,14 @@
 # MultiRobot Exploration
 TFG John Alejandro Gutiérrez: Exploración Multi-Robot en Easynav.
 
+## Groot2, Behaviour Tree
+## LazyLocalizer Plugin
+## Worlds
+## MapsMux
+## FrontierDetector
+## FrontierPoint Selector
+
+
 ## EasyNav MultiRobot Exploration Tutorial
 ### Start the simulator if needed
 

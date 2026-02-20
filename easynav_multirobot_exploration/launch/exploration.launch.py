@@ -17,32 +17,22 @@ def generate_launch_description():
         default_value='',
         description='Namespace for node and topics')
 
-    # explorer = Node(
-    #         package='easynav_multirobot_exploration',
-    #         executable='explorer',
-    #         name='explorer',
-    #         # parameters=[os.path.join(pkg, 'config', 'robots_pos.params.yaml')],
-    #         output='screen',
-    #         namespace=namespace,
-    #         # remappings=[
-    #         #     ('muxed_map', 'maps_manager_node/costmap/incoming_map'),
-    #         # ]
-    #     )
-
-    maps_mux = Node(
-            package='easynav_multirobot_exploration',
-            executable='maps_multiplexor',
-            name='maps_multiplexor',
-            parameters=[os.path.join(pkg, 'config', 'robots_pos.params.yaml')],
-            output='screen',
-            namespace=namespace,
-            remappings=[
-                ('muxed_map', 'maps_manager_node/costmap/incoming_map'),
-            ]
-        )
+    explorer = Node(
+        package='easynav_multirobot_exploration',
+        executable='explorer',
+        name='explorer',
+        parameters=[
+            os.path.join(pkg, 'config', 'explorer.params.yaml'),
+            {'bt_xml_file': os.path.join(pkg, 'behavior_trees', 'explore.xml')}
+            ],
+        output='screen',
+        namespace=namespace,
+        remappings=[
+            ('muxed_map', 'maps_manager_node/costmap/incoming_map'),
+        ]
+    )
 
     ld = LaunchDescription()
     ld.add_action(declare_namespace_argument)
-    ld.add_action(maps_mux)
-    # ld.add_action(explorer)
+    ld.add_action(explorer)
     return ld

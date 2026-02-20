@@ -1,4 +1,4 @@
-r1/maps_multiplexor:
+r1/explorer:
   ros__parameters:
     robot_ids: ["r1", "r2", "r3"]
     r1:
@@ -14,7 +14,7 @@ r1/maps_multiplexor:
       y: 3.0
       Y: 0.0
 
-r2/maps_multiplexor:
+r2/explorer:
   ros__parameters:
     robot_ids: ["r1", "r2", "r3"]
     r1:
@@ -30,7 +30,7 @@ r2/maps_multiplexor:
       y: 3.0
       Y: 0.0
 
-r3/maps_multiplexor:
+r3/explorer:
   ros__parameters:
     robot_ids: ["r1", "r2", "r3"]
     r1:

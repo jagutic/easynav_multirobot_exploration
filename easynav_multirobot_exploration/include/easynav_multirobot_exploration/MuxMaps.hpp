@@ -1,18 +1,18 @@
-#ifndef EASYNAV_MAPS_MUX_HPP_
-#define EASYNAV_MAPS_MUX_HPP_
+#ifndef EASYNAV_MULTIROBOT_EXPLORATION__MUX_MAPS_HPP
+#define EASYNAV_MULTIROBOT_EXPLORATION__MUX_MAPS_HPP
 
 #include <vector>
 #include <string>
 #include <cstring>
 
 #include "rclcpp/rclcpp.hpp"
+#include <opencv2/opencv.hpp>
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
-#include <opencv2/opencv.hpp>
+#include "behaviortree_cpp/action_node.h"
 
-#define MUX_THRESHOLD 50
 
-namespace easynav
+namespace multirobot_exploration
 {
 
 using nav_msgs::msg::OccupancyGrid;
@@ -25,30 +25,35 @@ struct BoundingBox {
   double max_y = std::numeric_limits<double>::lowest();
 };
 
-
-class MapsMux : public rclcpp::Node
+class MuxMaps : public BT::SyncActionNode
 {
 public:
-  MapsMux();
+  MuxMaps(const std::string& name, const BT::NodeConfig& conf);
   void translate_robot_coords(std::string origin_coord_id);
   
+  BT::NodeStatus tick() override;
+  static BT::PortsList providedPorts()
+  {
+    return BT::PortsList(
+      {
+        BT::OutputPort<OccupancyGrid>("muxed_map")
+      });
+  }
+  
 private:
-  void control_cycle();
   OccupancyGrid mux();
   BoundingBox get_global_bounds();
   void map_callback(const OccupancyGrid::SharedPtr map);
 
-  int n_robots_;
   std::string ns_;
   std::map<std::string, Pose2D> robots_coords_;
   std::map<std::string, OccupancyGrid::SharedPtr> maps_;
-  rclcpp::TimerBase::SharedPtr timer_;
-
-  // Subs & Pubs
+  
+  rclcpp::Node::SharedPtr node_;
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;
 };
 
-}  // namespace easynav
+} // ns multirobot_exploration
 
-#endif  // EASYNAV_MAPS_MUX_HPP_
+#endif // EASYNAV_MULTIROBOT_EXPLORATION__MUX_MAPS_HPP

@@ -42,7 +42,7 @@
 namespace easynav
 {
 
-/// \brief A localization method implementing a simplified AMCL (Adaptive Monte Carlo Localization) approach.
+/// \brief A using tf localization method.
 class LazyLocalizer : public LocalizerMethodBase
 {
 public:

@@ -5,78 +5,86 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(behaviortree_cpp REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(easynav_system REQUIRED)
 
-# Library
-add_library(${PROJECT_NAME} SHARED
-  src/${PROJECT_NAME}/MapsMux.cpp
-  src/${PROJECT_NAME}/LinearExplorer.cpp
+
+add_library(maps_mux_bt_node SHARED src/${PROJECT_NAME}/MuxMaps.cpp)
+add_library(detect_frontier_bt_node SHARED src/${PROJECT_NAME}/DetectFrontier.cpp)
+add_library(choose_frontier_goal_bt_node SHARED src/${PROJECT_NAME}/ChooseFrontierGoal.cpp)
+add_library(is_goal_valid_bt_node SHARED src/${PROJECT_NAME}/IsGoalValid.cpp)
+add_library(go_to_pose_bt_node SHARED src/${PROJECT_NAME}/GoToPose.cpp)
+add_library(is_explored SHARED src/${PROJECT_NAME}/IsExplored.cpp)
+
+set(plugin_libs
+  maps_mux_bt_node
+  detect_frontier_bt_node
+  choose_frontier_goal_bt_node
+  is_goal_valid_bt_node
+  go_to_pose_bt_node
+  is_explored
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
-  ${OpenCV_INCLUDE_DIRS}
-)
-
-target_link_libraries(${PROJECT_NAME} PUBLIC
-  rclcpp::rclcpp
-  ${nav_msgs_TARGETS}
-  ${geometry_msgs_TARGETS}
-  ${OpenCV_LIBS}
-)
-
-
-# Executables
-add_executable(maps_multiplexor src/maps_multiplexor.cpp)
-target_link_libraries(maps_multiplexor PUBLIC
-  ${PROJECT_NAME}
-)
-# add_executable(linear_explorer src/linear_explorer.cpp)
-# target_link_libraries(linear_explorer PUBLIC
-#   ${PROJECT_NAME}
-# )
+foreach(bt_plugin ${plugin_libs})
+  target_include_directories(${bt_plugin} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${OpenCV_INCLUDE_DIRS}
+    ${behaviortree_cpp_INCLUDE_DIRS}
+  )
+  target_link_libraries(${bt_plugin} PUBLIC
+    rclcpp::rclcpp
+    behaviortree_cpp::behaviortree_cpp
+    easynav_system::easynav_system
+    tf2::tf2
+    tf2_ros::tf2_ros
+    ${nav_msgs_TARGETS}
+    ${geometry_msgs_TARGETS}
+    ${tf2_geometry_msgs_TARGETS}
+    ${OpenCV_LIBS}
+  )
+  target_compile_definitions(${bt_plugin} PRIVATE BT_PLUGIN_EXPORT)
+endforeach()
 
 
-# Install
+add_executable(explorer src/explorer.cpp)
+target_link_libraries(explorer PUBLIC ${plugin_libs})
+
+
 install(TARGETS
-  maps_multiplexor
-  # linear_explorer
-  ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}
+  ${plugin_libs}
+  explorer
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-  DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME}
+install(DIRECTORY include/
+  DESTINATION include/
 )
 
-install(
-  DIRECTORY launch config rviz
+install(DIRECTORY
+  config
+  launch
+  rviz
+  behavior_trees
   DESTINATION share/${PROJECT_NAME}
 )
 
-
-# Test
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 
 ament_package()
-
