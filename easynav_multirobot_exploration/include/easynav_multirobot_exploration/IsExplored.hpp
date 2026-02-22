@@ -22,7 +22,7 @@ public:
   {
     return BT::PortsList(
       {
-        BT::InputPort<OccupancyGrid>("map")
+        BT::InputPort<OccupancyGrid::SharedPtr>("map")
       });
   }
 

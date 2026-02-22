@@ -4,14 +4,17 @@
     <RetryUntilSuccessful num_attempts="-1">
       <ReactiveSequence>
         <MuxMaps muxed_map="{mm}"/>
+        <GetPose pose="{p}"/>
         <DetectFrontier map="{mm}"
+                        robot_pose="{p}"
                         frontier="{f}"/>
-        <ChooseFrontierGoal frontier="{f}"
-                            frontier_goal="{fg}"/>
-        <IsGoalValid new_goal="{fg}"/>
+        <!-- <ChooseFrontierGoal robot_pose="{p}"
+                            frontier="{f}"
+                            frontier_goal="{fg}"/> -->
+        <!-- <IsGoalValid new_goal="{fg}"/>
         <SetBlackboard output_key="last_goal"
-                       value="{fg}"/>
-        <GoToPose pose="{fg}"/>
+                       value="{fg}"/> -->
+        <!-- <GoToPose pose="{fg}"/> -->
         <IsExplored map="{mm}"/>
       </ReactiveSequence>
     </RetryUntilSuccessful>
@@ -22,20 +25,29 @@
     <Action ID="ChooseFrontierGoal"
             editable="true">
       <input_port name="frontier"
-                  type="geometry_msgs::msg::PoseArray"/>
+                  type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
+      <input_port name="robot_pose"
+                  type="geometry_msgs::msg::Pose"/>
       <output_port name="frontier_goal"
                    type="geometry_msgs::msg::Pose"/>
     </Action>
     <Action ID="DetectFrontier"
             editable="true">
       <input_port name="map"
-                  type="nav_msgs::msg::OccupancyGrid"/>
+                  type="nav_msgs::msg::OccupancyGrid::SharedPtr"/>
+      <input_port name="robot_pose"
+                  type="geometry_msgs::msg::Pose"/>
       <output_port name="frontier"
-                   type="geometry_msgs::msg::PoseArray"/>
+                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
     </Action>
     <Action ID="GoToPose"
             editable="true">
       <input_port name="pose"
+                  type="geometry_msgs::msg::Pose"/>
+    </Action>
+    <Action ID="GetPose"
+            editable="true">
+      <output_port name="pose"
                   type="geometry_msgs::msg::Pose"/>
     </Action>
     <Condition ID="IsExplored"
@@ -51,7 +63,7 @@
     <Action ID="MuxMaps"
             editable="true">
       <output_port name="muxed_map"
-                   type="nav_msgs::msg::OccupancyGrid"/>
+                   type="nav_msgs::msg::OccupancyGrid::SharedPtr"/>
     </Action>
   </TreeNodesModel>
 

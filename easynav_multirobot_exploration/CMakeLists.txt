@@ -6,7 +6,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -16,9 +15,10 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(easynav_system REQUIRED)
-
+find_package(visualization_msgs REQUIRED)
 
 add_library(maps_mux_bt_node SHARED src/${PROJECT_NAME}/MuxMaps.cpp)
+add_library(get_pose_bt_node SHARED src/${PROJECT_NAME}/GetPose.cpp)
 add_library(detect_frontier_bt_node SHARED src/${PROJECT_NAME}/DetectFrontier.cpp)
 add_library(choose_frontier_goal_bt_node SHARED src/${PROJECT_NAME}/ChooseFrontierGoal.cpp)
 add_library(is_goal_valid_bt_node SHARED src/${PROJECT_NAME}/IsGoalValid.cpp)
@@ -27,6 +27,7 @@ add_library(is_explored SHARED src/${PROJECT_NAME}/IsExplored.cpp)
 
 set(plugin_libs
   maps_mux_bt_node
+  get_pose_bt_node
   detect_frontier_bt_node
   choose_frontier_goal_bt_node
   is_goal_valid_bt_node
@@ -48,6 +49,7 @@ foreach(bt_plugin ${plugin_libs})
     tf2::tf2
     tf2_ros::tf2_ros
     ${nav_msgs_TARGETS}
+    ${visualization_msgs_TARGETS}
     ${geometry_msgs_TARGETS}
     ${tf2_geometry_msgs_TARGETS}
     ${OpenCV_LIBS}

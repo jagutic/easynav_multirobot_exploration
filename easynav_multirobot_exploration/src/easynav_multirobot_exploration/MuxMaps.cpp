@@ -11,14 +11,13 @@ MuxMaps::MuxMaps(
   : BT::SyncActionNode(name, conf)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
+  tf_prefix_ = config().blackboard->get<std::string>("tf_prefix");
   RCLCPP_INFO(node_->get_logger(), "** MuxMap **");
 
-  // Get list of robots existing
   std::vector<std::string> ids;
-
   node_->declare_parameter("robot_ids", ids);
   node_->get_parameter("robot_ids", ids);
-  RCLCPP_INFO(node_->get_logger(), "%ld robots", ids.size());
+  RCLCPP_INFO(node_->get_logger(), "Total robots: %ld", ids.size());
 
   // Get coords for each robot existing
   for (const auto& id : ids) {
@@ -40,10 +39,6 @@ MuxMaps::MuxMaps(
     robots_coords_[id].y = y;
     robots_coords_[id].theta = Y;
 
-    // RCLCPP_INFO(node_->get_logger(),
-    //       "ID: %s, X: %.2f, Y: %.2f, theta: %.2f",
-    //       id.c_str(), x, y, Y);
-
     // Suscribe to every robot map topic
     std::string topic_name = "/" + id + "/map";
     map_subs_[id] = node_->create_subscription<OccupancyGrid>(
@@ -53,39 +48,41 @@ MuxMaps::MuxMaps(
     );
   }
 
-  // My robot (ns), acts as origin
-  ns_ = std::string(node_->get_namespace());
-  ns_ = ns_.substr(1);
   muxed_map_pub_ = node_->create_publisher<OccupancyGrid>(
-        "muxed_map", rclcpp::QoS(1).transient_local().reliable());
+    "muxed_map", rclcpp::QoS(1).transient_local().reliable());
 
-  RCLCPP_INFO(node_->get_logger(), "Setting origin at robot %s", ns_.c_str());
-  translate_robot_coords(ns_);
+    // Set origin to tf prefix robot
+  RCLCPP_INFO(node_->get_logger(), "Origin set at robot %s", tf_prefix_.c_str());
+  translate_robot_coords(tf_prefix_);
 }
 
 BT::NodeStatus
 MuxMaps::tick()
 {
-  OccupancyGrid muxed_map = mux();
-  
-  if (muxed_map.info.width == 0 || muxed_map.info.height == 0) {
+  auto muxed_map = std::make_shared<OccupancyGrid>();
+  mux(muxed_map);
+
+  if (muxed_map->info.width == 0 || muxed_map->info.height == 0) {
+    RCLCPP_ERROR(node_->get_logger(), "Unable to mux maps");
     return BT::NodeStatus::FAILURE;
   }
-  
-  RCLCPP_INFO(node_->get_logger(),
-              "Publishing map with size %dx%d",
-              muxed_map.info.height, muxed_map.info.width);
 
   setOutput("muxed_map", muxed_map);
-  muxed_map_pub_->publish(muxed_map);
+  muxed_map_pub_->publish(*muxed_map);
 
+  RCLCPP_INFO(node_->get_logger(), "\t");
+  RCLCPP_INFO(
+    node_->get_logger(),
+    "Muxed Map generated with size %dx%d",
+    muxed_map->info.height, muxed_map->info.width
+  );
   return BT::NodeStatus::SUCCESS;
 }
 
 void
 MuxMaps::map_callback(const OccupancyGrid::SharedPtr map)
 {
-  // Get robot id (namespace) form frame id
+  // Get robot id (namespace) from frame id
   std::string frame = map->header.frame_id;
   size_t pos = frame.find('/');
   std::string id = (pos != std::string::npos) ? frame.substr(0, pos) : frame;
@@ -102,7 +99,7 @@ MuxMaps::translate_robot_coords(std::string origin_coord_id)
     return; 
   }
 
-  Pose2D origin = robots_coords_[origin_coord_id];
+  geometry_msgs::msg::Pose2D origin = robots_coords_[origin_coord_id];
   double ox = origin.x;
   double oy = origin.y;
   double oth = origin.theta;
@@ -110,9 +107,9 @@ MuxMaps::translate_robot_coords(std::string origin_coord_id)
   double c = std::cos(oth);
   double s = std::sin(oth);
 
-  std::map<std::string, Pose2D> coords_transformed;
+  std::map<std::string, geometry_msgs::msg::Pose2D> coords_transformed;
   for (const auto& [id, p] : robots_coords_) {
-      Pose2D p_new;
+      geometry_msgs::msg::Pose2D p_new;
 
       // Linear traslation
       double dx = p.x - ox;
@@ -144,7 +141,7 @@ MuxMaps::get_global_bounds()
   for (const auto& [id, map] : maps_) {
     if (robots_coords_.find(id) == robots_coords_.end()) continue;
 
-    Pose2D pose = robots_coords_[id];
+    geometry_msgs::msg::Pose2D pose = robots_coords_[id];
     double c = std::cos(pose.theta);
     double s = std::sin(pose.theta);
 
@@ -181,14 +178,15 @@ MuxMaps::get_global_bounds()
   return box;
 }
 
-OccupancyGrid MuxMaps::mux()
+void
+MuxMaps::mux(OccupancyGrid::SharedPtr final_map)
 {
-  if (maps_.find(ns_) == maps_.end()) {
-    RCLCPP_ERROR(node_->get_logger(), "%s map not published yet", ns_.c_str());
-    return OccupancyGrid();
+  if (maps_.find(tf_prefix_) == maps_.end()) {
+    RCLCPP_ERROR(node_->get_logger(), "%s map not published yet", tf_prefix_.c_str());
+    return;
   }
 
-  OccupancyGrid::SharedPtr local_map = maps_[ns_];
+  OccupancyGrid::SharedPtr local_map = maps_[tf_prefix_];
   BoundingBox bounds = get_global_bounds();
 
   double res = local_map->info.resolution;
@@ -217,11 +215,11 @@ OccupancyGrid MuxMaps::mux()
   cv::Point2f src[3], dst[3];
 
   for (const auto& [id, map] : maps_) {
-    if (id == ns_) continue;
+    if (id == tf_prefix_) continue;
     if (!map) continue;
     if (robots_coords_.find(id) == robots_coords_.end()) continue;
 
-    Pose2D pose = robots_coords_[id];
+    geometry_msgs::msg::Pose2D pose = robots_coords_[id];
     cv::Mat extra_mat(map->info.height, map->info.width, CV_8SC1, reinterpret_cast<int8_t*>(map->data.data()));
 
     src[0] = {0.f, 0.f};
@@ -250,23 +248,19 @@ OccupancyGrid MuxMaps::mux()
     cv::max(total_mat, warped, total_mat);
   }
 
-  // Transform cvmat back to OccupancyGrid
-  OccupancyGrid master_map;
-
-  master_map.header = local_map->header;
-  master_map.header.stamp = node_->now();
-  master_map.info.resolution = res;
-  master_map.info.width = total_mat.cols;
-  master_map.info.height = total_mat.rows;
-  master_map.info.origin.position.x = origin_x;
-  master_map.info.origin.position.y = origin_y;
-  master_map.info.origin.orientation.w = 1.0;
+  // Fill ptr with mapa value
+  final_map->header = local_map->header;
+  final_map->header.stamp = node_->now();
+  final_map->info.resolution = res;
+  final_map->info.width = total_mat.cols;
+  final_map->info.height = total_mat.rows;
+  final_map->info.origin.position.x = origin_x;
+  final_map->info.origin.position.y = origin_y;
+  final_map->info.origin.orientation.w = 1.0;
 
   size_t size = total_mat.total() * total_mat.elemSize();
-  master_map.data.resize(size);
-  std::memcpy(master_map.data.data(), total_mat.data, size);
-
-  return master_map;
+  final_map->data.resize(size);
+  std::memcpy(final_map->data.data(), total_mat.data, size);
 }
 
 } // ns multirobot_exploration

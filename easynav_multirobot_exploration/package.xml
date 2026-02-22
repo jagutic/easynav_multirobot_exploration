@@ -16,7 +16,8 @@
   <buildtool_depend>tf2</buildtool_depend>
   <buildtool_depend>tf2_ros</buildtool_depend>
   <buildtool_depend>tf2_geometry_msgs</buildtool_depend>
-  <buildtool_depend>ament_index_cpp</buildtool_depend>
+  <buildtool_depend>visualization_msgs</buildtool_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

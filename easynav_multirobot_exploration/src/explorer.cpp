@@ -3,9 +3,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "behaviortree_cpp/bt_factory.h"
-#include "ament_index_cpp/get_package_share_directory.hpp"
 
 #include "easynav_multirobot_exploration/MuxMaps.hpp"
+#include "easynav_multirobot_exploration/GetPose.hpp"
 #include "easynav_multirobot_exploration/DetectFrontier.hpp"
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
 #include "easynav_multirobot_exploration/IsGoalValid.hpp"
@@ -21,6 +21,7 @@ int main(int argc, char **argv)
 
   BT::BehaviorTreeFactory factory;
   factory.registerNodeType<multirobot_exploration::MuxMaps>("MuxMaps");
+  factory.registerNodeType<multirobot_exploration::GetPose>("GetPose");
   factory.registerNodeType<multirobot_exploration::DetectFrontier>("DetectFrontier");
   factory.registerNodeType<multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
   factory.registerNodeType<multirobot_exploration::IsGoalValid>("IsGoalValid");
@@ -31,8 +32,13 @@ int main(int argc, char **argv)
   node->declare_parameter("bt_xml_file", xml_file);
   node->get_parameter("bt_xml_file", xml_file);
 
+  std::string tf_prefix;
+  node->declare_parameter("tf_prefix", tf_prefix);
+  node->get_parameter("tf_prefix", tf_prefix);
+
   auto blackboard = BT::Blackboard::create();
   blackboard->set<rclcpp::Node::SharedPtr>("node", node);
+  blackboard->set<std::string>("tf_prefix", tf_prefix);
 
   BT::Tree tree;
   try {
@@ -43,16 +49,18 @@ int main(int argc, char **argv)
   }
 
   rclcpp::Rate rate(1); // 1 hz
-  RCLCPP_INFO(node->get_logger(), "Init explorer...");
+  RCLCPP_INFO(node->get_logger(), "\t");
+  RCLCPP_INFO(node->get_logger(), "INIT EXPLORER...");
 
   bool finish = false;
   while (!finish && rclcpp::ok()) {
     finish = tree.rootNode()->executeTick() != BT::NodeStatus::RUNNING;
-  
+
     rclcpp::spin_some(node);
     rate.sleep();
   }
 
+  RCLCPP_INFO(node->get_logger(), "END EXPLORER...");
   rclcpp::shutdown();
   return 0;
 }

@@ -4,13 +4,16 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "behaviortree_cpp/action_node.h"
 
+
 namespace multirobot_exploration
 {
 
+using nav_msgs::msg::OccupancyGrid;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Pose;
 

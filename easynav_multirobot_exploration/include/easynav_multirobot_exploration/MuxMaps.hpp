@@ -16,7 +16,6 @@ namespace multirobot_exploration
 {
 
 using nav_msgs::msg::OccupancyGrid;
-using geometry_msgs::msg::Pose2D;
 
 struct BoundingBox {
   double min_x = std::numeric_limits<double>::max();
@@ -36,22 +35,22 @@ public:
   {
     return BT::PortsList(
       {
-        BT::OutputPort<OccupancyGrid>("muxed_map")
+        BT::OutputPort<OccupancyGrid::SharedPtr>("muxed_map")
       });
   }
   
 private:
-  OccupancyGrid mux();
   BoundingBox get_global_bounds();
+  void mux(OccupancyGrid::SharedPtr final_map);
   void map_callback(const OccupancyGrid::SharedPtr map);
 
-  std::string ns_;
-  std::map<std::string, Pose2D> robots_coords_;
+  std::string tf_prefix_;
   std::map<std::string, OccupancyGrid::SharedPtr> maps_;
+  std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_;
   
   rclcpp::Node::SharedPtr node_;
-  std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;
+  std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_;
 };
 
 } // ns multirobot_exploration

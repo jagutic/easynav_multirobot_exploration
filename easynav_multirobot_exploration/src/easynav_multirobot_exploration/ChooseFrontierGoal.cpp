@@ -3,17 +3,21 @@
 namespace multirobot_exploration
 {
 
-ChooseFrontierGoal::ChooseFrontierGoal(const std::string& name, const BT::NodeConfig& conf)
+ChooseFrontierGoal::ChooseFrontierGoal(
+  const std::string& name,
+  const BT::NodeConfig& conf)
   : BT::SyncActionNode(name, conf)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** ChooseFrontierGoal **");
 }
 
-BT::NodeStatus ChooseFrontierGoal::tick()
+BT::NodeStatus
+ChooseFrontierGoal::tick()
 {
   return BT::NodeStatus::SUCCESS;
 }
+
 
 } // namespace multirobot_exploration
 
