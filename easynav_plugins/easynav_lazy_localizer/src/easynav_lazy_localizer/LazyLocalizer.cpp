@@ -1,26 +1,3 @@
-// Copyright 2025 Intelligent Robotics Lab
-//
-// This file is part of the project Easy Navigation (EasyNav in short)
-// licensed under the GNU General Public License v3.0.
-// See <http://www.gnu.org/licenses/> for details.
-//
-// Easy Navigation program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-/// \file
-/// \brief Implementation of the LazyLocalizer class.
-
-
 #include "easynav_lazy_localizer/LazyLocalizer.hpp"
 
 namespace easynav
@@ -29,9 +6,10 @@ namespace easynav
 using std::placeholders::_1;
 using namespace std::chrono_literals;
 
-
 LazyLocalizer::LazyLocalizer()
 {
+  // Custom printer registration for NavState to handle Odometry messages.
+  // Converts quaternions to RPY for human-readable logging (x, y, yaw).
   NavState::register_printer<nav_msgs::msg::Odometry>(
     [](const nav_msgs::msg::Odometry & odom) {
       std::ostringstream ret;
@@ -52,15 +30,15 @@ LazyLocalizer::LazyLocalizer()
     });
 }
 
-LazyLocalizer::~LazyLocalizer()
-{
-}
+LazyLocalizer::~LazyLocalizer() {}
 
 std::expected<void, std::string>
 LazyLocalizer::on_initialize()
 {
   auto node = get_node();
-  RCLCPP_INFO(node->get_logger(), "Initialized Lazy Localizer, (copies already existing tf)");
+  // We call it "Lazy" because it doesn't compute localization; it just trusts 
+  // and copies the transform already provided by another node (like SLAM).
+  RCLCPP_INFO(node->get_logger(), "Initialized Lazy Localizer (trusting existing TFs)");
   return {};
 }
 
@@ -69,6 +47,7 @@ LazyLocalizer::update(NavState & nav_state)
 {
   geometry_msgs::msg::TransformStamped tf_msg;
   try {
+    // Attempt to lookup the transform between map and base_footprint using the shared buffer.
     tf_msg = RTTFBuffer::getInstance()->lookupTransform(
       get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(0.0));
   } catch (const tf2::TransformException & ex) {
@@ -76,7 +55,7 @@ LazyLocalizer::update(NavState & nav_state)
     return;
   }
 
-  // Set pose state directly from tf obstained, does no calculations
+  // Directly set the robot_pose state in the blackboard using the obtained TF.
   tf2::Transform tf_bft;
   tf2::fromMsg(tf_msg.transform, tf_bft);
   nav_state.set("robot_pose", get_pose_from_tf(tf_bft));
@@ -85,24 +64,15 @@ LazyLocalizer::update(NavState & nav_state)
 void
 LazyLocalizer::update_rt(NavState & nav_state)
 {
-  geometry_msgs::msg::TransformStamped tf_msg;
-  try {
-    tf_msg = RTTFBuffer::getInstance()->lookupTransform(
-      get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(0.0));
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
-    return;
-  }
-
-  // Set pose state directly from tf obstained, does no calculations
-  tf2::Transform tf_bft;
-  tf2::fromMsg(tf_msg.transform, tf_bft);
-  nav_state.set("robot_pose", get_pose_from_tf(tf_bft));
+  // Real-time update follows the same logic as standard update: 
+  update(nav_state);
 }
 
 nav_msgs::msg::Odometry
 LazyLocalizer::get_pose_from_tf(tf2::Transform tf)
 {
+  // Conversion helper: Maps a tf2::Transform into a standard Odometry message.
+  // Note: Twist (velocity) data is zeroed as we are only extracting spatial pose.
   nav_msgs::msg::Odometry pose;
 
   pose.header.stamp = get_node()->now();
@@ -114,6 +84,7 @@ LazyLocalizer::get_pose_from_tf(tf2::Transform tf)
   pose.pose.pose.position.z = tf.getOrigin().z();
   pose.pose.pose.orientation = tf2::toMsg(tf.getRotation());
   
+  // No velocity estimation in lazy mode.
   pose.twist.twist.linear.x = 0.0;
   pose.twist.twist.linear.y = 0.0;
   pose.twist.twist.linear.z = 0.0;
@@ -127,4 +98,5 @@ LazyLocalizer::get_pose_from_tf(tf2::Transform tf)
 }  // namespace easynav
 
 #include <pluginlib/class_list_macros.hpp>
+// Export as a plugin for the EasyNav Localizer system.
 PLUGINLIB_EXPORT_CLASS(easynav::LazyLocalizer, easynav::LocalizerMethodBase)

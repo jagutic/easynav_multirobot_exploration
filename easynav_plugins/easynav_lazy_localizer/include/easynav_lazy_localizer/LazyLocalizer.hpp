@@ -1,25 +1,3 @@
-// Copyright 2025 Intelligent Robotics Lab
-//
-// This file is part of the project Easy Navigation (EasyNav in short)
-// licensed under the GNU General Public License v3.0.
-// See <http://www.gnu.org/licenses/> for details.
-//
-// Easy Navigation program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-/// \file
-/// \brief Declaration of the LazyLocalizer method.
-
 #ifndef EASYNAV_COSTMAP_LOCALIZER__LAZYLOCALIZER_HPP_
 #define EASYNAV_COSTMAP_LOCALIZER__LAZYLOCALIZER_HPP_
 
@@ -42,47 +20,51 @@
 namespace easynav
 {
 
-/// \brief A using tf localization method.
+/**
+ * @brief Localization method that pulls the robot pose directly from TF Tree.
+ * * This class implements a "lazy" approach: it does not perform any internal 
+ * probabilistic calculation (like AMCL or EKF). Instead, it acts as a bridge 
+ * between the TF Tree (provided by SLAM or other sources) and the NavState blackboard.
+ */
 class LazyLocalizer : public LocalizerMethodBase
 {
 public:
   /**
-   * @brief Default constructor.
+   * @brief Constructor. Sets up custom printers for navigation state debugging.
    */
   LazyLocalizer();
 
   /**
-   * @brief Destructor.
+   * @brief Virtual destructor.
    */
   ~LazyLocalizer();
 
   /**
    * @brief Initializes the localization method.
-   *
-   * Sets up publishers, subscribers, and prepares the particle filter.
-   *
-   * @return std::expected<void, std::string> Success or error message.
+   * * Verifies TF prefix and prepares the node to listen to existing transforms.
+   * * @return std::expected<void, std::string> Success or error message.
    */
   virtual std::expected<void, std::string> on_initialize() override;
 
   /**
-   * @brief Update of the localization state.
-   *
-   * @param nav_state The current navigation state (read/write).
+   * @brief Standard update loop for the localization state.
+   * * Lookups the 'map' to 'base_footprint' transform and updates the NavState pose.
+   * * @param nav_state The shared navigation blackboard (read/write).
    */
   void update(NavState & nav_state) override;
 
   /**
-   * @brief Update of the localization state in real-time.
-   *
-   * @param nav_state The current navigation state (read/write).
+   * @brief Real-time update loop for high-frequency localization updates.
+   * * Similar to update(), but intended for high-priority task execution flows.
+   * * @param nav_state The shared navigation blackboard (read/write).
    */
   void update_rt(NavState & nav_state) override;
 
   /**
-   * @brief Gets the passed pose as an Odometry message.
-   *
-   * @return A nav_msgs::msg::Odometry message containing the estimated pose.
+   * @brief Helper to convert a tf2::Transform into a standard Odometry message.
+   * * Fills the position and orientation while zeroing the twist (velocity) components.
+   * * @param tf The transform to be converted.
+   * @return A nav_msgs::msg::Odometry message containing the robot pose.
    */
   nav_msgs::msg::Odometry get_pose_from_tf(tf2::Transform);
 };
