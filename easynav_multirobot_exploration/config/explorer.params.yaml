@@ -2,9 +2,6 @@ r1/explorer:
   ros__parameters:
     use_sim_time: true
     tf_prefix: r1
-    noise_kernel_size: 1 # 1 = no noise elimination
-    noise_kernel_type: 0 # 0 rect, 1 cross, 2 ellipse
-    dilate_kernel_type: 2 # 0 rect, 1 cross, 2 ellipse
     robot_ids: ["r1", "r2", "r3"]
     r1:
       x: 1.5
