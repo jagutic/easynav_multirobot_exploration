@@ -28,7 +28,6 @@ def generate_launch_description():
         output='screen',
         namespace=namespace,
         remappings=[
-            ('muxed_map', 'maps_manager_node/costmap/incoming_map'),
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static')
         ]

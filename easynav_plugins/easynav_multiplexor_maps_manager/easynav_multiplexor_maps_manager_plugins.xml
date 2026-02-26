@@ -1,0 +1,9 @@
+<class_libraries>
+  <library path="easynav_multiplexor_maps_manager">
+    <class name="easynav_multiplexor_maps_manager/MultiplexorMapsManager"  type="easynav::MultiplexorMapsManager" base_class_type="easynav::MapsManagerBase">
+      <description>
+      Maps Manager that merges maps required into incoming map.
+      </description>
+    </class>
+  </library>
+</class_libraries>

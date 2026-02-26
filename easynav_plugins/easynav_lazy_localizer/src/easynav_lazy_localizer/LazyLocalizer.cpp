@@ -49,7 +49,7 @@ LazyLocalizer::update(NavState & nav_state)
   try {
     // Attempt to lookup the transform between map and base_footprint using the shared buffer.
     tf_msg = RTTFBuffer::getInstance()->lookupTransform(
-      get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(0.0));
+      get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(1.0));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
     return;
@@ -64,8 +64,22 @@ LazyLocalizer::update(NavState & nav_state)
 void
 LazyLocalizer::update_rt(NavState & nav_state)
 {
-  // Real-time update follows the same logic as standard update: 
-  update(nav_state);
+  // Real-time update follows the same logic as standard update,
+  // but do not wait with DurationFromSec
+  geometry_msgs::msg::TransformStamped tf_msg;
+  try {
+    // Attempt to lookup the transform between map and base_footprint using the shared buffer.
+    tf_msg = RTTFBuffer::getInstance()->lookupTransform(
+      get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(0.0));
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_WARN(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
+    return;
+  }
+
+  // Directly set the robot_pose state in the blackboard using the obtained TF.
+  tf2::Transform tf_bft;
+  tf2::fromMsg(tf_msg.transform, tf_bft);
+  nav_state.set("robot_pose", get_pose_from_tf(tf_bft));
 }
 
 nav_msgs::msg::Odometry

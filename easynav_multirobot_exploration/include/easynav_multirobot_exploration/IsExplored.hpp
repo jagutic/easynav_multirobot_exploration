@@ -20,10 +20,7 @@ public:
   BT::NodeStatus tick() override;
   static BT::PortsList providedPorts()
   {
-    return BT::PortsList(
-      {
-        BT::InputPort<OccupancyGrid::SharedPtr>("map")
-      });
+    return BT::PortsList({});
   }
 
 private:

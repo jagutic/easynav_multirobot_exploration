@@ -4,9 +4,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "behaviortree_cpp/bt_factory.h"
 
-#include "easynav_multirobot_exploration/MuxMaps.hpp"
-#include "easynav_multirobot_exploration/GetPose.hpp"
-#include "easynav_multirobot_exploration/DetectFrontier.hpp"
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
 #include "easynav_multirobot_exploration/IsGoalValid.hpp"
 #include "easynav_multirobot_exploration/GoToPose.hpp"
@@ -20,9 +17,6 @@ int main(int argc, char **argv)
   auto node = std::make_shared<rclcpp::Node>("explorer");
 
   BT::BehaviorTreeFactory factory;
-  factory.registerNodeType<multirobot_exploration::MuxMaps>("MuxMaps");
-  factory.registerNodeType<multirobot_exploration::GetPose>("GetPose");
-  factory.registerNodeType<multirobot_exploration::DetectFrontier>("DetectFrontier");
   factory.registerNodeType<multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
   factory.registerNodeType<multirobot_exploration::IsGoalValid>("IsGoalValid");
   factory.registerNodeType<multirobot_exploration::GoToPose>("GoToPose");

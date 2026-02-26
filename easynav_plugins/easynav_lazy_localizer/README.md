@@ -6,8 +6,8 @@
 Lazy localizer, only copies existing tf.
 
 ## Authors and Maintainers
-- **Authors:** Intelligent Robotics Lab
-- **Maintainers:** Francisco Martín Rico <fmrico@gmail.com>
+- **Authors:** 
+- **Maintainers:** 
 
 ## Supported ROS 2 Distributions
 | Distribution | Status |

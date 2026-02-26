@@ -3,11 +3,6 @@
   <BehaviorTree ID="explore">
     <RetryUntilSuccessful num_attempts="-1">
       <ReactiveSequence>
-        <MuxMaps muxed_map="{mm}"/>
-        <GetPose pose="{p}"/>
-        <DetectFrontier map="{mm}"
-                        robot_pose="{p}"
-                        frontier="{f}"/>
         <!-- <ChooseFrontierGoal robot_pose="{p}"
                             frontier="{f}"
                             frontier_goal="{fg}"/> -->
@@ -15,7 +10,7 @@
         <SetBlackboard output_key="last_goal"
                        value="{fg}"/> -->
         <!-- <GoToPose pose="{fg}"/> -->
-        <IsExplored map="{mm}"/>
+        <IsExplored/>
       </ReactiveSequence>
     </RetryUntilSuccessful>
   </BehaviorTree>
@@ -31,40 +26,19 @@
       <output_port name="frontier_goal"
                    type="geometry_msgs::msg::Pose"/>
     </Action>
-    <Action ID="DetectFrontier"
-            editable="true">
-      <input_port name="map"
-                  type="nav_msgs::msg::OccupancyGrid::SharedPtr"/>
-      <input_port name="robot_pose"
-                  type="geometry_msgs::msg::Pose"/>
-      <output_port name="frontier"
-                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
-    </Action>
     <Action ID="GoToPose"
             editable="true">
       <input_port name="pose"
                   type="geometry_msgs::msg::Pose"/>
     </Action>
-    <Action ID="GetPose"
-            editable="true">
-      <output_port name="pose"
-                  type="geometry_msgs::msg::Pose"/>
-    </Action>
     <Condition ID="IsExplored"
                editable="true">
-      <input_port name="map"
-                  type="nav_msgs::msg::OccupancyGrid"/>
     </Condition>
     <Condition ID="IsGoalValid"
                editable="true">
       <input_port name="new_goal"
                   type="geometry_msgs::msg::Pose"/>
     </Condition>
-    <Action ID="MuxMaps"
-            editable="true">
-      <output_port name="muxed_map"
-                   type="nav_msgs::msg::OccupancyGrid::SharedPtr"/>
-    </Action>
   </TreeNodesModel>
 
 </root>
