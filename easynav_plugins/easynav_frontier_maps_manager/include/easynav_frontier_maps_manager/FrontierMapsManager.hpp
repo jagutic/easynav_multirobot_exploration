@@ -34,8 +34,9 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
-#include <easynav_common/YTSession.hpp>
 #include "easynav_costmap_common/costmap_2d.hpp"
+#include "easynav_costmap_common/cost_values.hpp"
+#include <easynav_common/YTSession.hpp>
 #include "easynav_core/MapsManagerBase.hpp"
 
 
@@ -91,7 +92,7 @@ private:
    * @return A visualization_msgs::Marker constructed as a set of points (usually blue).
    */
   visualization_msgs::msg::Marker fill_marker(
-    std::vector<geometry_msgs::msg::Point> frontier);
+    const std::vector<geometry_msgs::msg::Point>& frontier);
 
   /**
    * @brief Core computer vision algorithm translating grid values to binary matrices to extract the boundary.
@@ -102,7 +103,7 @@ private:
    * @return A vector of strictly safe, reachable 2D points sitting directly on the frontier boundary.
    */
   std::vector<geometry_msgs::msg::Point> get_frontier(
-    OccupancyGrid map, const nav_msgs::msg::Odometry& pose);
+    const Costmap2D& map, const nav_msgs::msg::Odometry& pose);
 
   // Cross distribution in orden to eliminate noise caused by isolated pixels
   cv::Mat CROSS_KERNEL = (cv::Mat_<char>(3, 3) << 
@@ -116,6 +117,8 @@ private:
     0, 1, 0
   );                                      /// Constant value for safety zone around resultant muxed map.
 
+  float proximity_radius_;
+  int obstacle_threshold_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frontier_pub_; ///< Publisher for RViz visualization.
 };
 
