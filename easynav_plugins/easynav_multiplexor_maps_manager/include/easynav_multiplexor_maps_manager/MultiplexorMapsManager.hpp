@@ -59,7 +59,7 @@ struct BoundingBox {
 
 /**
  * @class MultiplexorMapsManager
- * @brief A plugin-based map manager using the SimpleMap data structure.
+ * @brief A plugin-based map manager using the COstMap data structure.
  *
  * This manager merges multiple local occupancy grids with grid saved in navstate
  * Subscribes to multiple map topics passed as parameters.

@@ -1,73 +1,96 @@
-#include "easynav_multirobot_exploration/DetectFrontier.hpp"
+#include "easynav_frontier_maps_manager/FrontierMapsManager.hpp"
 
-namespace multirobot_exploration
+
+namespace easynav
 {
 
-DetectFrontier::DetectFrontier(
-    const std::string& name,
-    const BT::NodeConfig& conf)
-  : BT::SyncActionNode(name, conf)
-{
-  // Retrieve the shared ROS node and namespace prefix from the blackboard
-  node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
-  tf_prefix_ = config().blackboard->get<std::string>("tf_prefix");
-  RCLCPP_INFO(node_->get_logger(), "** DetectFrontier **");
+using namespace std::chrono_literals;
+using std::placeholders::_1;
 
-  // Create publisher for visual debugging of the frontier in RViz
-  frontier_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(
-    "frontier_marker", rclcpp::QoS(10).transient_local().reliable());
+FrontierMapsManager::FrontierMapsManager()
+{
+  // NavState::register_printer<Costmap2D>(
+  //   [](const Costmap2D & map) {
+  //     std::ostringstream oss;
+  //     oss << "Costmap2D of (" << map.getSizeInCellsX() << " x " << map.getSizeInCellsY()
+  //         << ") with resolution " << map.getResolution();
+  //     return oss.str();
+  //   });
 }
 
-BT::NodeStatus
-DetectFrontier::tick()
+FrontierMapsManager::~FrontierMapsManager() {}
+
+std::expected<void, std::string>
+FrontierMapsManager::on_initialize()
 {
-  OccupancyGrid::SharedPtr grid;
-  // Ensure the map is available on the blackboard before proceeding
-  if (!getInput("map", grid) || !grid) {
-    RCLCPP_ERROR(node_->get_logger(), "No map");
-    return BT::NodeStatus::FAILURE;
+  auto node = get_node();
+  const auto & plugin_name = get_plugin_name();
+  RCLCPP_INFO(node->get_logger(), "Loading Frontier Maps Manager");
+
+  // Create publisher for visual debugging of the frontier in RViz
+  frontier_pub_ = get_node()->create_publisher<visualization_msgs::msg::Marker>(
+    node->get_fully_qualified_name() + std::string("/") + plugin_name + "/points",
+    rclcpp::QoS(10).transient_local().reliable()
+  );
+
+  return {};
+}
+
+void
+FrontierMapsManager::update(NavState & nav_state)
+{
+  EASYNAV_TRACE_EVENT;
+
+  // Wait until we have robot position
+  if (!nav_state.has("robot_pose")) {
+    return;
+  }
+  const auto& robot_pose = nav_state.get<nav_msgs::msg::Odometry>("robot_pose");
+
+  
+  // Wait until we have map
+  const auto& fixed_costmap = nav_state.get<Costmap2D>("map.static");
+  
+  if (fixed_costmap.getSizeInCellsX() == 0 || fixed_costmap.getSizeInCellsY() == 0) {
+    RCLCPP_DEBUG(get_node()->get_logger(), "No map yet");
+    return;
   }
 
-  geometry_msgs::msg::Pose robot_pose;
-  // Ensure the robot's current pose is available on the blackboard
-  if (!getInput("robot_pose", robot_pose)) {
-    RCLCPP_ERROR(node_->get_logger(), "No robot pose");
-    return BT::NodeStatus::FAILURE;
-  }
-  
+  OccupancyGrid fixed_map;
+  fixed_costmap.toOccupancyGridMsg(fixed_map);
+
+
   // Execute the core OpenCV frontier extraction algorithm
   std::vector<geometry_msgs::msg::Point> frontier;
-  frontier = get_frontier(grid, robot_pose);
+  frontier = get_frontier(fixed_map, robot_pose);
 
   // If the map is fully explored or the algorithm fails, return FAILURE to trigger alternative BT logic
   if (frontier.empty()) {
-    RCLCPP_ERROR(node_->get_logger(), "Unable to detect frontier");
-    return BT::NodeStatus::FAILURE;
+    RCLCPP_ERROR(get_node()->get_logger(), "Unable to detect frontier");
+    return;
   }
   
   // Package the raw coordinates into a ROS Marker and publish them
   auto marker = fill_marker(frontier);
-  marker.header.frame_id = grid->header.frame_id;
-
+  marker.header.frame_id = get_tf_prefix() + "map";
   frontier_pub_->publish(marker);
   
   // Expose the valid frontier points to the rest of the behavior tree
-  setOutput("frontier", frontier);
+  nav_state.set("frontier", frontier);
 
   RCLCPP_INFO(
-    node_->get_logger(),
+    get_node()->get_logger(),
     "Frontier generated with size %ld",
     frontier.size()
   );
-  return BT::NodeStatus::SUCCESS;
 }
 
 visualization_msgs::msg::Marker
-DetectFrontier::fill_marker(
+FrontierMapsManager::fill_marker(
   std::vector<geometry_msgs::msg::Point> frontier)
 {
   visualization_msgs::msg::Marker marker;
-  marker.header.stamp = node_->now();
+  marker.header.stamp = get_node()->now();
   marker.ns = "frontier";
   marker.id = 0;
   marker.type = visualization_msgs::msg::Marker::POINTS;
@@ -95,31 +118,31 @@ DetectFrontier::fill_marker(
 }
 
 std::vector<geometry_msgs::msg::Point>
-DetectFrontier::get_frontier(
-  OccupancyGrid::SharedPtr map,
-  geometry_msgs::msg::Pose& pose)
+FrontierMapsManager::get_frontier(
+  OccupancyGrid map,
+  const nav_msgs::msg::Odometry& pose)
 {
-  int width = map->info.width;
-  int height = map->info.height;
-  double res = map->info.resolution;
-  double ox = map->info.origin.position.x;
-  double oy = map->info.origin.position.y;
+  int width = map.info.width;
+  int height = map.info.height;
+  double res = map.info.resolution;
+  double ox = map.info.origin.position.x;
+  double oy = map.info.origin.position.y;
 
   // Convert real-world meter coordinates (x, y) to grid indices (col, row)
-  int pose_x = static_cast<int>((pose.position.x - ox) / res);
-  int pose_y = static_cast<int>((pose.position.y - oy) / res);
+  int pose_x = static_cast<int>((pose.pose.pose.position.x - ox) / res);
+  int pose_y = static_cast<int>((pose.pose.pose.position.y - oy) / res);
 
   // Safety check: Abort if the robot is outside the map bounds or outside free space
   if (pose_x < 0 || pose_x >= width || pose_y < 0 || pose_y >= height) {
-    RCLCPP_ERROR(node_->get_logger(), "Robot not in map");
+    RCLCPP_ERROR(get_node()->get_logger(), "Robot not in map");
     return {};
   }
-  if (map->data[pose_y * width + pose_x] != 0) {
-    RCLCPP_ERROR(node_->get_logger(), "Robot not in free space");
+  if (map.data[pose_y * width + pose_x] != 0) {
+    RCLCPP_ERROR(get_node()->get_logger(), "Robot not in free space");
     return {};
   }
 
-  cv::Mat map_mat(height, width, CV_8SC1, const_cast<int8_t*>(map->data.data()));
+  cv::Mat map_mat(height, width, CV_8SC1, const_cast<int8_t*>(map.data.data()));
   
   // Split map in 3 pure binary masks
   cv::Mat free_space = (map_mat == 0);
@@ -188,11 +211,7 @@ DetectFrontier::get_frontier(
   return frontier_points;
 }
 
-} // namespace multirobot_exploration
+}  // namespace easynav
 
-
-#include "behaviortree_cpp/bt_factory.h"
-BT_REGISTER_NODES(factory)
-{
-  factory.registerNodeType<multirobot_exploration::DetectFrontier>("DetectFrontier");
-}
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(easynav::FrontierMapsManager, easynav::MapsManagerBase)

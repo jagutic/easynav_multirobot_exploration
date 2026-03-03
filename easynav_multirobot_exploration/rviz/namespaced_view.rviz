@@ -239,7 +239,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /r1/frontier_marker
+        Value: /<robot_namespace>/maps_manager_node/frontier/points
       Value: true
   Enabled: true
   Global Options:

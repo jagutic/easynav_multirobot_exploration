@@ -1,0 +1,9 @@
+<class_libraries>
+  <library path="easynav_frontier_maps_manager">
+    <class name="easynav_frontier_maps_manager/FrontierMapsManager"  type="easynav::FrontierMapsManager" base_class_type="easynav::MapsManagerBase">
+      <description>
+      Maps Manager that detects and publish frontier at actual map.
+      </description>
+    </class>
+  </library>
+</class_libraries>

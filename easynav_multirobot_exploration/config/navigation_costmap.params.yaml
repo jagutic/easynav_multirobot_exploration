@@ -22,7 +22,7 @@ r1/localizer_node:
 r1/maps_manager_node:
   ros__parameters:
     use_sim_time: true
-    map_types: [costmap, multiplexor]
+    map_types: [costmap, multiplexor, frontier]
     costmap:
       freq: 10.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
@@ -42,17 +42,21 @@ r1/maps_manager_node:
         x: 1.5
         y: 0.0
         Y: 0.0
-        topic: "map"
+        topic: "maps_manager_node/costmap/incoming_map"
       r2:
         x: -3.5
         y: -2.0
         Y: 0.0
-        topic: "map"
+        topic: "maps_manager_node/costmap/incoming_map"
       r3:
         x: 3.5
         y: 3.0
         Y: 0.0
-        topic: "map"
+        topic: "maps_manager_node/costmap/incoming_map"
+    frontier:
+      freq: 10.0
+      plugin: easynav_frontier_maps_manager/FrontierMapsManager
+    
 
 
 

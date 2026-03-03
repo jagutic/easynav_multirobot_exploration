@@ -83,8 +83,9 @@ MultiplexorMapsManager::on_initialize()
 
   // Publisher for the final merged global map.
   muxed_map_pub_ = node->create_publisher<OccupancyGrid>(
-    "maps_manager_node/costmap/incoming_map",
-    rclcpp::QoS(1).transient_local().reliable());
+    node->get_fully_qualified_name() + std::string("/") + plugin_name + "/map",
+    rclcpp::QoS(1).transient_local().reliable()
+  );
 
   return {};
 }
@@ -113,7 +114,7 @@ MultiplexorMapsManager::update(NavState & nav_state)
   // // pero tendría que modificar el CostmapMapsManager
   // nav_state.set("map.static") = muxed_map;
 
-  // De momento nos quedamos con esto
+  // Publish map for visualization
   muxed_map.header.frame_id = get_tf_prefix() + "map";
   muxed_map.header.stamp = get_node()->now();
   muxed_map_pub_->publish(muxed_map);
