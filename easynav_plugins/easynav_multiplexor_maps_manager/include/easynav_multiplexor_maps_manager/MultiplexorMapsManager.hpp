@@ -36,6 +36,7 @@
 
 #include <easynav_common/YTSession.hpp>
 #include "easynav_costmap_common/costmap_2d.hpp"
+#include "easynav_costmap_common/cost_values.hpp"
 #include "easynav_core/MapsManagerBase.hpp"
 
 
@@ -116,7 +117,7 @@ private:
    * @brief Computes the absolute bounding box encompassing all stored local maps.
    * @return A BoundingBox struct with the extreme min and max spatial coordinates.
    */
-  BoundingBox get_global_bounds();
+  BoundingBox get_global_bounds(const Costmap2D& fixed_map_msg);
 
   /**
    * @brief Merges the internal cache of local maps into src, using dst as output global map.
@@ -125,7 +126,7 @@ private:
    * @param src fixed map over who all other maps will be muxed
    * @param dst destination for new global map
    */
-  void mux(const OccupancyGrid& src, OccupancyGrid& dst);
+  void mux(const Costmap2D& src, Costmap2D& dst);
 
   std::map<std::string, OccupancyGrid::SharedPtr> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
   std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.

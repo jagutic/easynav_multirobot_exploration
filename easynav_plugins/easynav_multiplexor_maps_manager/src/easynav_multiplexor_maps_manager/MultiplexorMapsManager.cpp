@@ -28,17 +28,16 @@ MultiplexorMapsManager::on_initialize()
   RCLCPP_INFO(node->get_logger(), "Loading Multiplexor Maps Manager");
 
   // Get the list of active robot identifiers from the parameters
+  // And get the actual robot to work on
   std::vector<std::string> namespaces;
+  std::string fixed_map_ns;
+
   node->declare_parameter(plugin_name + ".robot_namespaces", namespaces);
   node->get_parameter(plugin_name + ".robot_namespaces", namespaces);
-
   RCLCPP_INFO(node->get_logger(), "Maps to merge: %ld", namespaces.size());
 
-  // Establish the local robot's frame as the global coordinate origin (0,0).
-  std::string fixed_map_ns;
   node->declare_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns);
   node->get_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns);
-
   RCLCPP_INFO(node->get_logger(), "Fixed map ns: %s", fixed_map_ns.c_str());
 
   // Initialize coordinates for each robot and create map subscriptions.
@@ -79,9 +78,10 @@ MultiplexorMapsManager::on_initialize()
         std::bind(&MultiplexorMapsManager::map_callback, this, _1)
     );
   }
+
+  // Establish the local robot's frame as the global coordinate origin (0,0).
   translate_robot_coords(fixed_map_ns);
 
-  // Publisher for the final merged global map.
   muxed_map_pub_ = node->create_publisher<OccupancyGrid>(
     node->get_fully_qualified_name() + std::string("/") + plugin_name + "/map",
     rclcpp::QoS(1).transient_local().reliable()
@@ -96,17 +96,15 @@ MultiplexorMapsManager::update(NavState & nav_state)
   EASYNAV_TRACE_EVENT;
 
   // Wait until there is map
-  const auto& fixed_costmap = nav_state.get<Costmap2D>("map.static");
+  const auto& fixed_map = nav_state.get<Costmap2D>("map.static");
   
-  if (fixed_costmap.getSizeInCellsX() == 0 || fixed_costmap.getSizeInCellsY() == 0) {
+  if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
     RCLCPP_DEBUG(get_node()->get_logger(), "No map yet");
     return;
   }
 
-  // When map arrives, multiplex maps over received fixed map
-  OccupancyGrid muxed_map, fixed_map;
-
-  fixed_costmap.toOccupancyGridMsg(fixed_map);
+  // Mux all maps on fixed costmap and save in muxed map
+  Costmap2D muxed_map;
   mux(fixed_map, muxed_map);
 
   // Update static map
@@ -115,9 +113,12 @@ MultiplexorMapsManager::update(NavState & nav_state)
   // nav_state.set("map.static") = muxed_map;
 
   // Publish map for visualization
-  muxed_map.header.frame_id = get_tf_prefix() + "map";
-  muxed_map.header.stamp = get_node()->now();
-  muxed_map_pub_->publish(muxed_map);
+  OccupancyGrid muxed_map_msg;
+  muxed_map.toOccupancyGridMsg(muxed_map_msg);
+
+  muxed_map_msg.header.frame_id = get_tf_prefix() + "map";
+  muxed_map_msg.header.stamp = get_node()->now();
+  muxed_map_pub_->publish(muxed_map_msg);
 }
 
 void
@@ -131,6 +132,7 @@ MultiplexorMapsManager::map_callback(const OccupancyGrid::SharedPtr map)
   // Cache the received map.
   maps_[ns] = map;
 }
+
 void
 MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns)
 {
@@ -178,12 +180,28 @@ MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns)
 }
 
 BoundingBox
-MultiplexorMapsManager::get_global_bounds()
+MultiplexorMapsManager::get_global_bounds(const Costmap2D& fixed_map)
 {
   BoundingBox box;
 
+  // Get fixed map bounds as initial bounds
+  double f_ox = fixed_map.getOriginX();
+  double f_oy = fixed_map.getOriginY();
+  double f_w = fixed_map.getSizeInMetersX();
+  double f_h = fixed_map.getSizeInMetersY();
+  double fixed_corners_x[4] = {f_ox, f_ox + f_w, f_ox + f_w, f_ox};
+  double fixed_corners_y[4] = {f_oy, f_oy, f_oy + f_h, f_oy + f_h};
+
+  for (int i = 0; i < 4; i++) {
+    box.min_x = std::min(box.min_x, fixed_corners_x[i]);
+    box.max_x = std::max(box.max_x, fixed_corners_x[i]);
+    box.min_y = std::min(box.min_y, fixed_corners_y[i]);
+    box.max_y = std::max(box.max_y, fixed_corners_y[i]);
+  }
+
   // Iterate through all available maps to find the global min/max coordinates.
   for (const auto& [id, map] : maps_) {
+    if (!map) continue;
     if (robots_coords_.find(id) == robots_coords_.end()) continue;
 
     geometry_msgs::msg::Pose2D pose = robots_coords_[id];
@@ -227,98 +245,88 @@ MultiplexorMapsManager::get_global_bounds()
 }
 
 void
-MultiplexorMapsManager::mux(const OccupancyGrid& src, OccupancyGrid& dst)
+MultiplexorMapsManager::mux(const Costmap2D& src, Costmap2D& dst)
 {
-  if (src.info.width == 0 || src.info.height == 0) {
+  if (src.getSizeInCellsX() == 0 || src.getSizeInCellsY() == 0) {
     RCLCPP_ERROR(get_node()->get_logger(), "Src map is empty, skipping mux");
     return;
   }
 
-  double res = src.info.resolution;
-  double local_x = src.info.origin.position.x;
-  double local_y = src.info.origin.position.y;
-  int w = src.info.width;
-  int h = src.info.height;
-  
-  // Calculate padding required to expand the local map to the global bounds.
-  BoundingBox bounds = get_global_bounds();
+  // Get fixed map data
+  double res = src.getResolution();
+  double local_x = src.getOriginX();
+  double local_y = src.getOriginY();
+  unsigned int w = src.getSizeInCellsX();
+  unsigned int h = src.getSizeInCellsY();
 
-  int pad_south = std::max(0, static_cast<int>(std::round((local_y - bounds.min_y) / res)));
-  int pad_north = std::max(0, static_cast<int>(std::round((bounds.max_y - (local_y + h * res)) / res)));
-  int pad_west  = std::max(0, static_cast<int>(std::round((local_x - bounds.min_x) / res)));
-  int pad_east  = std::max(0, static_cast<int>(std::round((bounds.max_x - (local_x + w * res)) / res)));
+  // Resize final costmap and create aux final mat filled with NO_INFORMATION
+  BoundingBox bounds = get_global_bounds(src);
+  uint32_t new_w = std::ceil((bounds.max_x - bounds.min_x) / res);
+  uint32_t new_h = std::ceil((bounds.max_y - bounds.min_y) / res);
 
-  // Note: data is treated as signed 8-bit integers (-1, 0, 100).
-  cv::Mat dst_mat;
-  cv::Mat src_mat(h, w, CV_8SC1, reinterpret_cast<int8_t*>(const_cast<signed char*>(src.data.data())));
+  dst.resizeMap(new_w, new_h, res, bounds.min_x, bounds.min_y);
+  dst.resetMapToValue(0, 0, new_w, new_h, easynav::NO_INFORMATION);
+  cv::Mat dst_mat(new_h, new_w, CV_8UC1, dst.getCharMap());
 
-  // Expand the canvas using borders filled with -1 (unknown space).
-  cv::copyMakeBorder(src_mat, dst_mat, 
-                     pad_south, pad_north, pad_west, pad_east, 
-                     cv::BORDER_CONSTANT, cv::Scalar(-1));
-  
-  // Calculate the new origin of the expanded map.
-  double origin_x = local_x - (pad_west * res);
-  double origin_y = local_y - (pad_south * res);
+  // Copy fixed mat to dst mat on origin position 
+  int offset_x = std::round((local_x - dst.getOriginX()) / res);
+  int offset_y = std::round((local_y - dst.getOriginY()) / res);
+
+  cv::Mat src_mat(h, w, CV_8UC1, src.getCharMap());
+  src_mat.copyTo(dst_mat(cv::Rect(offset_x, offset_y, w, h)));
 
   // Buffer for affine transformation.
   cv::Mat warped;
   cv::Point2f src_points[3], dst_points[3];
 
-  // Merge other robots' maps into the expanded canvas.
-  for (const auto& [ns, map] : maps_) {
-    if (!map) continue;
+  // Merge other robots maps into the expanded mat.
+  for (const auto& [ns, map_msg] : maps_) {
+    if (!map_msg) continue;
     if (robots_coords_.find(ns) == robots_coords_.end()) continue;
-
+  
+    // Use costmap for data correspondecy
+    Costmap2D incoming_costmap(*map_msg);
+    cv::Mat incoming_mat(
+      incoming_costmap.getSizeInCellsY(),
+      incoming_costmap.getSizeInCellsX(), 
+      CV_8UC1, incoming_costmap.getCharMap()
+    );
     geometry_msgs::msg::Pose2D pose = robots_coords_[ns];
-    cv::Mat extra_mat(map->info.height, map->info.width, CV_8SC1, reinterpret_cast<int8_t*>(map->data.data()));
 
     // Define 3 points (origin, top-right, bottom-left) to compute the affine transform.
     src_points[0] = {0.f, 0.f};
-    src_points[1] = {static_cast<float>(map->info.width), 0.f};
-    src_points[2] = {0.f, static_cast<float>(map->info.height)};
+    src_points[1] = {static_cast<float>(incoming_costmap.getSizeInCellsX()), 0.f};
+    src_points[2] = {0.f, static_cast<float>(incoming_costmap.getSizeInCellsY())};
 
     float c = std::cos(pose.theta);
     float s = std::sin(pose.theta);
-    float ox = map->info.origin.position.x;
-    float oy = map->info.origin.position.y;
-    float r = map->info.resolution;
+    float ox = incoming_costmap.getOriginX();
+    float oy = incoming_costmap.getOriginY();
+    float r = incoming_costmap.getResolution();
 
     // Transform the 3 source points to the destination pixel coordinates on the global canvas.
     for(int i = 0; i < 3; ++i) {
         float mx = ox + src_points[i].x * r;
         float my = oy + src_points[i].y * r;
+
         // Apply rotation and translation.
         float wx = pose.x + (mx * c - my * s);
         float wy = pose.y + (mx * s + my * c);
+
         // Convert back to grid indices relative to new origin.
-        dst_points[i].x = (wx - origin_x) / res;
-        dst_points[i].y = (wy - origin_y) / res;
+        dst_points[i].x = (wx - dst.getOriginX()) / res;
+        dst_points[i].y = (wy - dst.getOriginY()) / res;
     }
 
     // Apply the affine warp to align the remote map with the global frame.
     cv::Mat M = cv::getAffineTransform(src_points, dst_points);
-    cv::warpAffine(extra_mat, warped, M, dst_mat.size(), cv::INTER_NEAREST, cv::BORDER_CONSTANT, cv::Scalar(-1));
+    cv::warpAffine(incoming_mat, warped, M, dst_mat.size(), cv::INTER_NEAREST,
+                    cv::BORDER_CONSTANT, cv::Scalar(easynav::NO_INFORMATION));
     
-    // Merge logic: keep max value (e.g., Obstacle(100) > Free(0) > Unknown(-1)).
-    // This ensures obstacles are preserved even if another map sees them as free or unknown.
-    cv::max(dst_mat, warped, dst_mat);
+    // Copy valid data only if we dont have info about that space
+    cv::Mat valid_mask = (dst_mat == easynav::NO_INFORMATION) & (warped != easynav::NO_INFORMATION); 
+    warped.copyTo(dst_mat, valid_mask);
   }
-
-  // Populate the final OccupancyGrid message.
-  dst.header = src.header;
-  dst.header.stamp = get_node()->now();
-  dst.info.resolution = res;
-  dst.info.width = dst_mat.cols;
-  dst.info.height = dst_mat.rows;
-  dst.info.origin.position.x = origin_x;
-  dst.info.origin.position.y = origin_y;
-  dst.info.origin.orientation = src.info.origin.orientation;
-
-  // Copy raw data from the OpenCV matrix to the ROS message vector.
-  size_t size = dst_mat.total() * dst_mat.elemSize();
-  dst.data.resize(size);
-  std::memcpy(dst.data.data(), dst_mat.data, size);
 }
 
 }  // namespace easynav
