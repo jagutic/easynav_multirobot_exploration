@@ -17,7 +17,7 @@
   <depend>pluginlib</depend>
   <depend>yaets</depend>
   <depend>nav_msgs</depend>
-  <depend>OpenCV</depend>
+  <depend>libopencv-dev</depend>
   <depend>easynav_costmap_common</depend>
   <depend>visualization_msgs</depend>
 

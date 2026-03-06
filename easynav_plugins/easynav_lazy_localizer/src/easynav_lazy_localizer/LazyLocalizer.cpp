@@ -32,71 +32,58 @@ LazyLocalizer::LazyLocalizer()
 
 LazyLocalizer::~LazyLocalizer() {}
 
-std::expected<void, std::string>
+void
 LazyLocalizer::on_initialize()
 {
   auto node = get_node();
   // We call it "Lazy" because it doesn't compute localization; it just trusts 
   // and copies the transform already provided by another node (like SLAM).
   RCLCPP_INFO(node->get_logger(), "Initialized Lazy Localizer (trusting existing TFs)");
-  return {};
 }
 
 void
 LazyLocalizer::update(NavState & nav_state)
 {
-  geometry_msgs::msg::TransformStamped tf_msg;
-  try {
-    // Attempt to lookup the transform between map and base_footprint using the shared buffer.
-    tf_msg = RTTFBuffer::getInstance()->lookupTransform(
-      get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(1.0));
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
+  nav_msgs::msg::Odometry robot_pose = get_pose();
+  if (robot_pose == nav_msgs::msg::Odometry()) {
     return;
   }
 
-  // Directly set the robot_pose state in the blackboard using the obtained TF.
-  tf2::Transform tf_bft;
-  tf2::fromMsg(tf_msg.transform, tf_bft);
-  nav_state.set("robot_pose", get_pose_from_tf(tf_bft));
+  // Set the robot_pose state in the blackboard using the obtained TF.
+  // Without publishing it anywhere
+  nav_state.set("robot_pose", robot_pose);
 }
 
 void
 LazyLocalizer::update_rt(NavState & nav_state)
 {
-  // Real-time update follows the same logic as standard update,
-  // but do not wait with DurationFromSec
+  update(nav_state);
+}
+
+nav_msgs::msg::Odometry
+LazyLocalizer::get_pose()
+{
+  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
+
   geometry_msgs::msg::TransformStamped tf_msg;
   try {
     // Attempt to lookup the transform between map and base_footprint using the shared buffer.
     tf_msg = RTTFBuffer::getInstance()->lookupTransform(
-      get_tf_prefix() + "map", get_tf_prefix() + "base_footprint", tf2::TimePointZero, tf2::durationFromSec(0.0));
+      tf_info.map_frame, tf_info.robot_frame, tf2::TimePointZero, tf2::durationFromSec(0.0));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
-    return;
+    return nav_msgs::msg::Odometry();
   }
 
-  // Directly set the robot_pose state in the blackboard using the obtained TF.
-  tf2::Transform tf_bft;
-  tf2::fromMsg(tf_msg.transform, tf_bft);
-  nav_state.set("robot_pose", get_pose_from_tf(tf_bft));
-}
-
-nav_msgs::msg::Odometry
-LazyLocalizer::get_pose_from_tf(tf2::Transform tf)
-{
-  // Conversion helper: Maps a tf2::Transform into a standard Odometry message.
-  // Note: Twist (velocity) data is zeroed as we are only extracting spatial pose.
+  // Use tf to obtain robot pose
+  tf2::Transform tf_robot;
   nav_msgs::msg::Odometry pose;
 
-  pose.header.stamp = get_node()->now();
-  pose.header.frame_id = get_tf_prefix() + "map";
-  pose.child_frame_id = get_tf_prefix() + "base_footprint";
-
-  pose.pose.pose.position.x = tf.getOrigin().x();
-  pose.pose.pose.position.y = tf.getOrigin().y();
-  pose.pose.pose.position.z = tf.getOrigin().z();
-  pose.pose.pose.orientation = tf2::toMsg(tf.getRotation());
+  tf2::fromMsg(tf_msg.transform, tf_robot);
+  pose.pose.pose.position.x = tf_robot.getOrigin().x();
+  pose.pose.pose.position.y = tf_robot.getOrigin().y();
+  pose.pose.pose.position.z = tf_robot.getOrigin().z();
+  pose.pose.pose.orientation = tf2::toMsg(tf_robot.getRotation());
   
   // No velocity estimation in lazy mode.
   pose.twist.twist.linear.x = 0.0;
@@ -105,6 +92,11 @@ LazyLocalizer::get_pose_from_tf(tf2::Transform tf)
   pose.twist.twist.angular.x = 0.0;
   pose.twist.twist.angular.y = 0.0;
   pose.twist.twist.angular.z = 0.0;
+
+  // Fill stamps and frames with tf info
+  pose.header.stamp = tf_msg.header.stamp;
+  pose.header.frame_id = tf_info.map_frame;
+  pose.child_frame_id = tf_info.robot_frame;
 
   return pose;
 }

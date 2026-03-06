@@ -20,7 +20,7 @@ MultiplexorMapsManager::MultiplexorMapsManager()
 
 MultiplexorMapsManager::~MultiplexorMapsManager() {}
 
-std::expected<void, std::string>
+void
 MultiplexorMapsManager::on_initialize()
 {
   auto node = get_node();
@@ -86,8 +86,6 @@ MultiplexorMapsManager::on_initialize()
     node->get_fully_qualified_name() + std::string("/") + plugin_name + "/map",
     rclcpp::QoS(1).transient_local().reliable()
   );
-
-  return {};
 }
 
 void
@@ -96,10 +94,16 @@ MultiplexorMapsManager::update(NavState & nav_state)
   EASYNAV_TRACE_EVENT;
 
   // Wait until there is map
+  if (!nav_state.has("map.static")) {
+    RCLCPP_DEBUG(get_node()->get_logger(), "No Static Map");
+    return;
+  }
+
+  // Check if its empty
   const auto& fixed_map = nav_state.get<Costmap2D>("map.static");
-  
+
   if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
-    RCLCPP_DEBUG(get_node()->get_logger(), "No map yet");
+    RCLCPP_DEBUG(get_node()->get_logger(), "Empty Static Map");
     return;
   }
 
@@ -107,18 +111,19 @@ MultiplexorMapsManager::update(NavState & nav_state)
   Costmap2D muxed_map;
   mux(fixed_map, muxed_map);
 
-  // Update static map
-  // // Esto es el objetivo
-  // // pero tendría que modificar el CostmapMapsManager
-  // nav_state.set("map.static") = muxed_map;
-
   // Publish map for visualization
+  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
+  rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
+
   OccupancyGrid muxed_map_msg;
   muxed_map.toOccupancyGridMsg(muxed_map_msg);
 
-  muxed_map_msg.header.frame_id = get_tf_prefix() + "map";
-  muxed_map_msg.header.stamp = get_node()->now();
+  muxed_map_msg.header.frame_id = tf_info.map_frame;
+  muxed_map_msg.header.stamp = map_stamp;
   muxed_map_pub_->publish(muxed_map_msg);
+
+  // TO DO
+  // Update map so robot can navigate on muxed map
 }
 
 void

@@ -33,6 +33,7 @@ r1/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
         inflation_radius: 0.5
         cost_scaling_factor: 8.0
+        inscribed_radius: 0.05
     multiplexor:
       freq: 10.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
@@ -58,9 +59,6 @@ r1/maps_manager_node:
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.2
       obstacle_threshold: 20
-    
-
-
 
 r1/planner_node:
   ros__parameters:

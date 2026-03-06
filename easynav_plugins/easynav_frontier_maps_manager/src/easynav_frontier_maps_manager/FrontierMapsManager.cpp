@@ -20,7 +20,7 @@ FrontierMapsManager::FrontierMapsManager()
 
 FrontierMapsManager::~FrontierMapsManager() {}
 
-std::expected<void, std::string>
+void
 FrontierMapsManager::on_initialize()
 {
   auto node = get_node();
@@ -34,14 +34,11 @@ FrontierMapsManager::on_initialize()
   node->get_parameter(plugin_name + ".proximity_radius", proximity_radius_);
   node->get_parameter(plugin_name + ".obstacle_threshold", obstacle_threshold_);
 
-
   // Create publisher for visual debugging of the frontier in RViz
   frontier_pub_ = get_node()->create_publisher<visualization_msgs::msg::Marker>(
     node->get_fully_qualified_name() + std::string("/") + plugin_name + "/points",
     rclcpp::QoS(10).transient_local().reliable()
   );
-
-  return {};
 }
 
 void
@@ -72,8 +69,12 @@ FrontierMapsManager::update(NavState & nav_state)
   }
   
   // Package the raw coordinates into a ROS Marker and publish them
+  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
+  rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
+
   auto marker = fill_marker(frontier);
-  marker.header.frame_id = get_tf_prefix() + "map";
+  marker.header.frame_id = tf_info.map_frame;
+  marker.header.stamp = map_stamp;
   frontier_pub_->publish(marker);
   
   // Expose the valid frontier points to the rest of the easynav system
@@ -85,7 +86,6 @@ FrontierMapsManager::fill_marker(
   const std::vector<geometry_msgs::msg::Point>& frontier)
 {
   visualization_msgs::msg::Marker marker;
-  marker.header.stamp = get_node()->now();
   marker.ns = "frontier";
   marker.id = 0;
   marker.type = visualization_msgs::msg::Marker::POINTS;
@@ -131,7 +131,7 @@ FrontierMapsManager::get_frontier(
     return {};
   }
   unsigned char robot_cost = map.getCost(pose_x, pose_y);
-  if (robot_cost != 0) {
+  if (robot_cost < easynav::FREE_SPACE || robot_cost > obstacle_threshold_) {
       RCLCPP_ERROR(
         get_node()->get_logger(), 
         "Robot is not in free space (Cost: %d)", 

@@ -44,7 +44,7 @@ public:
    * * Verifies TF prefix and prepares the node to listen to existing transforms.
    * * @return std::expected<void, std::string> Success or error message.
    */
-  virtual std::expected<void, std::string> on_initialize() override;
+  void on_initialize() override;
 
   /**
    * @brief Standard update loop for the localization state.
@@ -66,7 +66,7 @@ public:
    * * @param tf The transform to be converted.
    * @return A nav_msgs::msg::Odometry message containing the robot pose.
    */
-  nav_msgs::msg::Odometry get_pose_from_tf(tf2::Transform);
+  nav_msgs::msg::Odometry get_pose();
 };
 
 }  // namespace easynav

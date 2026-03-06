@@ -37,6 +37,7 @@
 #include "easynav_costmap_common/costmap_2d.hpp"
 #include "easynav_costmap_common/cost_values.hpp"
 #include <easynav_common/YTSession.hpp>
+#include "easynav_common/RTTFBuffer.hpp"
 #include "easynav_core/MapsManagerBase.hpp"
 
 
@@ -73,7 +74,7 @@ public:
    *
    * @return std::expected<void, std::string> Success or error string.
    */
-  virtual std::expected<void, std::string> on_initialize() override;
+  virtual void on_initialize() override;
 
   /**
    * @brief Updates the internal maps using the current navigation state.
