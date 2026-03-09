@@ -8,11 +8,13 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "easynav_system/GoalManagerClient.hpp"
 
+#define GOAL_RADIUS 0.1
 
 namespace multirobot_exploration
 {
 
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseStamped;
 
 class GoToPose : public BT::ActionNodeBase
 {
@@ -26,7 +28,7 @@ public:
   {
     return BT::PortsList(
       {
-        BT::InputPort<Pose>("pose")
+        BT::InputPort<Pose>("goal_pose")
       });
   }
 

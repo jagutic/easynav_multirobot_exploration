@@ -57,8 +57,8 @@ r1/maps_manager_node:
     frontier:
       freq: 10.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
-      proximity_radius: 0.2
-      obstacle_threshold: 20
+      proximity_radius: 0.3
+      obstacle_threshold: 10
 
 r1/planner_node:
   ros__parameters:
@@ -88,11 +88,9 @@ r1/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
-    position_tolerance: 0.1
-    angle_tolerance: 0.05
+    position_tolerance: 0.2
+    angle_tolerance: 0.5
     tf_prefix: r1
-
-
 
 
 
@@ -105,8 +103,8 @@ r2/controller_node:
       plugin: easynav_simple_controller/SimpleController
       max_linear_speed: 1.0
       max_angular_speed: 1.5
-      look_ahead_dist: 0.5
-      k_rot: 1.0
+      look_ahead_dist: 0.3
+      k_rot: 0.8
 
 r2/localizer_node:
   ros__parameters:
@@ -120,7 +118,7 @@ r2/localizer_node:
 r2/maps_manager_node:
   ros__parameters:
     use_sim_time: true
-    map_types: [costmap]
+    map_types: [costmap, multiplexor, frontier]
     costmap:
       freq: 10.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
@@ -131,6 +129,32 @@ r2/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
         inflation_radius: 0.5
         cost_scaling_factor: 8.0
+        inscribed_radius: 0.05
+    multiplexor:
+      freq: 10.0
+      plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
+      fixed_map_ns: "r2"
+      robot_namespaces: ["r1", "r2", "r3"]
+      r1:
+        x: 1.5
+        y: 0.0
+        Y: 0.0
+        topic: "maps_manager_node/costmap/incoming_map"
+      r2:
+        x: -3.5
+        y: -2.0
+        Y: 0.0
+        topic: "maps_manager_node/costmap/incoming_map"
+      r3:
+        x: 3.5
+        y: 3.0
+        Y: 0.0
+        topic: "maps_manager_node/costmap/incoming_map"
+    frontier:
+      freq: 10.0
+      plugin: easynav_frontier_maps_manager/FrontierMapsManager
+      proximity_radius: 0.3
+      obstacle_threshold: 10
 
 r2/planner_node:
   ros__parameters:
@@ -160,8 +184,8 @@ r2/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
-    position_tolerance: 0.1
-    angle_tolerance: 0.05
+    position_tolerance: 0.2
+    angle_tolerance: 0.5
     tf_prefix: r2
 
 
@@ -176,8 +200,8 @@ r3/controller_node:
       plugin: easynav_simple_controller/SimpleController
       max_linear_speed: 1.0
       max_angular_speed: 1.5
-      look_ahead_dist: 0.2
-      k_rot: 0.7
+      look_ahead_dist: 0.3
+      k_rot: 0.8
 
 r3/localizer_node:
   ros__parameters:
@@ -191,7 +215,7 @@ r3/localizer_node:
 r3/maps_manager_node:
   ros__parameters:
     use_sim_time: true
-    map_types: [costmap]
+    map_types: [costmap, multiplexor, frontier]
     costmap:
       freq: 10.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
@@ -202,6 +226,32 @@ r3/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
         inflation_radius: 0.5
         cost_scaling_factor: 8.0
+        inscribed_radius: 0.05
+    multiplexor:
+      freq: 10.0
+      plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
+      fixed_map_ns: "r3"
+      robot_namespaces: ["r1", "r2", "r3"]
+      r1:
+        x: 1.5
+        y: 0.0
+        Y: 0.0
+        topic: "maps_manager_node/costmap/incoming_map"
+      r2:
+        x: -3.5
+        y: -2.0
+        Y: 0.0
+        topic: "maps_manager_node/costmap/incoming_map"
+      r3:
+        x: 3.5
+        y: 3.0
+        Y: 0.0
+        topic: "maps_manager_node/costmap/incoming_map"
+    frontier:
+      freq: 10.0
+      plugin: easynav_frontier_maps_manager/FrontierMapsManager
+      proximity_radius: 0.3
+      obstacle_threshold: 10
 
 r3/planner_node:
   ros__parameters:
@@ -231,6 +281,7 @@ r3/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
-    position_tolerance: 0.1
-    angle_tolerance: 0.05
+    position_tolerance: 0.2
+    angle_tolerance: 0.5
     tf_prefix: r3
+

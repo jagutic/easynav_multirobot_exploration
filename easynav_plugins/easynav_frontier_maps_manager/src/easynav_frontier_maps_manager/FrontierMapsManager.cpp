@@ -64,7 +64,7 @@ FrontierMapsManager::update(NavState & nav_state)
 
   // If the map is fully explored or the algorithm fails, return FAILURE to trigger alternative BT logic
   if (frontier.empty()) {
-    RCLCPP_ERROR(get_node()->get_logger(), "No frontier possible");
+    RCLCPP_WARN(get_node()->get_logger(), "No frontier possible");
     return;
   }
   
@@ -127,12 +127,12 @@ FrontierMapsManager::get_frontier(
   // Localization verification before initilazing frontier search
   unsigned int pose_x, pose_y;
   if (!map.worldToMap(pose.pose.pose.position.x, pose.pose.pose.position.y, pose_x, pose_y)) {
-    RCLCPP_ERROR(get_node()->get_logger(), "Robot not in map.");
+    RCLCPP_WARN(get_node()->get_logger(), "Robot not in map.");
     return {};
   }
   unsigned char robot_cost = map.getCost(pose_x, pose_y);
   if (robot_cost < easynav::FREE_SPACE || robot_cost > obstacle_threshold_) {
-      RCLCPP_ERROR(
+      RCLCPP_WARN(
         get_node()->get_logger(), 
         "Robot is not in free space (Cost: %d)", 
         robot_cost

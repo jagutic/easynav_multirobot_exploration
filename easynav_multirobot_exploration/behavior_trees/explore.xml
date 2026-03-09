@@ -2,16 +2,16 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="explore">
     <RetryUntilSuccessful num_attempts="-1">
-      <ReactiveSequence>
-        <!-- <ChooseFrontierGoal robot_pose="{p}"
-                            frontier="{f}"
-                            frontier_goal="{fg}"/> -->
+      <Sequence>
+        <GetPose pose="{p}"/>
+        <ChooseFrontierGoal robot_pose="{p}"
+                            frontier_goal="{fg}"/>
         <!-- <IsGoalValid new_goal="{fg}"/>
         <SetBlackboard output_key="last_goal"
                        value="{fg}"/> -->
-        <!-- <GoToPose pose="{fg}"/> -->
+        <GoToPose goal_pose="{fg}"/>
         <IsExplored/>
-      </ReactiveSequence>
+      </Sequence>
     </RetryUntilSuccessful>
   </BehaviorTree>
 
@@ -19,16 +19,19 @@
   <TreeNodesModel>
     <Action ID="ChooseFrontierGoal"
             editable="true">
-      <input_port name="frontier"
-                  type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <input_port name="robot_pose"
                   type="geometry_msgs::msg::Pose"/>
       <output_port name="frontier_goal"
                    type="geometry_msgs::msg::Pose"/>
     </Action>
+    <Action ID="GetPose"
+            editable="true">
+      <output_port name="pose"
+                  type="geometry_msgs::msg::Pose"/>
+    </Action>
     <Action ID="GoToPose"
             editable="true">
-      <input_port name="pose"
+      <input_port name="goal_pose"
                   type="geometry_msgs::msg::Pose"/>
     </Action>
     <Condition ID="IsExplored"

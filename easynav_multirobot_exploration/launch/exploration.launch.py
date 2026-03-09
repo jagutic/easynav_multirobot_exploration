@@ -29,7 +29,8 @@ def generate_launch_description():
         namespace=namespace,
         remappings=[
             ('/tf', 'tf'),
-            ('/tf_static', 'tf_static')
+            ('/tf_static', 'tf_static'),
+            ('frontier_topic', 'maps_manager_node/frontier/points')
         ]
     )
 

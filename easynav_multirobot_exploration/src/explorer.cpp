@@ -7,6 +7,7 @@
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
 #include "easynav_multirobot_exploration/IsGoalValid.hpp"
 #include "easynav_multirobot_exploration/GoToPose.hpp"
+#include "easynav_multirobot_exploration/GetPose.hpp"
 #include "easynav_multirobot_exploration/IsExplored.hpp"
 
 using namespace std::chrono_literals;
@@ -14,35 +15,47 @@ using namespace std::chrono_literals;
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("explorer");
 
   BT::BehaviorTreeFactory factory;
   factory.registerNodeType<multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
   factory.registerNodeType<multirobot_exploration::IsGoalValid>("IsGoalValid");
   factory.registerNodeType<multirobot_exploration::GoToPose>("GoToPose");
+  factory.registerNodeType<multirobot_exploration::GetPose>("GetPose");
   factory.registerNodeType<multirobot_exploration::IsExplored>("IsExplored");
-  
-  std::string xml_file;
-  node->declare_parameter("bt_xml_file", xml_file);
-  node->get_parameter("bt_xml_file", xml_file);
 
-  std::string tf_prefix;
-  node->declare_parameter("tf_prefix", tf_prefix);
-  node->get_parameter("tf_prefix", tf_prefix);
+  // Parameters to set in blackboard
+  std::string map_frame, robot_frame, odom_frame;
 
   auto blackboard = BT::Blackboard::create();
+  auto node = std::make_shared<rclcpp::Node>("explorer");
+
+  node->declare_parameter("map_frame", map_frame);
+  node->declare_parameter("robot_frame", robot_frame);
+  node->declare_parameter("odom_frame", odom_frame);
+
+  node->get_parameter("map_frame", map_frame);
+  node->get_parameter("robot_frame", robot_frame);
+  node->get_parameter("odom_frame", odom_frame);
+
   blackboard->set<rclcpp::Node::SharedPtr>("node", node);
-  blackboard->set<std::string>("tf_prefix", tf_prefix);
+  blackboard->set<std::string>("map_frame", map_frame);
+  blackboard->set<std::string>("robot_frame", robot_frame);
+  blackboard->set<std::string>("odom_frame", odom_frame);
+
+  // Create tree using xml file passed as param
+  std::string bt_xml_file;
+  node->declare_parameter("bt_xml_file", bt_xml_file);
+  node->get_parameter("bt_xml_file", bt_xml_file);
 
   BT::Tree tree;
   try {
-    tree = factory.createTreeFromFile(xml_file, blackboard);
+    tree = factory.createTreeFromFile(bt_xml_file, blackboard);
   } catch (const std::exception &e) {
     RCLCPP_ERROR(node->get_logger(), "Error al cargar el XML: %s", e.what());
     return 1;
   }
 
-  rclcpp::Rate rate(1); // 1 hz
+  rclcpp::Rate rate(5); // 5 hz
   RCLCPP_INFO(node->get_logger(), "\t");
   RCLCPP_INFO(node->get_logger(), "INIT EXPLORER...");
 

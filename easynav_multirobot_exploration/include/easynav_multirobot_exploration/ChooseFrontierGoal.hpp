@@ -5,17 +5,19 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
-#include "geometry_msgs/msg/pose_array.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+
 #include "behaviortree_cpp/action_node.h"
 
 
 namespace multirobot_exploration
 {
 
-using nav_msgs::msg::OccupancyGrid;
-using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Pose;
+using visualization_msgs::msg::Marker;
+using geometry_msgs::msg::Point;
+
 
 class ChooseFrontierGoal : public BT::SyncActionNode
 {
@@ -27,13 +29,18 @@ public:
   {
     return BT::PortsList(
       {
-        BT::InputPort<PoseArray>("frontier"),
+        BT::InputPort<Pose>("robot_pose"),
         BT::OutputPort<Pose>("frontier_goal")
       });
   }
 
 private:
+  Pose calc_closest_goal(const Pose& current_pose);
+
+  std::vector<Point> frontier_;
+
   rclcpp::Node::SharedPtr node_;
+  rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;
 };
 
 } // namespace multirobot_exploration
