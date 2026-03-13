@@ -43,17 +43,17 @@ r1/maps_manager_node:
         x: 1.5
         y: 0.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
       r2:
         x: -3.5
         y: -2.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
       r3:
         x: 3.5
         y: 3.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
     frontier:
       freq: 10.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
@@ -139,17 +139,17 @@ r2/maps_manager_node:
         x: 1.5
         y: 0.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
       r2:
         x: -3.5
         y: -2.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
       r3:
         x: 3.5
         y: 3.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
     frontier:
       freq: 10.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
@@ -236,17 +236,17 @@ r3/maps_manager_node:
         x: 1.5
         y: 0.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
       r2:
         x: -3.5
         y: -2.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
       r3:
         x: 3.5
         y: 3.0
         Y: 0.0
-        topic: "maps_manager_node/costmap/incoming_map"
+        topic: "local_map"
     frontier:
       freq: 10.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager

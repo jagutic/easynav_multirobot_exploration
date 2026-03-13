@@ -30,15 +30,14 @@ MultiplexorMapsManager::on_initialize()
   // Get the list of active robot identifiers from the parameters
   // And get the actual robot to work on
   std::vector<std::string> namespaces;
-  std::string fixed_map_ns;
 
   node->declare_parameter(plugin_name + ".robot_namespaces", namespaces);
   node->get_parameter(plugin_name + ".robot_namespaces", namespaces);
   RCLCPP_INFO(node->get_logger(), "Maps to merge: %ld", namespaces.size());
 
-  node->declare_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns);
-  node->get_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns);
-  RCLCPP_INFO(node->get_logger(), "Fixed map ns: %s", fixed_map_ns.c_str());
+  node->declare_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns_);
+  node->get_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns_);
+  RCLCPP_INFO(node->get_logger(), "Fixed map ns: %s", fixed_map_ns_.c_str());
 
   // Initialize coordinates for each robot and create map subscriptions.
   float x, y, Y;
@@ -62,9 +61,6 @@ MultiplexorMapsManager::on_initialize()
     robots_coords_[ns].x = x;
     robots_coords_[ns].y = y;
     robots_coords_[ns].theta = Y;
-
-    // Do not suscribe to main map (is in navstate)
-    if (ns == fixed_map_ns) {continue;}
   
     // Create a subscription to the map topic for this specific robot.
     // Using transient_local QoS ensures we receive the latest map ("latched" behavior).
@@ -80,7 +76,7 @@ MultiplexorMapsManager::on_initialize()
   }
 
   // Establish the local robot's frame as the global coordinate origin (0,0).
-  translate_robot_coords(fixed_map_ns);
+  translate_robot_coords(fixed_map_ns_);
 
   muxed_map_pub_ = node->create_publisher<OccupancyGrid>(
     node->get_fully_qualified_name() + std::string("/") + plugin_name + "/map",
@@ -93,23 +89,13 @@ MultiplexorMapsManager::update(NavState & nav_state)
 {
   EASYNAV_TRACE_EVENT;
 
-  // Wait until there is map
-  if (!nav_state.has("map.static")) {
-    RCLCPP_DEBUG(get_node()->get_logger(), "No Static Map");
-    return;
-  }
-
-  // Check if its empty
-  const auto& fixed_map = nav_state.get<Costmap2D>("map.static");
-
-  if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
-    RCLCPP_DEBUG(get_node()->get_logger(), "Empty Static Map");
-    return;
-  }
-
   // Mux all maps on fixed costmap and save in muxed map
   Costmap2D muxed_map;
-  mux(fixed_map, muxed_map);
+  mux(muxed_map);
+
+  // Save new map in navstate so it can be used
+  nav_state.set("map.static", muxed_map);
+  nav_state.set("map.static.update", true);
 
   // Publish map for visualization
   const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
@@ -121,9 +107,6 @@ MultiplexorMapsManager::update(NavState & nav_state)
   muxed_map_msg.header.frame_id = tf_info.map_frame;
   muxed_map_msg.header.stamp = map_stamp;
   muxed_map_pub_->publish(muxed_map_msg);
-
-  // TO DO
-  // Update map so robot can navigate on muxed map
 }
 
 void
@@ -185,24 +168,9 @@ MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns)
 }
 
 BoundingBox
-MultiplexorMapsManager::get_global_bounds(const Costmap2D& fixed_map)
+MultiplexorMapsManager::get_global_bounds()
 {
   BoundingBox box;
-
-  // Get fixed map bounds as initial bounds
-  double f_ox = fixed_map.getOriginX();
-  double f_oy = fixed_map.getOriginY();
-  double f_w = fixed_map.getSizeInMetersX();
-  double f_h = fixed_map.getSizeInMetersY();
-  double fixed_corners_x[4] = {f_ox, f_ox + f_w, f_ox + f_w, f_ox};
-  double fixed_corners_y[4] = {f_oy, f_oy, f_oy + f_h, f_oy + f_h};
-
-  for (int i = 0; i < 4; i++) {
-    box.min_x = std::min(box.min_x, fixed_corners_x[i]);
-    box.max_x = std::max(box.max_x, fixed_corners_x[i]);
-    box.min_y = std::min(box.min_y, fixed_corners_y[i]);
-    box.max_y = std::max(box.max_y, fixed_corners_y[i]);
-  }
 
   // Iterate through all available maps to find the global min/max coordinates.
   for (const auto& [id, map] : maps_) {
@@ -250,22 +218,23 @@ MultiplexorMapsManager::get_global_bounds(const Costmap2D& fixed_map)
 }
 
 void
-MultiplexorMapsManager::mux(const Costmap2D& src, Costmap2D& dst)
+MultiplexorMapsManager::mux(Costmap2D& dst)
 {
-  if (src.getSizeInCellsX() == 0 || src.getSizeInCellsY() == 0) {
-    RCLCPP_ERROR(get_node()->get_logger(), "Src map is empty, skipping mux");
-    return;
-  }
+  // Get fixed map from the list
+  auto it_fixed = maps_.find(fixed_map_ns_);
+  if (it_fixed == maps_.end() || !it_fixed->second) return;
+
+  Costmap2D fixed_map(*it_fixed->second);
 
   // Get fixed map data
-  double res = src.getResolution();
-  double local_x = src.getOriginX();
-  double local_y = src.getOriginY();
-  unsigned int w = src.getSizeInCellsX();
-  unsigned int h = src.getSizeInCellsY();
+  double res = fixed_map.getResolution();
+  double local_x = fixed_map.getOriginX();
+  double local_y = fixed_map.getOriginY();
+  unsigned int w = fixed_map.getSizeInCellsX();
+  unsigned int h = fixed_map.getSizeInCellsY();
 
   // Resize final costmap and create aux final mat filled with NO_INFORMATION
-  BoundingBox bounds = get_global_bounds(src);
+  BoundingBox bounds = get_global_bounds();
   uint32_t new_w = std::ceil((bounds.max_x - bounds.min_x) / res);
   uint32_t new_h = std::ceil((bounds.max_y - bounds.min_y) / res);
 
@@ -277,8 +246,8 @@ MultiplexorMapsManager::mux(const Costmap2D& src, Costmap2D& dst)
   int offset_x = std::round((local_x - dst.getOriginX()) / res);
   int offset_y = std::round((local_y - dst.getOriginY()) / res);
 
-  cv::Mat src_mat(h, w, CV_8UC1, src.getCharMap());
-  src_mat.copyTo(dst_mat(cv::Rect(offset_x, offset_y, w, h)));
+  cv::Mat fixed_mat(h, w, CV_8UC1, fixed_map.getCharMap());
+  fixed_mat.copyTo(dst_mat(cv::Rect(offset_x, offset_y, w, h)));
 
   // Buffer for affine transformation.
   cv::Mat warped;
@@ -287,6 +256,7 @@ MultiplexorMapsManager::mux(const Costmap2D& src, Costmap2D& dst)
   // Merge other robots maps into the expanded mat.
   for (const auto& [ns, map_msg] : maps_) {
     if (!map_msg) continue;
+    if (ns == fixed_map_ns_) continue;
     if (robots_coords_.find(ns) == robots_coords_.end()) continue;
   
     // Use costmap for data correspondecy

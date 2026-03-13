@@ -62,8 +62,7 @@ def generate_launch_description():
         remappings=[
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static'),
-            ('/map', 'maps_manager_node/costmap/incoming_map'),
-            # ('/map', 'map'),
+            ('/map', 'local_map'),
             ('/map_metadata', 'map_metadata'),
             ('/scan_raw', 'scan_raw'),
         ]

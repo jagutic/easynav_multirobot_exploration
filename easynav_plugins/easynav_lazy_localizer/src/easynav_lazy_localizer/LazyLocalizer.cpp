@@ -71,7 +71,7 @@ LazyLocalizer::get_pose()
     tf_msg = RTTFBuffer::getInstance()->lookupTransform(
       tf_info.map_frame, tf_info.robot_frame, tf2::TimePointZero, tf2::durationFromSec(0.0));
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
+    RCLCPP_DEBUG(get_node()->get_logger(), "LazyLocalizer::update: TF failed: %s", ex.what());
     return nav_msgs::msg::Odometry();
   }
 

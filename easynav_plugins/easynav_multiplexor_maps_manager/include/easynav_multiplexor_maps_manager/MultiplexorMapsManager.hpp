@@ -118,16 +118,15 @@ private:
    * @brief Computes the absolute bounding box encompassing all stored local maps.
    * @return A BoundingBox struct with the extreme min and max spatial coordinates.
    */
-  BoundingBox get_global_bounds(const Costmap2D& fixed_map_msg);
+  BoundingBox get_global_bounds();
 
   /**
    * @brief Merges the internal cache of local maps into src, using dst as output global map.
    * * This method handles the grid indexing translation and resolves overlapping pixel 
    * values (e.g., preserving known obstacles over unknown space).
-   * @param src fixed map over who all other maps will be muxed
    * @param dst destination for new global map
    */
-  void mux(const Costmap2D& src, Costmap2D& dst);
+  void mux(Costmap2D& dst);
 
   std::map<std::string, OccupancyGrid::SharedPtr> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
   std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
@@ -135,6 +134,7 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;     ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
 
+  std::string fixed_map_ns_;                                    /// Identificator to local map
   double PADDING = 0;                                           /// Constant value for safety zone around resultant muxed map.
 };
 
