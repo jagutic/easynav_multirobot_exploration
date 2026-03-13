@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  rclcpp::Rate rate(5); // 5 hz
+  rclcpp::Rate rate(1); // 1 hz
   RCLCPP_INFO(node->get_logger(), "\t");
   RCLCPP_INFO(node->get_logger(), "INIT EXPLORER...");
 

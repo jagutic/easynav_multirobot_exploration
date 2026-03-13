@@ -9,7 +9,8 @@ IsExplored::IsExplored(
   : BT::ConditionNode(name, conf)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
-  RCLCPP_INFO(node_->get_logger(), "** IsExplored **");}
+  RCLCPP_INFO(node_->get_logger(), "** IsExplored **");
+}
 
 BT::NodeStatus IsExplored::tick()
 {

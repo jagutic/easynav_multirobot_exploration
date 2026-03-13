@@ -64,19 +64,6 @@ ros2 launch easynav_multirobot_exploration slam_namespaced.launch.py namespace:=
 ros2 launch easynav_multirobot_exploration slam_namespaced.launch.py namespace:=r2
 ```
 
-### Launch Exploration for each robot
-Use ```use_sim_time:=true``` or ```use_sim_time:=false``` to alternate between simulation and real robots. 
-By default is set to 'true' (simulation).
-
-```bash
-# Terminal 1 (robot r1)
-ros2 launch easynav_multirobot_exploration exploration.launch.py namespace:=r1
-
-# Terminal 2 (robot r2)
-ros2 launch easynav_multirobot_exploration exploration.launch.py namespace:=r2
-```
-
-
 ### Start EasyNav for each robot to be able to navigate
 Use ```use_sim_time:=true``` or ```use_sim_time:=false``` to alternate between simulation and real robots. 
 By default is set to 'true' (simulation).
@@ -95,6 +82,18 @@ ros2 run easynav_system system_main \
 --params-file ./src/easynav_multirobot_exploration/easynav_multirobot_exploration/config/navigation_costmap.params.yaml \
 -r __ns:=/r2 \
 -r /tf:=tf -r /tf_static:=tf_static
+```
+
+### Launch Exploration behaviour for each robot
+Use ```use_sim_time:=true``` or ```use_sim_time:=false``` to alternate between simulation and real robots. 
+By default is set to 'true' (simulation).
+
+```bash
+# Terminal 1 (robot r1)
+ros2 launch easynav_multirobot_exploration exploration.launch.py namespace:=r1
+
+# Terminal 2 (robot r2)
+ros2 launch easynav_multirobot_exploration exploration.launch.py namespace:=r2
 ```
 
 ### Launch RViz instances for visualization
@@ -122,25 +121,42 @@ robot maintains its own TF tree.
 
 ## System Architecture
 
+### EasyNav plugins
+#### Lazy Localizer
+- A lightweight localization plugin designed to **reuse SLAM published TFs**. Ensures that different localization sources do not collide or create jumps in the transform tree during the exploration process, where both SLAM and Navigation nned to be executed at the same time.
+
+#### Multiplexor MapsManager
+- Works **under** Costmap MapsManager. Receive all maps to mux through the topic passed as parameter. Uses **OpenCV** to handle the merging of multiple `OccupancyGrid` into a global map. This allows robots to share their knowledge of the world. Set this new muxed map as static map for all easynav system.
+
+
+#### Frontier MapsManager
+- Works **over** Costmap MapsManager. Using dynamic map saved at navstate (blackboard), extract frontier between free space and the rest of the map using **OpenCV** morphological filters. Erase noise for better use. Publishes frontier points for behaviours to use it, and saves it in navstate (blackboard) for debugging.
+
 ### Behavior Tree
 Decision-making flow orchestration using **BehaviorTree.CPP**. Visualization and real-time monitoring are fully supported via **Groot2** for debugging the exploration states.
 
-- **MuxMaps (Map Merger)**
-A specialized node that handles the synchronization and merging of multiple `OccupancyGrid` streams into a unified global frame using affine transformations. This allows robots to share map data in a common coordinate system.
-
-- **DetectFrontier (OpenCV-based)**
-High-performance frontier extraction leveraging OpenCV morphological filters. It uses operations like **Hit-or-Miss** and **Dilate** to accurately identify clean boundaries between free and unknown space, filtering out sensor noise.
+- **GetPose**
+Instante Action Node that uses TFs to obtain robot pose, so the rest of bt nodes can use it.
 
 - **ChooseFrontierGoal**
+Instant Action Node that uses frontier points published to select next goal. For the moment, closest frontier point policy is being used.
+
+- **GoToPose**
+Action node that uses easynav GoalManagerClient to send a goal to easynav system. Checks state to inform about feedback and results.
+
+- **IsExplored**
+Condition node only true when its conisderes exploration is finished.
 
 
-## Other Components
-
-### **Simulation Environments**
+### Simulation Environments
 Collection of Gazebo environments used for multi-robot validation:
 - **Hospital**: The largest and most complex environment for stress-testing path planning.
 * **Maze (Big version)**: Designed for testing wall-following and frontier logic in tight spaces.
 * **Maze (Small version)**: Fast-iteration environment for quick logic verification.
 
-###  **LazyLocalizer EasyNav Plugin**
-- A **lightweight localization plugin** designed to bridge SLAM-published TFs. It ensures that different localization sources do not collide or create jumps in the transform tree during the exploration process.
+### Other resources
+
+#### IsExploredModel
+Trained CNN to clasify actual map in explored-not explored, so we can decide whether if exploration is complete or not. Used in bt node to return SUCCESS or FAILURE easyly.
+
+

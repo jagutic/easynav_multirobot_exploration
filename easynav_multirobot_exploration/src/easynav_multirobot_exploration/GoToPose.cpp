@@ -51,19 +51,12 @@ GoToPose::tick()
       response = nav_client_->get_feedback();
       RCLCPP_INFO(
         node_->get_logger(),
-        "Distance to goal: %.2f",
-        response.distance_to_goal
-      );
-      RCLCPP_INFO(
-        node_->get_logger(),
-        "Navigation time: %d sec",
-        response.navigation_time.sec
+        "Distance to goal: %.2f\n Navigation time: %d sec %dnsec",
+        response.distance_to_goal,
+        response.navigation_time.sec,
+        response.navigation_time.nanosec
       );
 
-      // if (response.distance_to_goal < GOAL_RADIUS) {
-      //   nav_client_->cancel();
-      //   return BT::NodeStatus::SUCCESS;
-      // }
       return BT::NodeStatus::RUNNING;
 
     // Manage normal state, send goal to begin navigation

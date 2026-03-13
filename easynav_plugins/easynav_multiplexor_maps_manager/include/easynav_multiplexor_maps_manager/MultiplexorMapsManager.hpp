@@ -135,7 +135,7 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;     ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
 
-  double PADDING = 0.1;                                           /// Constant value for safety zone around resultant muxed map.
+  double PADDING = 0;                                           /// Constant value for safety zone around resultant muxed map.
 };
 
 }  // namespace easynav

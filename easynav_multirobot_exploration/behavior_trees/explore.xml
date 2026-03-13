@@ -6,9 +6,7 @@
         <GetPose pose="{p}"/>
         <ChooseFrontierGoal robot_pose="{p}"
                             frontier_goal="{fg}"/>
-        <!-- <IsGoalValid new_goal="{fg}"/>
-        <SetBlackboard output_key="last_goal"
-                       value="{fg}"/> -->
+        <!-- <IsGoalValid new_goal="{fg}"/> -->
         <GoToPose goal_pose="{fg}"/>
         <IsExplored/>
       </Sequence>
