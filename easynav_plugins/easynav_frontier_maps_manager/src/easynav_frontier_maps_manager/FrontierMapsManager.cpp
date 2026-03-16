@@ -142,50 +142,44 @@ FrontierMapsManager::get_frontier(
 
   /** Frontier search */
   cv::Mat map_mat(height, width, CV_8UC1, map.getCharMap());
+  free_space_ = (map_mat >= easynav::FREE_SPACE) & (map_mat <= obstacle_threshold_);
+  unknown_space_ = (map_mat == easynav::NO_INFORMATION);
 
-  cv::Mat free_space = (map_mat >= easynav::FREE_SPACE) & (map_mat <= obstacle_threshold_);
-  cv::Mat unknown_space = (map_mat == easynav::NO_INFORMATION);
+
+  // Resize only if neccesary
+  if (reachable_mask_.size() != cv::Size(width + 2, height + 2)) {
+    reachable_mask_ = cv::Mat::zeros(height + 2, width + 2, CV_8UC1);
+  } else {
+    reachable_mask_.setTo(0);
+  }
 
   // Simulate a "paint bucket" originating from the robot to find all connected free space
   cv::Rect rect;
-  cv::Mat reachable_mask = cv::Mat::zeros(height + 2, width + 2, CV_8UC1);
-
-  cv::floodFill(free_space, reachable_mask, cv::Point(pose_x, pose_y), cv::Scalar(128),
+  cv::floodFill(free_space_, reachable_mask_, cv::Point(pose_x, pose_y), cv::Scalar(128),
                 &rect, cv::Scalar(0), cv::Scalar(0), 4 | (255 << 8) | cv::FLOODFILL_MASK_ONLY);
-  cv::Mat reachable_actual = reachable_mask(cv::Rect(1, 1, width, height));
+  reachable_actual_ = reachable_mask_(cv::Rect(1, 1, width, height));
 
 
-  // Dilate and intersect unknowk space 
-  // Guarantees resulting pixels to belong to safe, navigable 0-cost areas.
-  cv::Mat frontiers;
+  // Intersect with dilated unknown space, to get total frontier 
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
 
-  cv::dilate(unknown_space, frontiers, kernel);
-  cv::bitwise_and(frontiers, reachable_actual, frontiers);
+  cv::dilate(unknown_space_, frontiers_, kernel);
+  cv::bitwise_and(frontiers_, reachable_actual_, frontiers_);
 
 
-  // Eliminate frontier pixels surrounding isolated unknown pixels
-  // Reduce noise and clean frontier
+  // Clean frontier points
   cv::Mat isolated_centers;
   cv::Mat pixels_to_delete;
 
-  cv::morphologyEx(frontiers, isolated_centers, cv::MORPH_HITMISS, CROSS_KERNEL);
+  cv::morphologyEx(frontiers_, isolated_centers, cv::MORPH_HITMISS, CROSS_KERNEL);
   cv::dilate(isolated_centers, pixels_to_delete, CROSS_MASK);
-  cv::bitwise_and(frontiers, ~pixels_to_delete, frontiers);
-
-
-  // Exclude frontier points that are too close to robot
-  const int prox_radius_px = static_cast<int>(proximity_radius_ / res);
-  cv::Mat distance_mask = cv::Mat::ones(frontiers.size(), CV_8UC1) * 255;
-
-  cv::circle(distance_mask, cv::Point(pose_x, pose_y), prox_radius_px, cv::Scalar(0), -1);
-  cv::bitwise_and(frontiers, distance_mask, frontiers);
+  cv::bitwise_and(frontiers_, ~pixels_to_delete, frontiers_);
 
 
   // Extract the non-zero pixel coordinates into a vector safely
   std::vector<cv::Point> raw_points;
-  if (cv::countNonZero(frontiers) > 0) {
-    cv::findNonZero(frontiers, raw_points);
+  if (cv::countNonZero(frontiers_) > 0) {
+    cv::findNonZero(frontiers_, raw_points);
   }
 
   // Translate the local OpenCV grid indices back into global ROS spatial coordinates (meters)
@@ -193,10 +187,19 @@ FrontierMapsManager::get_frontier(
   frontier_points.reserve(raw_points.size());
 
   for (const auto& pt : raw_points) {
+    // Get distances
+    double wx = ox + (pt.x * res) + (res / 2.0);
+    double wy = oy + (pt.y * res) + (res / 2.0);
+
+    // Simple proximity filter
+    double dx = wx - pose.pose.pose.position.x;
+    double dy = wy - pose.pose.pose.position.y;
+    if ((dx*dx + dy*dy) < proximity_radius_ * proximity_radius_) continue;
+
+    // Safe final frontier points
     geometry_msgs::msg::Point target_point;
-    // Shift by res/2 to point precisely to the center of the grid cell
-    target_point.x = ox + (pt.x * res) + (res / 2.0);
-    target_point.y = oy + (pt.y * res) + (res / 2.0);
+    target_point.x = wx;
+    target_point.y = wy;
     target_point.z = 0.0;
     frontier_points.push_back(target_point);
   }

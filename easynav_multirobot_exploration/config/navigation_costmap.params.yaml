@@ -24,7 +24,7 @@ r1/maps_manager_node:
     use_sim_time: true
     map_types: [costmap, multiplexor, frontier]
     costmap:
-      freq: 10.0
+      freq: 5.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
       filters: [obstacles, inflation]
       obstacles:
@@ -35,7 +35,7 @@ r1/maps_manager_node:
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
-      freq: 10.0
+      freq: 2.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r1"
       robot_namespaces: ["r1", "r2", "r3"]
@@ -55,7 +55,7 @@ r1/maps_manager_node:
         Y: 0.0
         topic: "local_map"
     frontier:
-      freq: 10.0
+      freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
       obstacle_threshold: 10
@@ -120,7 +120,7 @@ r2/maps_manager_node:
     use_sim_time: true
     map_types: [costmap, multiplexor, frontier]
     costmap:
-      freq: 10.0
+      freq: 5.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
       filters: [obstacles, inflation]
       obstacles:
@@ -131,7 +131,7 @@ r2/maps_manager_node:
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
-      freq: 10.0
+      freq: 2.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r2"
       robot_namespaces: ["r1", "r2", "r3"]
@@ -151,7 +151,7 @@ r2/maps_manager_node:
         Y: 0.0
         topic: "local_map"
     frontier:
-      freq: 10.0
+      freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
       obstacle_threshold: 10
@@ -217,7 +217,7 @@ r3/maps_manager_node:
     use_sim_time: true
     map_types: [costmap, multiplexor, frontier]
     costmap:
-      freq: 10.0
+      freq: 5.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
       filters: [obstacles, inflation]
       obstacles:
@@ -228,7 +228,7 @@ r3/maps_manager_node:
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
-      freq: 10.0
+      freq: 2.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r3"
       robot_namespaces: ["r1", "r2", "r3"]
@@ -248,7 +248,7 @@ r3/maps_manager_node:
         Y: 0.0
         topic: "local_map"
     frontier:
-      freq: 10.0
+      freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
       obstacle_threshold: 10

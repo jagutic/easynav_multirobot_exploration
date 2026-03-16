@@ -121,6 +121,14 @@ private:
   float proximity_radius_;
   int obstacle_threshold_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frontier_pub_; ///< Publisher for RViz visualization.
+
+
+  /** Internal matrixes to improve efficiency */
+  cv::Mat free_space_;
+  cv::Mat unknown_space_;
+  cv::Mat reachable_mask_;
+  cv::Mat reachable_actual_;
+  cv::Mat frontiers_;
 };
 
 }  // namespace easynav

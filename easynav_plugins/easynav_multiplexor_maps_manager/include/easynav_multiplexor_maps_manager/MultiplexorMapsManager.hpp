@@ -25,7 +25,7 @@
 
 #include <vector>
 #include <expected>
-
+#include <mutex>
 #include <string>
 #include <cstring>
 
@@ -128,12 +128,13 @@ private:
    */
   void mux(Costmap2D& dst);
 
-  std::map<std::string, OccupancyGrid::SharedPtr> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
+  std::map<std::string, Costmap2D> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
   std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
   
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;     ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
 
+  std::mutex maps_mutex_;                                       /// Mutex to avoid concurrency problems
   std::string fixed_map_ns_;                                    /// Identificator to local map
   double PADDING = 0;                                           /// Constant value for safety zone around resultant muxed map.
 };
