@@ -24,7 +24,7 @@ r1/maps_manager_node:
     use_sim_time: true
     map_types: [costmap, multiplexor, frontier]
     costmap:
-      freq: 5.0
+      freq: 10.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
       filters: [obstacles, inflation]
       obstacles:
@@ -35,7 +35,7 @@ r1/maps_manager_node:
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
-      freq: 2.0
+      freq: 5.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r1"
       robot_namespaces: ["r1", "r2", "r3"]
@@ -58,7 +58,9 @@ r1/maps_manager_node:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
-      obstacle_threshold: 10
+      obstacle_threshold: 5
+      dbscan_eps_px: 2
+      dbscan_min_points: 5
 
 r1/planner_node:
   ros__parameters:
@@ -154,7 +156,9 @@ r2/maps_manager_node:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
-      obstacle_threshold: 10
+      obstacle_threshold: 5
+      dbscan_eps_px: 2
+      dbscan_min_points: 5
 
 r2/planner_node:
   ros__parameters:
@@ -251,7 +255,9 @@ r3/maps_manager_node:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
-      obstacle_threshold: 10
+      obstacle_threshold: 5
+      dbscan_eps_px: 2
+      dbscan_min_points: 5
 
 r3/planner_node:
   ros__parameters:

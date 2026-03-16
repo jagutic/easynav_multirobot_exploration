@@ -96,15 +96,24 @@ private:
     const std::vector<geometry_msgs::msg::Point>& frontier);
 
   /**
+   * @brief Groups nearby frontier pixels and calculates their geometric centers (centroids).
+   * * Acts as a density-based clustering filter (DBSCAN-style): uses dilation to merge 
+   * points within a specific pixel radius (Epsilon) and discards small clusters 
+   * (MinPoints) to effectively eliminate sensor noise and fragmented frontiers.
+   * * @param points Binary image (CV_8UC1) where white pixels represent detected frontiers.
+   * @return A vector of image coordinates (pixels) representing the precise center of each cluster.
+   */
+  std::vector<cv::Point> get_centroids_DBSCAN(cv::Mat& points);
+
+  /**
    * @brief Core computer vision algorithm translating grid values to binary matrices to extract the boundary.
    * * Applies morphological opening to clear sensor noise, uses floodFill to safely map reachable space 
    * from the robot's footprint, and extracts the dilated intersection with the unknown area.
    * @param map The current OccupancyGrid to be analyzed.
    * @param pose The current robot position used as the seed point for the floodFill algorithm.
-   * @return A vector of strictly safe, reachable 2D points sitting directly on the frontier boundary.
+   * @return A matrix of strictly safe, reachable points sitting directly on the frontier boundary.
    */
-  std::vector<geometry_msgs::msg::Point> get_frontier(
-    const Costmap2D& map, const nav_msgs::msg::Odometry& pose);
+  std::vector<geometry_msgs::msg::Point> get_frontier(const Costmap2D& map, const nav_msgs::msg::Odometry& pose);
 
   // Cross distribution in orden to eliminate noise caused by isolated pixels
   cv::Mat CROSS_KERNEL = (cv::Mat_<char>(3, 3) << 
@@ -118,17 +127,19 @@ private:
     0, 1, 0
   );                                      /// Constant value for safety zone around resultant muxed map.
 
-  float proximity_radius_;
-  int obstacle_threshold_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frontier_pub_; ///< Publisher for RViz visualization.
-
-
+  
+  /** Frontier adjustmente params */
+  int obstacle_threshold_;
+  float proximity_radius_;
+  int dbscan_eps_px_;
+  int dbscan_min_points_;
+  
   /** Internal matrixes to improve efficiency */
   cv::Mat free_space_;
   cv::Mat unknown_space_;
   cv::Mat reachable_mask_;
   cv::Mat reachable_actual_;
-  cv::Mat frontiers_;
 };
 
 }  // namespace easynav

@@ -27,12 +27,16 @@ FrontierMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Frontier Maps Manager");
 
-  // Get frontier params
-  node->declare_parameter(plugin_name + ".proximity_radius", 0.0);
+  // Get params
   node->declare_parameter(plugin_name + ".obstacle_threshold", easynav::FREE_SPACE);
+  node->declare_parameter(plugin_name + ".proximity_radius", 0.0);
+  node->declare_parameter(plugin_name + ".dbscan_eps_px", 0);
+  node->declare_parameter(plugin_name + ".dbscan_min_points", 0);
 
-  node->get_parameter(plugin_name + ".proximity_radius", proximity_radius_);
   node->get_parameter(plugin_name + ".obstacle_threshold", obstacle_threshold_);
+  node->get_parameter(plugin_name + ".proximity_radius", proximity_radius_);
+  node->get_parameter(plugin_name + ".dbscan_eps_px", dbscan_eps_px_);
+  node->get_parameter(plugin_name + ".dbscan_min_points", dbscan_min_points_);
 
   // Create publisher for visual debugging of the frontier in RViz
   frontier_pub_ = get_node()->create_publisher<visualization_msgs::msg::Marker>(
@@ -48,11 +52,10 @@ FrontierMapsManager::update(NavState & nav_state)
 
   // Wait until we have robot position
   if (!nav_state.has("robot_pose") || !nav_state.has("map.dynamic")) return;
-
   const auto& robot_pose = nav_state.get<nav_msgs::msg::Odometry>("robot_pose");
-  const auto& fixed_map = nav_state.get<Costmap2D>("map.dynamic");
-
+  
   // Wait until we have map
+  const auto& fixed_map = nav_state.get<Costmap2D>("map.dynamic");
   if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
     RCLCPP_DEBUG(get_node()->get_logger(), "No map yet");
     return;
@@ -62,13 +65,12 @@ FrontierMapsManager::update(NavState & nav_state)
   std::vector<geometry_msgs::msg::Point> frontier;
   frontier = get_frontier(fixed_map, robot_pose);
 
-  // If the map is fully explored or the algorithm fails, return FAILURE to trigger alternative BT logic
   if (frontier.empty()) {
     RCLCPP_WARN(get_node()->get_logger(), "No frontier possible");
     return;
   }
   
-  // Package the raw coordinates into a ROS Marker and publish them
+  // Publish and save result in navstate
   const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
   rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
 
@@ -112,6 +114,47 @@ FrontierMapsManager::fill_marker(
   return marker;
 }
 
+std::vector<cv::Point>
+FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
+{
+  if (dbscan_eps_px_ == 0 && dbscan_min_points_ == 0) {
+    std::vector<cv::Point> raw_points;
+    if (cv::countNonZero(points) > 0) {
+      cv::findNonZero(points, raw_points);
+    }
+    return raw_points;
+  }
+
+  // Epsilon: dilate to group points
+  cv::Mat kernel = cv::getStructuringElement(
+    cv::MORPH_ELLIPSE,
+    cv::Size(2 * dbscan_eps_px_ + 1, 2 * dbscan_eps_px_ + 1)
+  );
+
+  cv::Mat clustered;
+  cv::dilate(points, clustered, kernel);
+
+  // Apply clustering
+  cv::Mat labels, stats, raw_centroids;
+  int n_labels = cv::connectedComponentsWithStats(clustered, labels, stats, raw_centroids);
+
+
+  // Extract centroids
+  std::vector<cv::Point> centroids;
+  centroids.reserve(n_labels);
+
+  for (int i = 1; i < n_labels; i++) {
+    // Discard insignificant groups with min_points
+    if (stats.at<int>(i, cv::CC_STAT_AREA) < dbscan_min_points_) continue;
+
+    centroids.push_back(cv::Point(
+      raw_centroids.at<double>(i, 0),
+      raw_centroids.at<double>(i, 1)
+    ));
+  }
+  return centroids;
+}
+
 std::vector<geometry_msgs::msg::Point>
 FrontierMapsManager::get_frontier(
   const Costmap2D& map,
@@ -132,19 +175,19 @@ FrontierMapsManager::get_frontier(
   }
   unsigned char robot_cost = map.getCost(pose_x, pose_y);
   if (robot_cost < easynav::FREE_SPACE || robot_cost > obstacle_threshold_) {
-      RCLCPP_WARN(
-        get_node()->get_logger(), 
-        "Robot is not in free space (Cost: %d)", 
-        robot_cost
-      );
-      return {};
+    RCLCPP_WARN(
+      get_node()->get_logger(), 
+      "Robot is not in free space (Cost: %d)", 
+      robot_cost
+    );
+    return {};
   }
+
 
   /** Frontier search */
   cv::Mat map_mat(height, width, CV_8UC1, map.getCharMap());
   free_space_ = (map_mat >= easynav::FREE_SPACE) & (map_mat <= obstacle_threshold_);
   unknown_space_ = (map_mat == easynav::NO_INFORMATION);
-
 
   // Resize only if neccesary
   if (reachable_mask_.size() != cv::Size(width + 2, height + 2)) {
@@ -159,52 +202,52 @@ FrontierMapsManager::get_frontier(
                 &rect, cv::Scalar(0), cv::Scalar(0), 4 | (255 << 8) | cv::FLOODFILL_MASK_ONLY);
   reachable_actual_ = reachable_mask_(cv::Rect(1, 1, width, height));
 
-
   // Intersect with dilated unknown space, to get total frontier 
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+  cv::Mat frontier;
 
-  cv::dilate(unknown_space_, frontiers_, kernel);
-  cv::bitwise_and(frontiers_, reachable_actual_, frontiers_);
-
-
-  // Clean frontier points
-  cv::Mat isolated_centers;
-  cv::Mat pixels_to_delete;
-
-  cv::morphologyEx(frontiers_, isolated_centers, cv::MORPH_HITMISS, CROSS_KERNEL);
-  cv::dilate(isolated_centers, pixels_to_delete, CROSS_MASK);
-  cv::bitwise_and(frontiers_, ~pixels_to_delete, frontiers_);
+  cv::dilate(unknown_space_, frontier, kernel);
+  cv::bitwise_and(frontier, reachable_actual_, frontier);
 
 
-  // Extract the non-zero pixel coordinates into a vector safely
-  std::vector<cv::Point> raw_points;
-  if (cv::countNonZero(frontiers_) > 0) {
-    cv::findNonZero(frontiers_, raw_points);
+  // Extract centroids (final frontier)
+  std::vector<cv::Point> frontier_centroids;
+  frontier_centroids = get_centroids_DBSCAN(frontier);
+
+  if (frontier_centroids.empty()) {
+    RCLCPP_WARN(get_node()->get_logger(), "No centroids possible.");
+    return {};
   }
 
-  // Translate the local OpenCV grid indices back into global ROS spatial coordinates (meters)
-  std::vector<geometry_msgs::msg::Point> frontier_points;
-  frontier_points.reserve(raw_points.size());
+  // Translate to ROS msg
+  std::vector<geometry_msgs::msg::Point> final_frontier;
+  final_frontier.reserve(frontier_centroids.size());
 
-  for (const auto& pt : raw_points) {
-    // Get distances
-    double wx = ox + (pt.x * res) + (res / 2.0);
-    double wy = oy + (pt.y * res) + (res / 2.0);
-
-    // Simple proximity filter
+  for (const auto& fc: frontier_centroids) {
+    double wx = ox + (fc.x * res) + (res / 2.0);
+    double wy = oy + (fc.y * res) + (res / 2.0);
+  
+    // Proximity security filter
     double dx = wx - pose.pose.pose.position.x;
     double dy = wy - pose.pose.pose.position.y;
-    if ((dx*dx + dy*dy) < proximity_radius_ * proximity_radius_) continue;
+    if ((dx*dx + dy*dy) < proximity_radius_*proximity_radius_) continue;
 
-    // Safe final frontier points
-    geometry_msgs::msg::Point target_point;
-    target_point.x = wx;
-    target_point.y = wy;
-    target_point.z = 0.0;
-    frontier_points.push_back(target_point);
+    // Save to final list
+    geometry_msgs::msg::Point p;
+    p.x = wx;
+    p.y = wy;
+    p.z = 0.0;
+    final_frontier.push_back(p);
   }
 
-  return frontier_points;
+  if (final_frontier.empty() && dbscan_eps_px_ != 0 && dbscan_min_points_ != 0) {
+    RCLCPP_WARN(get_node()->get_logger(),
+      "No DBSCAN clustering possible, changing to raw frontier.");
+  
+    dbscan_eps_px_ = dbscan_min_points_ = 0;
+  }
+
+  return final_frontier;
 }
 
 }  // namespace easynav

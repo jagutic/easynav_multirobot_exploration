@@ -172,7 +172,7 @@ MultiplexorMapsManager::get_global_bounds() {
 
   // Iterate through all available maps to find the global min/max coordinates.
   for (const auto &[id, map] : maps_) {
-    if (!map.getCharMap()) continue;
+  if (map.getSizeInCellsX() == 0 || map.getSizeInCellsY() == 0) continue;
 
     geometry_msgs::msg::Pose2D pose = robots_coords_[id];
     double c = std::cos(pose.theta);
@@ -223,7 +223,7 @@ MultiplexorMapsManager::mux(Costmap2D &dst) {
 
   // Get fixed map from the list
   const Costmap2D &fixed_map = maps_[fixed_map_ns_];
-  if (!fixed_map.getCharMap()) {
+  if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
     RCLCPP_WARN(get_node()->get_logger(), "Not fixed map yet");
     return;
   }
@@ -258,7 +258,7 @@ MultiplexorMapsManager::mux(Costmap2D &dst) {
   // Merge other robots maps into the expanded mat.
   for (const auto &[ns, incoming_map] : maps_) {
     if (ns == fixed_map_ns_) continue;
-    if (!incoming_map.getCharMap()) continue;
+    if (incoming_map.getSizeInCellsX() == 0 || incoming_map.getSizeInCellsY() == 0) continue;
 
     // Use costmap for data correspondecy
     cv::Mat incoming_mat(incoming_map.getSizeInCellsY(),
