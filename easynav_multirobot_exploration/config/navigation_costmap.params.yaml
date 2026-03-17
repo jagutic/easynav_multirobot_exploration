@@ -59,8 +59,9 @@ r1/maps_manager_node:
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
       obstacle_threshold: 5
-      dbscan_eps_px: 2
-      dbscan_min_points: 5
+      clustering: true
+      dbscan_eps_px: 0
+      dbscan_min_points: 10
 
 r1/planner_node:
   ros__parameters:
@@ -157,8 +158,9 @@ r2/maps_manager_node:
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
       obstacle_threshold: 5
-      dbscan_eps_px: 2
-      dbscan_min_points: 5
+      clustering: true
+      dbscan_eps_px: 0
+      dbscan_min_points: 10
 
 r2/planner_node:
   ros__parameters:
@@ -256,8 +258,9 @@ r3/maps_manager_node:
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3
       obstacle_threshold: 5
-      dbscan_eps_px: 2
-      dbscan_min_points: 5
+      clustering: true
+      dbscan_eps_px: 0
+      dbscan_min_points: 10
 
 r3/planner_node:
   ros__parameters:

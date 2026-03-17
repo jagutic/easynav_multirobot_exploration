@@ -89,11 +89,9 @@ public:
 private:
   /**
    * @brief Converts the raw mathematical frontier coordinates into a ROS 2 Marker for RViz.
-   * @param frontier The extracted vector of spatial coordinates outlining the unknown space.
-   * @return A visualization_msgs::Marker constructed as a set of points (usually blue).
+   * @param points The extracted vector of spatial coordinates outlining the unknown space.
    */
-  visualization_msgs::msg::Marker fill_marker(
-    const std::vector<geometry_msgs::msg::Point>& frontier);
+  void fill_marker(const std::vector<geometry_msgs::msg::Point>& points);
 
   /**
    * @brief Groups nearby frontier pixels and calculates their geometric centers (centroids).
@@ -115,25 +113,18 @@ private:
    */
   std::vector<geometry_msgs::msg::Point> get_frontier(const Costmap2D& map, const nav_msgs::msg::Odometry& pose);
 
-  // Cross distribution in orden to eliminate noise caused by isolated pixels
-  cv::Mat CROSS_KERNEL = (cv::Mat_<char>(3, 3) << 
-    -1,  1, -1,
-     1, -1,  1,
-    -1,  1, -1
-  );
-  cv::Mat CROSS_MASK = (cv::Mat_<uchar>(3, 3) << 
-    0, 1, 0,
-    1, 0, 1,
-    0, 1, 0
-  );                                      /// Constant value for safety zone around resultant muxed map.
-
+  visualization_msgs::msg::Marker marker_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frontier_pub_; ///< Publisher for RViz visualization.
   
-  /** Frontier adjustmente params */
+  /** Frontier params */
   int obstacle_threshold_;
   float proximity_radius_;
+
+  /** Clustering params */
   int dbscan_eps_px_;
   int dbscan_min_points_;
+  bool clustering_;
+  rclcpp::TimerBase::SharedPtr clustering_timer_;
   
   /** Internal matrixes to improve efficiency */
   cv::Mat free_space_;

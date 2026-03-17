@@ -237,10 +237,13 @@ MultiplexorMapsManager::mux(Costmap2D &dst) {
 
   // Resize final costmap and create aux final mat filled with NO_INFORMATION
   BoundingBox bounds = get_global_bounds();
-  uint32_t new_w = std::ceil((bounds.max_x - bounds.min_x) / res);
-  uint32_t new_h = std::ceil((bounds.max_y - bounds.min_y) / res);
+  double aligned_ox = local_x - std::floor((local_x - bounds.min_x) / res) * res;
+  double aligned_oy = local_y - std::floor((local_y - bounds.min_y) / res) * res;
 
-  dst.resizeMap(new_w, new_h, res, bounds.min_x, bounds.min_y);
+  uint32_t new_w = std::ceil((bounds.max_x - aligned_ox) / res);
+  uint32_t new_h = std::ceil((bounds.max_y - aligned_oy) / res);
+
+  dst.resizeMap(new_w, new_h, res, aligned_ox, aligned_oy);
   dst.resetMapToValue(0, 0, new_w, new_h, easynav::NO_INFORMATION);
   cv::Mat dst_mat(new_h, new_w, CV_8UC1, dst.getCharMap());
 

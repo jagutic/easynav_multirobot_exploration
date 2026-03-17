@@ -27,16 +27,33 @@ FrontierMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Frontier Maps Manager");
 
-  // Get params
   node->declare_parameter(plugin_name + ".obstacle_threshold", easynav::FREE_SPACE);
   node->declare_parameter(plugin_name + ".proximity_radius", 0.0);
-  node->declare_parameter(plugin_name + ".dbscan_eps_px", 0);
-  node->declare_parameter(plugin_name + ".dbscan_min_points", 0);
+  node->declare_parameter(plugin_name + ".clustering", false);
 
   node->get_parameter(plugin_name + ".obstacle_threshold", obstacle_threshold_);
   node->get_parameter(plugin_name + ".proximity_radius", proximity_radius_);
-  node->get_parameter(plugin_name + ".dbscan_eps_px", dbscan_eps_px_);
-  node->get_parameter(plugin_name + ".dbscan_min_points", dbscan_min_points_);
+  node->get_parameter(plugin_name + ".clustering", clustering_);
+
+  // Clustering dbssacn params
+  if (clustering_) {
+    node->declare_parameter(plugin_name + ".dbscan_eps_px", 0);
+    node->declare_parameter(plugin_name + ".dbscan_min_points", 0);
+
+    node->get_parameter(plugin_name + ".dbscan_eps_px", dbscan_eps_px_);
+    node->get_parameter(plugin_name + ".dbscan_min_points", dbscan_min_points_);
+  }
+
+  // Init internal marker parameters
+  marker_.ns = "frontier";
+  marker_.id = 0;
+  marker_.action = visualization_msgs::msg::Marker::ADD;
+
+  marker_.color.r = 0.0;
+  marker_.color.g = 0.0;
+  marker_.color.b = 1.0; // Solid blue
+  marker_.color.a = 1.0;
+
 
   // Create publisher for visual debugging of the frontier in RViz
   frontier_pub_ = get_node()->create_publisher<visualization_msgs::msg::Marker>(
@@ -66,65 +83,53 @@ FrontierMapsManager::update(NavState & nav_state)
   frontier = get_frontier(fixed_map, robot_pose);
 
   if (frontier.empty()) {
-    RCLCPP_WARN(get_node()->get_logger(), "No frontier possible");
+    RCLCPP_DEBUG(get_node()->get_logger(), "No frontier possible");
     return;
   }
-  
+
   // Publish and save result in navstate
   const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
   rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
 
-  auto marker = fill_marker(frontier);
-  marker.header.frame_id = tf_info.map_frame;
-  marker.header.stamp = map_stamp;
-  frontier_pub_->publish(marker);
+  fill_marker(frontier);
+  marker_.header.frame_id = tf_info.map_frame;
+  marker_.header.stamp = map_stamp;
+  frontier_pub_->publish(marker_);
   
   // Expose the valid frontier points to the rest of the easynav system
   nav_state.set("frontier", frontier);
 }
 
-visualization_msgs::msg::Marker
+void
 FrontierMapsManager::fill_marker(
-  const std::vector<geometry_msgs::msg::Point>& frontier)
+  const std::vector<geometry_msgs::msg::Point>& points)
 {
-  visualization_msgs::msg::Marker marker;
-  marker.ns = "frontier";
-  marker.id = 0;
-  marker.type = visualization_msgs::msg::Marker::POINTS;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  
-  // Points size
-  marker.scale.x = 0.05; 
-  marker.scale.y = 0.05;
-
-  // Color (Default: Solid Blue)
-  marker.color.r = 0.0;
-  marker.color.g = 0.0;
-  marker.color.b = 1.0;
-  marker.color.a = 1.0;
+  // Select points size
+  if (clustering_) {
+    marker_.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+    marker_.scale.x = 0.15; 
+    marker_.scale.y = 0.15;
+    marker_.scale.z = 0.15;
+  } else {
+    marker_.type = visualization_msgs::msg::Marker::POINTS;
+    marker_.scale.x = 0.05; 
+    marker_.scale.y = 0.05;
+  }
 
   // Append each geometric point to the marker's array
-  for (const auto& pt : frontier) {
+  marker_.points.clear();
+  for (const auto& pt : points) {
     geometry_msgs::msg::Point p;
     p.x = pt.x;
     p.y = pt.y;
-    p.z = 0.0; // Flat 2D exploration
-    marker.points.push_back(p);
+    p.z = 0.0;
+    marker_.points.push_back(p);
   }
-  return marker;
 }
 
 std::vector<cv::Point>
 FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
 {
-  if (dbscan_eps_px_ == 0 && dbscan_min_points_ == 0) {
-    std::vector<cv::Point> raw_points;
-    if (cv::countNonZero(points) > 0) {
-      cv::findNonZero(points, raw_points);
-    }
-    return raw_points;
-  }
-
   // Epsilon: dilate to group points
   cv::Mat kernel = cv::getStructuringElement(
     cv::MORPH_ELLIPSE,
@@ -147,11 +152,35 @@ FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
     // Discard insignificant groups with min_points
     if (stats.at<int>(i, cv::CC_STAT_AREA) < dbscan_min_points_) continue;
 
-    centroids.push_back(cv::Point(
-      raw_centroids.at<double>(i, 0),
-      raw_centroids.at<double>(i, 1)
-    ));
+    // We need centroid to be ON the frontier
+    cv::Point2d math_center(raw_centroids.at<double>(i, 0), raw_centroids.at<double>(i, 1));
+
+    int left = stats.at<int>(i, cv::CC_STAT_LEFT);
+    int top = stats.at<int>(i, cv::CC_STAT_TOP);
+    int width = stats.at<int>(i, cv::CC_STAT_WIDTH);
+    int height = stats.at<int>(i, cv::CC_STAT_HEIGHT);
+
+    cv::Point best_p;
+    bool found = false;
+    double min_dist = std::numeric_limits<double>::max();
+
+    // Get closest point to centroid ON the frontier
+    for (int y = top; y < top + height; ++y) {
+      for (int x = left; x < left + width; ++x) {
+        if (labels.at<int>(y, x) == i && points.at<uchar>(y, x) > 0) {
+          double dist = cv::norm(cv::Point2d(x, y) - math_center);
+          
+          if (dist < min_dist) {
+            min_dist = dist;
+            best_p = cv::Point(x, y);
+            found = true;
+          }
+        }
+      }
+    }
+    if (found) centroids.push_back(best_p);
   }
+
   return centroids;
 }
 
@@ -210,20 +239,26 @@ FrontierMapsManager::get_frontier(
   cv::bitwise_and(frontier, reachable_actual_, frontier);
 
 
-  // Extract centroids (final frontier)
-  std::vector<cv::Point> frontier_centroids;
-  frontier_centroids = get_centroids_DBSCAN(frontier);
+  // Extract frontier points,
+  // grouping them in clusters or using raw points
+  std::vector<cv::Point> frontier_points;
 
-  if (frontier_centroids.empty()) {
-    RCLCPP_WARN(get_node()->get_logger(), "No centroids possible.");
+  if (clustering_) {
+    frontier_points = get_centroids_DBSCAN(frontier);
+  } else if (cv::countNonZero(frontier) > 0) {
+    cv::findNonZero(frontier, frontier_points);
+  }
+
+  if (frontier_points.empty()) {
+    RCLCPP_WARN(get_node()->get_logger(), "No frontier points list");
     return {};
   }
 
   // Translate to ROS msg
   std::vector<geometry_msgs::msg::Point> final_frontier;
-  final_frontier.reserve(frontier_centroids.size());
+  final_frontier.reserve(frontier_points.size());
 
-  for (const auto& fc: frontier_centroids) {
+  for (const auto& fc: frontier_points) {
     double wx = ox + (fc.x * res) + (res / 2.0);
     double wy = oy + (fc.y * res) + (res / 2.0);
   
@@ -240,11 +275,26 @@ FrontierMapsManager::get_frontier(
     final_frontier.push_back(p);
   }
 
-  if (final_frontier.empty() && dbscan_eps_px_ != 0 && dbscan_min_points_ != 0) {
-    RCLCPP_WARN(get_node()->get_logger(),
-      "No DBSCAN clustering possible, changing to raw frontier.");
-  
-    dbscan_eps_px_ = dbscan_min_points_ = 0;
+  // If clustering wasnt possible, change temporarily to raw mode
+  if (clustering_) {
+    if (final_frontier.empty()) {
+      clustering_ = false;
+      RCLCPP_INFO(get_node()->get_logger(),
+        "No DBSCAN clustering possible, changing to raw frontier.");
+
+      // Timer to re-try clustering in x seconds
+      if (!clustering_timer_) {
+        clustering_timer_ = get_node()->create_wall_timer(
+          5s, [this]() {
+            clustering_ = true;
+            RCLCPP_INFO(get_node()->get_logger(), "Re-Trying Clustering");
+          }
+        );
+      }
+
+
+    // When cluster possible, delete timer
+    } else {clustering_timer_ = nullptr;}
   }
 
   return final_frontier;
