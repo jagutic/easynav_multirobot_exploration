@@ -113,18 +113,20 @@ private:
    */
   std::vector<geometry_msgs::msg::Point> get_frontier(const Costmap2D& map, const nav_msgs::msg::Odometry& pose);
 
-  visualization_msgs::msg::Marker marker_;
+  rclcpp::TimerBase::SharedPtr clustering_timer_;                              /// Retrying timer if clustering fails
+  visualization_msgs::msg::Marker marker_;                                     /// Marker to be published
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frontier_pub_; ///< Publisher for RViz visualization.
-  
-  /** Frontier params */
+
+  /** Internal Flags */
+  bool clustering_;
+  bool invalid_frontier_ = false;
+
+  /** Adjustment params */
   int obstacle_threshold_;
   float proximity_radius_;
 
-  /** Clustering params */
   int dbscan_eps_px_;
   int dbscan_min_points_;
-  bool clustering_;
-  rclcpp::TimerBase::SharedPtr clustering_timer_;
   
   /** Internal matrixes to improve efficiency */
   cv::Mat free_space_;

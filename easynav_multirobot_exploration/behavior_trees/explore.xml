@@ -2,14 +2,23 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="explore">
     <RetryUntilSuccessful num_attempts="-1">
-      <Sequence>
-        <GetPose pose="{p}"/>
-        <ChooseFrontierGoal robot_pose="{p}"
-                            frontier_goal="{fg}"/>
-        <!-- <IsGoalValid new_goal="{fg}"/> -->
-        <GoToPose goal_pose="{fg}"/>
-        <IsExplored/>
-      </Sequence>
+      <ReactiveSequence>
+        <GetExplorationData frontier="{f}"
+                            pose="{p}"
+                            map="{m}"/>
+        <ReactiveFallback>
+          <IsExplored frontier_to_check="{f}"
+                      map_to_check="{m}"/>
+          <Sequence>
+            <ChooseFrontierGoal robot_pose="{p}"
+                                robot_frontier="{f}"
+                                frontier_goal="{fg}"/>
+            <GoToPose goal_pose="{fg}"/>
+            <IsExplored frontier_to_check="{f}"
+                        map_to_check="{m}"/>
+          </Sequence>
+        </ReactiveFallback>
+      </ReactiveSequence>
     </RetryUntilSuccessful>
   </BehaviorTree>
 
@@ -19,13 +28,19 @@
             editable="true">
       <input_port name="robot_pose"
                   type="geometry_msgs::msg::Pose"/>
+      <input_port name="robot_frontier"
+                  type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <output_port name="frontier_goal"
                    type="geometry_msgs::msg::Pose"/>
     </Action>
-    <Action ID="GetPose"
+    <Action ID="GetExplorationData"
             editable="true">
+      <output_port name="frontier"
+                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <output_port name="pose"
-                  type="geometry_msgs::msg::Pose"/>
+                   type="geometry_msgs::msg::Pose"/>
+      <input_port name="map"
+                  type="nav_msgs::msg::OccupancyGrid"/>
     </Action>
     <Action ID="GoToPose"
             editable="true">
@@ -34,11 +49,10 @@
     </Action>
     <Condition ID="IsExplored"
                editable="true">
-    </Condition>
-    <Condition ID="IsGoalValid"
-               editable="true">
-      <input_port name="new_goal"
-                  type="geometry_msgs::msg::Pose"/>
+      <input_port name="frontier_to_check"
+                  type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
+      <input_port name="map_to_check"
+                  type="nav_msgs::msg::OccupancyGrid"/>
     </Condition>
   </TreeNodesModel>
 

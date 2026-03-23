@@ -5,10 +5,10 @@ r1/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 1.0
-      max_angular_speed: 1.5
-      look_ahead_dist: 0.3
-      k_rot: 0.8
+      max_linear_speed: 0.6
+      max_angular_speed: 1.0
+      look_ahead_dist: 0.2
+      k_rot: 0.5
 
 r1/localizer_node:
   ros__parameters:
@@ -66,8 +66,8 @@ r1/maps_manager_node:
 r1/planner_node:
   ros__parameters:
     use_sim_time: true
-    planner_types: [simple]
-    simple:
+    planner_types: [costmap]
+    costmap:
       freq: 0.5
       plugin: easynav_costmap_planner/CostmapPlanner
       cost_factor: 10.0
@@ -165,8 +165,8 @@ r2/maps_manager_node:
 r2/planner_node:
   ros__parameters:
     use_sim_time: true
-    planner_types: [simple]
-    simple:
+    planner_types: [costmap]
+    costmap:
       freq: 0.5
       plugin: easynav_costmap_planner/CostmapPlanner
       cost_factor: 10.0
@@ -265,8 +265,8 @@ r3/maps_manager_node:
 r3/planner_node:
   ros__parameters:
     use_sim_time: true
-    planner_types: [simple]
-    simple:
+    planner_types: [costmap]
+    costmap:
       freq: 0.5
       plugin: easynav_costmap_planner/CostmapPlanner
       cost_factor: 10.0

@@ -30,7 +30,8 @@ def generate_launch_description():
         remappings=[
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static'),
-            ('frontier_topic', 'maps_manager_node/frontier/points')
+            ('frontier_topic', 'maps_manager_node/frontier/points'),
+            ('map_topic', 'maps_manager_node/multiplexor/map')
         ]
     )
 

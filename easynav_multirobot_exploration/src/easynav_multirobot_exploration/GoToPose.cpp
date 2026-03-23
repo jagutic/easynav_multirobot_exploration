@@ -16,21 +16,20 @@ BT::NodeStatus
 GoToPose::tick()
 {
   easynav_interfaces::msg::NavigationControl response;
-  easynav::GoalManagerClient::State state;
-  state = nav_client_->get_state();
   
-  switch (state) {
+  switch (nav_client_->get_state()) {
+    // No action in these states
     case easynav::GoalManagerClient::State::SENT_GOAL:
     case easynav::GoalManagerClient::State::SENT_PREEMPT:
       return BT::NodeStatus::RUNNING;
-    
+
     // Manage error state
     case easynav::GoalManagerClient::State::ERROR:
       RCLCPP_ERROR(node_->get_logger(), "Error with goal manager client");
       nav_client_->reset();
       return BT::NodeStatus::FAILURE;
 
-    // Manage finished state
+    // Manage failure or successs navigation ending
     case easynav::GoalManagerClient::State::NAVIGATION_CANCELLED:
     case easynav::GoalManagerClient::State::NAVIGATION_FAILED:
       response = nav_client_->get_result();

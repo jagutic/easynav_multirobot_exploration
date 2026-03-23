@@ -7,7 +7,7 @@
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
 #include "easynav_multirobot_exploration/IsGoalValid.hpp"
 #include "easynav_multirobot_exploration/GoToPose.hpp"
-#include "easynav_multirobot_exploration/GetPose.hpp"
+#include "easynav_multirobot_exploration/GetExplorationData.hpp"
 #include "easynav_multirobot_exploration/IsExplored.hpp"
 
 using namespace std::chrono_literals;
@@ -20,12 +20,11 @@ int main(int argc, char **argv)
   factory.registerNodeType<multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
   factory.registerNodeType<multirobot_exploration::IsGoalValid>("IsGoalValid");
   factory.registerNodeType<multirobot_exploration::GoToPose>("GoToPose");
-  factory.registerNodeType<multirobot_exploration::GetPose>("GetPose");
+  factory.registerNodeType<multirobot_exploration::GetExplorationData>("GetExplorationData");
   factory.registerNodeType<multirobot_exploration::IsExplored>("IsExplored");
 
   // Parameters to set in blackboard
   std::string map_frame, robot_frame, odom_frame;
-
   auto blackboard = BT::Blackboard::create();
   auto node = std::make_shared<rclcpp::Node>("explorer");
 

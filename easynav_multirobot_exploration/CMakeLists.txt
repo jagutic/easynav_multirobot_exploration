@@ -19,14 +19,14 @@ find_package(easynav_system REQUIRED)
 add_library(choose_frontier_goal_bt_node SHARED src/${PROJECT_NAME}/ChooseFrontierGoal.cpp)
 add_library(is_goal_valid_bt_node SHARED src/${PROJECT_NAME}/IsGoalValid.cpp)
 add_library(go_to_pose_bt_node SHARED src/${PROJECT_NAME}/GoToPose.cpp)
-add_library(get_pose_bt_node SHARED src/${PROJECT_NAME}/GetPose.cpp)
+add_library(get_exploration_data_bt_node SHARED src/${PROJECT_NAME}/GetExplorationData.cpp)
 add_library(is_explored SHARED src/${PROJECT_NAME}/IsExplored.cpp)
 
 set(plugin_libs
   choose_frontier_goal_bt_node
   is_goal_valid_bt_node
   go_to_pose_bt_node
-  get_pose_bt_node
+  get_exploration_data_bt_node
   is_explored
 )
 

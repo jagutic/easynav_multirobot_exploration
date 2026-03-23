@@ -27,6 +27,7 @@ FrontierMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Frontier Maps Manager");
 
+  // Frontier extraction params
   node->declare_parameter(plugin_name + ".obstacle_threshold", easynav::FREE_SPACE);
   node->declare_parameter(plugin_name + ".proximity_radius", 0.0);
   node->declare_parameter(plugin_name + ".clustering", false);
@@ -35,14 +36,17 @@ FrontierMapsManager::on_initialize()
   node->get_parameter(plugin_name + ".proximity_radius", proximity_radius_);
   node->get_parameter(plugin_name + ".clustering", clustering_);
 
-  // Clustering dbssacn params
   if (clustering_) {
+    RCLCPP_INFO(node->get_logger(), "Clustering mode active");
+
     node->declare_parameter(plugin_name + ".dbscan_eps_px", 0);
     node->declare_parameter(plugin_name + ".dbscan_min_points", 0);
 
     node->get_parameter(plugin_name + ".dbscan_eps_px", dbscan_eps_px_);
     node->get_parameter(plugin_name + ".dbscan_min_points", dbscan_min_points_);
-  }
+
+  } else  RCLCPP_INFO(node->get_logger(), "Raw mode active");
+
 
   // Init internal marker parameters
   marker_.ns = "frontier";
@@ -69,6 +73,7 @@ FrontierMapsManager::update(NavState & nav_state)
 
   // Wait until we have robot position
   if (!nav_state.has("robot_pose") || !nav_state.has("map.dynamic")) return;
+
   const auto& robot_pose = nav_state.get<nav_msgs::msg::Odometry>("robot_pose");
   
   // Wait until we have map
@@ -82,8 +87,12 @@ FrontierMapsManager::update(NavState & nav_state)
   std::vector<geometry_msgs::msg::Point> frontier;
   frontier = get_frontier(fixed_map, robot_pose);
 
-  if (frontier.empty()) {
-    RCLCPP_DEBUG(get_node()->get_logger(), "No frontier possible");
+  // Invalid != empty, empty may be useful
+  if (invalid_frontier_) {
+    RCLCPP_WARN(get_node()->get_logger(), "Invalid frontier");
+
+    // Reset, by default frontiers are supossed to be valid
+    invalid_frontier_ = false;
     return;
   }
 
@@ -174,10 +183,8 @@ FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
             min_dist = dist;
             best_p = cv::Point(x, y);
             found = true;
-          }
-        }
-      }
-    }
+    }}}}
+  
     if (found) centroids.push_back(best_p);
   }
 
@@ -200,8 +207,10 @@ FrontierMapsManager::get_frontier(
   unsigned int pose_x, pose_y;
   if (!map.worldToMap(pose.pose.pose.position.x, pose.pose.pose.position.y, pose_x, pose_y)) {
     RCLCPP_WARN(get_node()->get_logger(), "Robot not in map.");
+    invalid_frontier_ = true;
     return {};
   }
+
   unsigned char robot_cost = map.getCost(pose_x, pose_y);
   if (robot_cost < easynav::FREE_SPACE || robot_cost > obstacle_threshold_) {
     RCLCPP_WARN(
@@ -209,9 +218,9 @@ FrontierMapsManager::get_frontier(
       "Robot is not in free space (Cost: %d)", 
       robot_cost
     );
+    invalid_frontier_ = true;
     return {};
   }
-
 
   /** Frontier search */
   cv::Mat map_mat(height, width, CV_8UC1, map.getCharMap());
@@ -242,16 +251,14 @@ FrontierMapsManager::get_frontier(
   // Extract frontier points,
   // grouping them in clusters or using raw points
   std::vector<cv::Point> frontier_points;
+  bool centroids_empty = false;
 
   if (clustering_) {
     frontier_points = get_centroids_DBSCAN(frontier);
+    if (frontier_points.empty()) centroids_empty = true;
+
   } else if (cv::countNonZero(frontier) > 0) {
     cv::findNonZero(frontier, frontier_points);
-  }
-
-  if (frontier_points.empty()) {
-    RCLCPP_WARN(get_node()->get_logger(), "No frontier points list");
-    return {};
   }
 
   // Translate to ROS msg
@@ -275,12 +282,14 @@ FrontierMapsManager::get_frontier(
     final_frontier.push_back(p);
   }
 
-  // If clustering wasnt possible, change temporarily to raw mode
+  // If clustering wasnt possible due to proximity filter, change to raw mode
   if (clustering_) {
-    if (final_frontier.empty()) {
+    invalid_frontier_ = final_frontier.empty() && !centroids_empty;
+
+    if (invalid_frontier_) { // Only when centroid(s) where eliminated due to proximity filter
       clustering_ = false;
       RCLCPP_INFO(get_node()->get_logger(),
-        "No DBSCAN clustering possible, changing to raw frontier.");
+        "No DBSCAN clustering possible, changing to Raw Frontier mode.");
 
       // Timer to re-try clustering in x seconds
       if (!clustering_timer_) {
@@ -291,7 +300,6 @@ FrontierMapsManager::get_frontier(
           }
         );
       }
-
 
     // When cluster possible, delete timer
     } else {clustering_timer_ = nullptr;}
