@@ -10,7 +10,21 @@ from launch.actions import DeclareLaunchArgument
 def generate_launch_description():
     pkg = get_package_share_directory('easynav_multirobot_exploration')
 
+    params_file = LaunchConfiguration('params_file')
+    bt_xml_file = LaunchConfiguration('bt_xml_file')
     namespace = LaunchConfiguration('namespace')
+
+    declare_params_file_argument = DeclareLaunchArgument(
+        'params_file',
+        default_value=os.path.join(pkg, 'config', 'explorer.params.yaml'),
+        description='Absolute path to parameter file'
+    )
+
+    declare_bt_xml_argument = DeclareLaunchArgument(
+        'bt_xml_file',
+        default_value=os.path.join(pkg, 'behavior_trees', 'explore.xml'),
+        description='Absolut path to behaviour tree xml file'
+    )
 
     declare_namespace_argument = DeclareLaunchArgument(
         'namespace',
@@ -22,8 +36,8 @@ def generate_launch_description():
         executable='explorer',
         name='explorer',
         parameters=[
-            os.path.join(pkg, 'config', 'explorer.params.yaml'),
-            {'bt_xml_file': os.path.join(pkg, 'behavior_trees', 'explore.xml')}
+            params_file,
+            {'bt_xml_file': bt_xml_file}
             ],
         output='screen',
         namespace=namespace,
@@ -36,6 +50,8 @@ def generate_launch_description():
     )
 
     ld = LaunchDescription()
+    ld.add_action(declare_params_file_argument)
+    ld.add_action(declare_bt_xml_argument)
     ld.add_action(declare_namespace_argument)
     ld.add_action(explorer)
     return ld
