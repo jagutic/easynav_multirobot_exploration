@@ -4,9 +4,9 @@ namespace multirobot_exploration
 {
 
 ChooseFrontierGoal::ChooseFrontierGoal(
-  const std::string& name,
-  const BT::NodeConfig& conf)
-  : BT::SyncActionNode(name, conf)
+  const std::string & name,
+  const BT::NodeConfig & conf)
+: BT::SyncActionNode(name, conf)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** ChooseFrontierGoal **");
@@ -48,7 +48,7 @@ ChooseFrontierGoal::tick()
 
 geometry_msgs::msg::Pose
 ChooseFrontierGoal::calc_closest_goal(
-  const Pose& pose, const std::vector<Point>& frontier)
+  const Pose & pose, const std::vector<Point> & frontier)
 {
   geometry_msgs::msg::Pose frontier_goal;
   double min_dist_sq = std::numeric_limits<double>::max();

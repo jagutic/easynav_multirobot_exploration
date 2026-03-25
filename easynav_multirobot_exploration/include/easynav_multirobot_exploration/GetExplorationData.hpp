@@ -30,7 +30,7 @@ using visualization_msgs::msg::Marker;
 /**
  * @class GetExplorationData
  * @brief Behavior Tree action node that retrieves the current pose of the robot.
- * * This node queries the TF2 tree to find the transform between the map frame 
+ * * This node queries the TF2 tree to find the transform between the map frame
  * and the robot's base frame, returning it as a geometry_msgs::Pose.
  */
 class GetExplorationData : public BT::SyncActionNode
@@ -41,13 +41,13 @@ public:
    * @param name The name of the node in the behavior tree.
    * @param conf The node configuration containing blackboard bindings.
    */
-  GetExplorationData(const std::string& name, const BT::NodeConfig& conf);
+  GetExplorationData(const std::string & name, const BT::NodeConfig & conf);
 
   /**
    * @brief Main execution function for the BT node.
-   * * Looks up the latest TF transform to determine the robot's position 
+   * * Looks up the latest TF transform to determine the robot's position
    * and sets the result on the blackboard.
-   * * @return BT::NodeStatus::SUCCESS if the pose was successfully retrieved, 
+   * * @return BT::NodeStatus::SUCCESS if the pose was successfully retrieved,
    * BT::NodeStatus::FAILURE if the TF lookup fails.
    */
   BT::NodeStatus tick() override;

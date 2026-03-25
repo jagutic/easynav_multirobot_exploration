@@ -48,10 +48,11 @@ using nav_msgs::msg::OccupancyGrid;
 
 /**
  * @brief Represents a 2D spatial bounding box.
- * * Used to calculate the global dimensions required to fit multiple 
+ * * Used to calculate the global dimensions required to fit multiple
  * overlapping or disjoint local maps into a single global map.
  */
-struct BoundingBox {
+struct BoundingBox
+{
   double min_x = std::numeric_limits<double>::max();
   double min_y = std::numeric_limits<double>::max();
   double max_x = std::numeric_limits<double>::lowest();
@@ -65,7 +66,7 @@ struct BoundingBox {
  *
  * This manager merges multiple local occupancy grids with grid saved in navstate
  * Subscribes to multiple map topics passed as parameters.
- * Calculates the required global boundaries, and multiplexes them into a single 
+ * Calculates the required global boundaries, and multiplexes them into a single
  * unified OccupancyGrid that is both published to ROS and set on the nav_state.
  */
 class MultiplexorMapsManager : public easynav::MapsManagerBase
@@ -105,7 +106,6 @@ public:
    * @param origin_coord_id The frame identifier to be used as the shared (0,0) origin.
    */
   void translate_robot_coords(std::string origin_coord_id);
-  
 
 private:
   /**
@@ -122,15 +122,15 @@ private:
 
   /**
    * @brief Merges the internal cache of local maps into src, using dst as output global map.
-   * * This method handles the grid indexing translation and resolves overlapping pixel 
+   * * This method handles the grid indexing translation and resolves overlapping pixel
    * values (e.g., preserving known obstacles over unknown space).
    * @param dst destination for new global map
    */
-  void mux(Costmap2D& dst);
+  void mux(Costmap2D & dst);
 
   std::map<std::string, Costmap2D> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
   std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
-  
+
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;     ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
 

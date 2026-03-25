@@ -22,8 +22,8 @@ namespace easynav
 
 /**
  * @brief Localization method that pulls the robot pose directly from TF Tree.
- * * This class implements a "lazy" approach: it does not perform any internal 
- * probabilistic calculation (like AMCL or EKF). Instead, it acts as a bridge 
+ * * This class implements a "lazy" approach: it does not perform any internal
+ * probabilistic calculation (like AMCL or EKF). Instead, it acts as a bridge
  * between the TF Tree (provided by SLAM or other sources) and the NavState blackboard.
  */
 class LazyLocalizer : public LocalizerMethodBase

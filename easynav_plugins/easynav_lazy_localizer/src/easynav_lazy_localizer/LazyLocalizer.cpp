@@ -36,7 +36,7 @@ void
 LazyLocalizer::on_initialize()
 {
   auto node = get_node();
-  // We call it "Lazy" because it doesn't compute localization; it just trusts 
+  // We call it "Lazy" because it doesn't compute localization; it just trusts
   // and copies the transform already provided by another node (like SLAM).
   RCLCPP_INFO(node->get_logger(), "Initialized Lazy Localizer (trusting existing TFs)");
 }
@@ -84,7 +84,7 @@ LazyLocalizer::get_pose()
   pose.pose.pose.position.y = tf_robot.getOrigin().y();
   pose.pose.pose.position.z = tf_robot.getOrigin().z();
   pose.pose.pose.orientation = tf2::toMsg(tf_robot.getRotation());
-  
+
   // No velocity estimation in lazy mode.
   pose.twist.twist.linear.x = 0.0;
   pose.twist.twist.linear.y = 0.0;

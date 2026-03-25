@@ -15,7 +15,7 @@ using geometry_msgs::msg::Pose;
 class IsGoalValid : public BT::ConditionNode
 {
 public:
-  IsGoalValid(const std::string& name, const BT::NodeConfig& conf);
+  IsGoalValid(const std::string & name, const BT::NodeConfig & conf);
 
   BT::NodeStatus tick() override;
   static BT::PortsList providedPorts()

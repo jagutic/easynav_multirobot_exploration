@@ -5,10 +5,13 @@ r1/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.6
-      max_angular_speed: 1.0
-      look_ahead_dist: 0.2
-      k_rot: 0.5
+      max_linear_speed: 0.5
+      max_angular_speed: 0.7
+      look_ahead_dist: 0.4
+      k_rot: 0.75
+      k_p: 1.0
+      k_i: 0.0
+      k_d: 0.3
 
 r1/localizer_node:
   ros__parameters:
@@ -31,8 +34,8 @@ r1/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
       inflation:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 0.5
-        cost_scaling_factor: 8.0
+        inflation_radius: 0.6
+        cost_scaling_factor: 7.0
         inscribed_radius: 0.05
     multiplexor:
       freq: 5.0
@@ -45,13 +48,13 @@ r1/maps_manager_node:
         Y: 0.0
         topic: "local_map"
       r2:
-        x: -3.5
-        y: -2.0
+        x: -7.0
+        y: -3.0
         Y: 0.0
         topic: "local_map"
       r3:
-        x: 3.5
-        y: 3.0
+        x: 7.0
+        y: -3.0
         Y: 0.0
         topic: "local_map"
     frontier:
@@ -104,10 +107,13 @@ r2/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 1.0
-      max_angular_speed: 1.5
-      look_ahead_dist: 0.3
-      k_rot: 0.8
+      max_linear_speed: 0.5
+      max_angular_speed: 0.7
+      look_ahead_dist: 0.4
+      k_rot: 0.75
+      k_p: 1.0
+      k_i: 0.0
+      k_d: 0.3
 
 r2/localizer_node:
   ros__parameters:
@@ -123,18 +129,18 @@ r2/maps_manager_node:
     use_sim_time: true
     map_types: [costmap, multiplexor, frontier]
     costmap:
-      freq: 5.0
+      freq: 10.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
       filters: [obstacles, inflation]
       obstacles:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
       inflation:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 0.5
-        cost_scaling_factor: 8.0
+        inflation_radius: 0.6
+        cost_scaling_factor: 7.0
         inscribed_radius: 0.05
     multiplexor:
-      freq: 2.0
+      freq: 5.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r2"
       robot_namespaces: ["r1", "r2", "r3"]
@@ -144,13 +150,13 @@ r2/maps_manager_node:
         Y: 0.0
         topic: "local_map"
       r2:
-        x: -3.5
-        y: -2.0
+        x: -7.0
+        y: -3.0
         Y: 0.0
         topic: "local_map"
       r3:
-        x: 3.5
-        y: 3.0
+        x: 7.0
+        y: -3.0
         Y: 0.0
         topic: "local_map"
     frontier:
@@ -204,10 +210,13 @@ r3/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 1.0
-      max_angular_speed: 1.5
-      look_ahead_dist: 0.3
-      k_rot: 0.8
+      max_linear_speed: 0.5
+      max_angular_speed: 0.7
+      look_ahead_dist: 0.4
+      k_rot: 0.75
+      k_p: 1.0
+      k_i: 0.0
+      k_d: 0.3
 
 r3/localizer_node:
   ros__parameters:
@@ -223,18 +232,18 @@ r3/maps_manager_node:
     use_sim_time: true
     map_types: [costmap, multiplexor, frontier]
     costmap:
-      freq: 5.0
+      freq: 10.0
       plugin: easynav_costmap_maps_manager/CostmapMapsManager
       filters: [obstacles, inflation]
       obstacles:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
       inflation:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 0.5
-        cost_scaling_factor: 8.0
+        inflation_radius: 0.6
+        cost_scaling_factor: 7.0
         inscribed_radius: 0.05
     multiplexor:
-      freq: 2.0
+      freq: 5.0
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r3"
       robot_namespaces: ["r1", "r2", "r3"]
@@ -244,13 +253,13 @@ r3/maps_manager_node:
         Y: 0.0
         topic: "local_map"
       r2:
-        x: -3.5
-        y: -2.0
+        x: -7.0
+        y: -3.0
         Y: 0.0
         topic: "local_map"
       r3:
-        x: 3.5
-        y: 3.0
+        x: 7.0
+        y: -3.0
         Y: 0.0
         topic: "local_map"
     frontier:

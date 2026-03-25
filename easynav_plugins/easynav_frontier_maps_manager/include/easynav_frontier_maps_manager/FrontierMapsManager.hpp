@@ -51,7 +51,7 @@ using nav_msgs::msg::OccupancyGrid;
  * @class FrontierMapsManager
  * @brief A plugin-based map manager using the CostMap data structure.
  * Isolates exploration frontiers from an occupancy grid.
- * Converts the ROS map into OpenCV matrices, applying morphological operations (floodFill, 
+ * Converts the ROS map into OpenCV matrices, applying morphological operations (floodFill,
  * dilate, morphEx) to cleanly extract the boundaries between reachable free space and unknown zones.
  */
 class FrontierMapsManager : public easynav::MapsManagerBase
@@ -91,27 +91,29 @@ private:
    * @brief Converts the raw mathematical frontier coordinates into a ROS 2 Marker for RViz.
    * @param points The extracted vector of spatial coordinates outlining the unknown space.
    */
-  void fill_marker(const std::vector<geometry_msgs::msg::Point>& points);
+  void fill_marker(const std::vector<geometry_msgs::msg::Point> & points);
 
   /**
    * @brief Groups nearby frontier pixels and calculates their geometric centers (centroids).
-   * * Acts as a density-based clustering filter (DBSCAN-style): uses dilation to merge 
-   * points within a specific pixel radius (Epsilon) and discards small clusters 
+   * * Acts as a density-based clustering filter (DBSCAN-style): uses dilation to merge
+   * points within a specific pixel radius (Epsilon) and discards small clusters
    * (MinPoints) to effectively eliminate sensor noise and fragmented frontiers.
    * * @param points Binary image (CV_8UC1) where white pixels represent detected frontiers.
    * @return A vector of image coordinates (pixels) representing the precise center of each cluster.
    */
-  std::vector<cv::Point> get_centroids_DBSCAN(cv::Mat& points);
+  std::vector<cv::Point> get_centroids_DBSCAN(cv::Mat & points);
 
   /**
    * @brief Core computer vision algorithm translating grid values to binary matrices to extract the boundary.
-   * * Applies morphological opening to clear sensor noise, uses floodFill to safely map reachable space 
+   * * Applies morphological opening to clear sensor noise, uses floodFill to safely map reachable space
    * from the robot's footprint, and extracts the dilated intersection with the unknown area.
    * @param map The current OccupancyGrid to be analyzed.
    * @param pose The current robot position used as the seed point for the floodFill algorithm.
    * @return A matrix of strictly safe, reachable points sitting directly on the frontier boundary.
    */
-  std::vector<geometry_msgs::msg::Point> get_frontier(const Costmap2D& map, const nav_msgs::msg::Odometry& pose);
+  std::vector<geometry_msgs::msg::Point> get_frontier(
+    const Costmap2D & map,
+    const nav_msgs::msg::Odometry & pose);
 
   rclcpp::TimerBase::SharedPtr clustering_timer_;                              /// Retrying timer if clustering fails
   visualization_msgs::msg::Marker marker_;                                     /// Marker to be published
@@ -127,7 +129,7 @@ private:
 
   int dbscan_eps_px_;
   int dbscan_min_points_;
-  
+
   /** Internal matrixes to improve efficiency */
   cv::Mat free_space_;
   cv::Mat unknown_space_;

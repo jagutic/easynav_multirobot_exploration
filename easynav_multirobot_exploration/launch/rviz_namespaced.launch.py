@@ -1,19 +1,14 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    EmitEvent,
-    RegisterEventHandler
-)
+from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler
 from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.substitutions import EqualsSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
-from nav2_common.launch import ReplaceString # type: ignore
+from nav2_common.launch import ReplaceString  # type: ignore
 
 
 def generate_launch_description():
@@ -45,9 +40,8 @@ def generate_launch_description():
     )
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation (Gazebo) clock if true')
+        'use_sim_time', default_value='true', description='Use simulation (Gazebo) clock if true'
+    )
 
     # Launch rviz
     namespaced_rviz_config_file = ReplaceString(

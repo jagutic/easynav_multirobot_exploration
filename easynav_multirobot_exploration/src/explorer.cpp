@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   BT::Tree tree;
   try {
     tree = factory.createTreeFromFile(bt_xml_file, blackboard);
-  } catch (const std::exception &e) {
+  } catch (const std::exception & e) {
     RCLCPP_ERROR(node->get_logger(), "Error al cargar el XML: %s", e.what());
     return 1;
   }

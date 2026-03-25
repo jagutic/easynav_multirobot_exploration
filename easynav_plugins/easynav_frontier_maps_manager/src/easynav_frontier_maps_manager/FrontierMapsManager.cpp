@@ -9,13 +9,6 @@ using std::placeholders::_1;
 
 FrontierMapsManager::FrontierMapsManager()
 {
-  // NavState::register_printer<Costmap2D>(
-  //   [](const Costmap2D & map) {
-  //     std::ostringstream oss;
-  //     oss << "Costmap2D of (" << map.getSizeInCellsX() << " x " << map.getSizeInCellsY()
-  //         << ") with resolution " << map.getResolution();
-  //     return oss.str();
-  //   });
 }
 
 FrontierMapsManager::~FrontierMapsManager() {}
@@ -45,7 +38,7 @@ FrontierMapsManager::on_initialize()
     node->get_parameter(plugin_name + ".dbscan_eps_px", dbscan_eps_px_);
     node->get_parameter(plugin_name + ".dbscan_min_points", dbscan_min_points_);
 
-  } else  RCLCPP_INFO(node->get_logger(), "Raw mode active");
+  } else {RCLCPP_INFO(node->get_logger(), "Raw mode active");}
 
 
   // Init internal marker parameters
@@ -72,12 +65,12 @@ FrontierMapsManager::update(NavState & nav_state)
   EASYNAV_TRACE_EVENT;
 
   // Wait until we have robot position
-  if (!nav_state.has("robot_pose") || !nav_state.has("map.dynamic")) return;
+  if (!nav_state.has("robot_pose") || !nav_state.has("map.dynamic")) {return;}
 
-  const auto& robot_pose = nav_state.get<nav_msgs::msg::Odometry>("robot_pose");
-  
+  const auto & robot_pose = nav_state.get<nav_msgs::msg::Odometry>("robot_pose");
+
   // Wait until we have map
-  const auto& fixed_map = nav_state.get<Costmap2D>("map.dynamic");
+  const auto & fixed_map = nav_state.get<Costmap2D>("map.dynamic");
   if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
     RCLCPP_DEBUG(get_node()->get_logger(), "No map yet");
     return;
@@ -104,30 +97,30 @@ FrontierMapsManager::update(NavState & nav_state)
   marker_.header.frame_id = tf_info.map_frame;
   marker_.header.stamp = map_stamp;
   frontier_pub_->publish(marker_);
-  
+
   // Expose the valid frontier points to the rest of the easynav system
   nav_state.set("frontier", frontier);
 }
 
 void
 FrontierMapsManager::fill_marker(
-  const std::vector<geometry_msgs::msg::Point>& points)
+  const std::vector<geometry_msgs::msg::Point> & points)
 {
   // Select points size
   if (clustering_) {
     marker_.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-    marker_.scale.x = 0.15; 
+    marker_.scale.x = 0.15;
     marker_.scale.y = 0.15;
     marker_.scale.z = 0.15;
   } else {
     marker_.type = visualization_msgs::msg::Marker::POINTS;
-    marker_.scale.x = 0.05; 
+    marker_.scale.x = 0.05;
     marker_.scale.y = 0.05;
   }
 
   // Append each geometric point to the marker's array
   marker_.points.clear();
-  for (const auto& pt : points) {
+  for (const auto & pt : points) {
     geometry_msgs::msg::Point p;
     p.x = pt.x;
     p.y = pt.y;
@@ -137,7 +130,7 @@ FrontierMapsManager::fill_marker(
 }
 
 std::vector<cv::Point>
-FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
+FrontierMapsManager::get_centroids_DBSCAN(cv::Mat & points)
 {
   // Epsilon: dilate to group points
   cv::Mat kernel = cv::getStructuringElement(
@@ -159,7 +152,7 @@ FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
 
   for (int i = 1; i < n_labels; i++) {
     // Discard insignificant groups with min_points
-    if (stats.at<int>(i, cv::CC_STAT_AREA) < dbscan_min_points_) continue;
+    if (stats.at<int>(i, cv::CC_STAT_AREA) < dbscan_min_points_) {continue;}
 
     // We need centroid to be ON the frontier
     cv::Point2d math_center(raw_centroids.at<double>(i, 0), raw_centroids.at<double>(i, 1));
@@ -178,14 +171,17 @@ FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
       for (int x = left; x < left + width; ++x) {
         if (labels.at<int>(y, x) == i && points.at<uchar>(y, x) > 0) {
           double dist = cv::norm(cv::Point2d(x, y) - math_center);
-          
+
           if (dist < min_dist) {
             min_dist = dist;
             best_p = cv::Point(x, y);
             found = true;
-    }}}}
-  
-    if (found) centroids.push_back(best_p);
+          }
+        }
+      }
+    }
+
+    if (found) {centroids.push_back(best_p);}
   }
 
   return centroids;
@@ -193,8 +189,8 @@ FrontierMapsManager::get_centroids_DBSCAN(cv::Mat& points)
 
 std::vector<geometry_msgs::msg::Point>
 FrontierMapsManager::get_frontier(
-  const Costmap2D& map,
-  const nav_msgs::msg::Odometry& pose)
+  const Costmap2D & map,
+  const nav_msgs::msg::Odometry & pose)
 {
  // Obtian costmap data
   int width = map.getSizeInCellsX();
@@ -214,8 +210,8 @@ FrontierMapsManager::get_frontier(
   unsigned char robot_cost = map.getCost(pose_x, pose_y);
   if (robot_cost < easynav::FREE_SPACE || robot_cost > obstacle_threshold_) {
     RCLCPP_WARN(
-      get_node()->get_logger(), 
-      "Robot is not in free space (Cost: %d)", 
+      get_node()->get_logger(),
+      "Robot is not in free space (Cost: %d)",
       robot_cost
     );
     invalid_frontier_ = true;
@@ -240,7 +236,7 @@ FrontierMapsManager::get_frontier(
                 &rect, cv::Scalar(0), cv::Scalar(0), 4 | (255 << 8) | cv::FLOODFILL_MASK_ONLY);
   reachable_actual_ = reachable_mask_(cv::Rect(1, 1, width, height));
 
-  // Intersect with dilated unknown space, to get total frontier 
+  // Intersect with dilated unknown space, to get total frontier
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
   cv::Mat frontier;
 
@@ -255,7 +251,7 @@ FrontierMapsManager::get_frontier(
 
   if (clustering_) {
     frontier_points = get_centroids_DBSCAN(frontier);
-    if (frontier_points.empty()) centroids_empty = true;
+    if (frontier_points.empty()) {centroids_empty = true;}
 
   } else if (cv::countNonZero(frontier) > 0) {
     cv::findNonZero(frontier, frontier_points);
@@ -265,14 +261,14 @@ FrontierMapsManager::get_frontier(
   std::vector<geometry_msgs::msg::Point> final_frontier;
   final_frontier.reserve(frontier_points.size());
 
-  for (const auto& fc: frontier_points) {
+  for (const auto & fc: frontier_points) {
     double wx = ox + (fc.x * res) + (res / 2.0);
     double wy = oy + (fc.y * res) + (res / 2.0);
-  
+
     // Proximity security filter
     double dx = wx - pose.pose.pose.position.x;
     double dy = wy - pose.pose.pose.position.y;
-    if ((dx*dx + dy*dy) < proximity_radius_*proximity_radius_) continue;
+    if ((dx * dx + dy * dy) < proximity_radius_ * proximity_radius_) {continue;}
 
     // Save to final list
     geometry_msgs::msg::Point p;

@@ -22,7 +22,7 @@ using visualization_msgs::msg::Marker;
 /**
  * @class ChooseFrontierGoal
  * @brief A Behavior Tree SyncActionNode that selects the optimal exploration target.
- * * This node evaluates a list of detected frontiers and chooses the best goal 
+ * * This node evaluates a list of detected frontiers and chooses the best goal
  * (typically the closest one) based on the robot's current pose.
  */
 class ChooseFrontierGoal : public BT::SyncActionNode
@@ -33,7 +33,7 @@ public:
    * @param name Name of the node as defined in the XML tree.
    * @param conf Configuration containing blackboard and port mapping.
    */
-  ChooseFrontierGoal(const std::string& name, const BT::NodeConfig& conf);
+  ChooseFrontierGoal(const std::string & name, const BT::NodeConfig & conf);
 
   /**
    * @brief The core logic executed when the node is ticked.
@@ -62,7 +62,7 @@ private:
    * @param frontier A vector of points representing the identified frontiers.
    * @return The selected Pose to be sent to the navigation stack.
    */
-  Pose calc_closest_goal(const Pose& current_pose, const std::vector<Point>& frontier);
+  Pose calc_closest_goal(const Pose & current_pose, const std::vector<Point> & frontier);
 
   rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging and time access
 };

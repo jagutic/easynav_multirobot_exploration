@@ -1,11 +1,13 @@
 #include "easynav_multiplexor_maps_manager/MultiplexorMapsManager.hpp"
 
-namespace easynav {
+namespace easynav
+{
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-MultiplexorMapsManager::MultiplexorMapsManager() {
+MultiplexorMapsManager::MultiplexorMapsManager()
+{
   // NavState::register_printer<Costmap2D>(
   //   [](const Costmap2D & map) {
   //     std::ostringstream oss;
@@ -19,9 +21,10 @@ MultiplexorMapsManager::MultiplexorMapsManager() {
 MultiplexorMapsManager::~MultiplexorMapsManager() {}
 
 void
-MultiplexorMapsManager::on_initialize() {
+MultiplexorMapsManager::on_initialize()
+{
   auto node = get_node();
-  const auto &plugin_name = get_plugin_name();
+  const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Multiplexor Maps Manager");
 
   // Get the list of active robot identifiers from the parameters
@@ -39,7 +42,7 @@ MultiplexorMapsManager::on_initialize() {
   // Initialize coordinates for each robot and create map subscriptions.
   float x, y, Y;
 
-  for (const auto &ns : namespaces) {
+  for (const auto & ns : namespaces) {
     std::string param_prefix = plugin_name + "." + ns;
     std::string x_key = param_prefix + ".x";
     std::string y_key = param_prefix + ".y";
@@ -82,7 +85,8 @@ MultiplexorMapsManager::on_initialize() {
 }
 
 void
-MultiplexorMapsManager::update(NavState &nav_state) {
+MultiplexorMapsManager::update(NavState & nav_state)
+{
   EASYNAV_TRACE_EVENT;
 
   // Mux all maps on fixed costmap and save in muxed map
@@ -97,7 +101,7 @@ MultiplexorMapsManager::update(NavState &nav_state) {
   nav_state.set("map.static.update", true);
 
   // Publish map for visualization
-  const auto &tf_info = RTTFBuffer::getInstance()->get_tf_info();
+  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
   rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
 
   OccupancyGrid muxed_map_msg;
@@ -109,7 +113,8 @@ MultiplexorMapsManager::update(NavState &nav_state) {
 }
 
 void
-MultiplexorMapsManager::map_callback(const OccupancyGrid::SharedPtr map) {
+MultiplexorMapsManager::map_callback(const OccupancyGrid::SharedPtr map)
+{
   // Extract the robot ID from the frame_id string (e.g., "r1/map" -> "r1").
   std::string frame = map->header.frame_id;
   size_t pos = frame.find('/');
@@ -122,7 +127,8 @@ MultiplexorMapsManager::map_callback(const OccupancyGrid::SharedPtr map) {
 }
 
 void
-MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns) {
+MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns)
+{
   // Verify the reference robot exists in our coordinate list.
   if (robots_coords_.find(fixed_ns) == robots_coords_.end()) {
     RCLCPP_ERROR(get_node()->get_logger(), "%s not in robot list",
@@ -167,12 +173,13 @@ MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns) {
 }
 
 BoundingBox
-MultiplexorMapsManager::get_global_bounds() {
+MultiplexorMapsManager::get_global_bounds()
+{
   BoundingBox box;
 
   // Iterate through all available maps to find the global min/max coordinates.
   for (const auto &[id, map] : maps_) {
-  if (map.getSizeInCellsX() == 0 || map.getSizeInCellsY() == 0) continue;
+    if (map.getSizeInCellsX() == 0 || map.getSizeInCellsY() == 0) {continue;}
 
     geometry_msgs::msg::Pose2D pose = robots_coords_[id];
     double c = std::cos(pose.theta);
@@ -193,14 +200,18 @@ MultiplexorMapsManager::get_global_bounds() {
       double gx = pose.x + (local_corners_x[i] * c - local_corners_y[i] * s);
       double gy = pose.y + (local_corners_x[i] * s + local_corners_y[i] * c);
 
-      if (gx < box.min_x)
+      if (gx < box.min_x) {
         box.min_x = gx;
-      if (gx > box.max_x)
+      }
+      if (gx > box.max_x) {
         box.max_x = gx;
-      if (gy < box.min_y)
+      }
+      if (gy < box.min_y) {
         box.min_y = gy;
-      if (gy > box.max_y)
+      }
+      if (gy > box.max_y) {
         box.max_y = gy;
+      }
     }
   }
 
@@ -219,10 +230,11 @@ MultiplexorMapsManager::get_global_bounds() {
 }
 
 void
-MultiplexorMapsManager::mux(Costmap2D &dst) {
+MultiplexorMapsManager::mux(Costmap2D & dst)
+{
 
   // Get fixed map from the list
-  const Costmap2D &fixed_map = maps_[fixed_map_ns_];
+  const Costmap2D & fixed_map = maps_[fixed_map_ns_];
   if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
     RCLCPP_WARN(get_node()->get_logger(), "Not fixed map yet");
     return;
@@ -260,22 +272,22 @@ MultiplexorMapsManager::mux(Costmap2D &dst) {
 
   // Merge other robots maps into the expanded mat.
   for (const auto &[ns, incoming_map] : maps_) {
-    if (ns == fixed_map_ns_) continue;
-    if (incoming_map.getSizeInCellsX() == 0 || incoming_map.getSizeInCellsY() == 0) continue;
+    if (ns == fixed_map_ns_) {continue;}
+    if (incoming_map.getSizeInCellsX() == 0 || incoming_map.getSizeInCellsY() == 0) {continue;}
 
     // Use costmap for data correspondecy
     cv::Mat incoming_mat(incoming_map.getSizeInCellsY(),
-                         incoming_map.getSizeInCellsX(), CV_8UC1,
-                         incoming_map.getCharMap());
+      incoming_map.getSizeInCellsX(), CV_8UC1,
+      incoming_map.getCharMap());
     geometry_msgs::msg::Pose2D pose = robots_coords_[ns];
 
     // Define 3 points (origin, top-right, bottom-left) to compute the affine
     // transform.
     src_points[0] = {0.f, 0.f};
     src_points[1] = {static_cast<float>(incoming_map.getSizeInCellsX()),
-                     0.f};
+      0.f};
     src_points[2] = {0.f,
-                     static_cast<float>(incoming_map.getSizeInCellsY())};
+      static_cast<float>(incoming_map.getSizeInCellsY())};
 
     float c = std::cos(pose.theta);
     float s = std::sin(pose.theta);
@@ -305,7 +317,7 @@ MultiplexorMapsManager::mux(Costmap2D &dst) {
 
     // Copy valid data only if we dont have info about that space
     cv::Mat valid_mask = (dst_mat == easynav::NO_INFORMATION) &
-                         (warped != easynav::NO_INFORMATION);
+      (warped != easynav::NO_INFORMATION);
     warped.copyTo(dst_mat, valid_mask);
   }
 }

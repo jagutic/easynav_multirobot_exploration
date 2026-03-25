@@ -1,20 +1,17 @@
 import os
 from os.path import join
-from ament_index_python.packages import get_package_share_directory
 
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    OpaqueFunction,
 )
-
-from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution
-from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 import yaml
 
 
@@ -37,16 +34,19 @@ def spawn_robots(context):
         else:
             return data
 
-    config_robots = yaml.safe_load(open(config_file, 'r'))
+    config_robots = yaml.safe_load(open(config_file))
     config_robots = convert_floats_to_strings(config_robots)
 
     robot_actions = []
     for robot_args in config_robots['robots']:
         spawn_robot = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('kobuki_description'),
-                'launch/'), 'spawn.launch.py']),
-            launch_arguments=robot_args.items()
+            PythonLaunchDescriptionSource(
+                [
+                    os.path.join(get_package_share_directory('kobuki_description'), 'launch/'),
+                    'spawn.launch.py',
+                ]
+            ),
+            launch_arguments=robot_args.items(),
         )
         robot_actions.append(spawn_robot)
     return robot_actions
@@ -56,36 +56,24 @@ def generate_launch_description():
     pkg = get_package_share_directory('easynav_multirobot_exploration')
 
     world = LaunchConfiguration('world')
-    size = LaunchConfiguration('size')
+    config = LaunchConfiguration('config')
 
-    # Diferent simulation enviroments to test
     world_arg = DeclareLaunchArgument(
         'world',
-        default_value='maze',
-        description='Tipo de simulación: [maze, hospital]'
+        default_value=os.path.join(
+            get_package_share_directory('maze_world'), 'worlds', 'maze_small.world'
+        ),
+        description='Simulation world',
     )
-
-    size_arg = DeclareLaunchArgument(
-        'size',
-        default_value='small',
-        description='Tamaño de la simulación: [small, big]'
+    config_arg = DeclareLaunchArgument(
+        'config',
+        default_value=os.path.join(pkg, 'config', 'sim', 'maze_small.params.yaml'),
+        description='File for simulated robot parameters',
     )
-
-
-    # Different files for each world
-    world_file = PathJoinSubstitution([
-        FindPackageShare([ world, "_world" ]),
-        'worlds',
-        [ world, '_', size, '.world' ]
-    ])
-    config_file = PathJoinSubstitution([
-        pkg, 'config', 'sim',
-        [ world, '_', size, '.params.yaml' ]
-    ])
 
     robots_config_arg = DeclareLaunchArgument(
         'robots_config_file',
-        default_value=config_file,
+        default_value=config,
         description='YAML file with the configuration of the robots to be spawned',
     )
 
@@ -95,27 +83,25 @@ def generate_launch_description():
         description='Set to false to run gazebo headless',
     )
 
-    # This argument is automatically forwarded to kobuki_description / spawn.launch.py
+    # This argument is automatically forwarded to kobuki_description /
+    # spawn.launch.py
     declare_do_tf_remapping_arg = DeclareLaunchArgument(
         'do_tf_remapping',
         default_value='true',
         description='Whether to remap the tf topics to independent namespaces (/tf -> tf)',
     )
 
-
     # Gz server and client
     gazebo_server = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('ros_gz_sim'), 'launch',
-                         'gz_sim.launch.py')),
-        launch_arguments={'gz_args': ['-r -s ', world_file]}.items()
+            os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
+        ),
+        launch_arguments={'gz_args': ['-r -s ', world]}.items(),
     )
 
     gazebo_client = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('ros_gz_sim'),
-                         'launch',
-                         'gz_sim.launch.py')
+            os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={'gz_args': [' -g ']}.items(),
         condition=IfCondition(LaunchConfiguration('gui')),
@@ -129,10 +115,7 @@ def generate_launch_description():
         parameters=[
             {
                 'use_sim_time': True,
-                'config_file': join(pkg,
-                                    'config',
-                                    'bridge',
-                                    'clock_bridge.yaml'),
+                'config_file': join(pkg, 'config', 'bridge', 'clock_bridge.yaml'),
             }
         ],
         output='screen',
@@ -140,7 +123,7 @@ def generate_launch_description():
 
     ld = LaunchDescription()
     ld.add_action(world_arg)
-    ld.add_action(size_arg)
+    ld.add_action(config_arg)
     ld.add_action(gui_arg)
     ld.add_action(robots_config_arg)
     ld.add_action(ros_gz_bridge)

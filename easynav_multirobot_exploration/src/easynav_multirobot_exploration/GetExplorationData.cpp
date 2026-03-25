@@ -4,9 +4,9 @@ namespace multirobot_exploration
 {
 
 GetExplorationData::GetExplorationData(
-    const std::string& name,
-    const BT::NodeConfig& conf)
-  : BT::SyncActionNode(name, conf),
+  const std::string & name,
+  const BT::NodeConfig & conf)
+: BT::SyncActionNode(name, conf),
   tf_buffer_(),
   tf_listener_(tf_buffer_) // Initialize the listener to automatically populate the buffer
 {

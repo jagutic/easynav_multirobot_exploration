@@ -3,8 +3,8 @@
 namespace multirobot_exploration
 {
 
-GoToPose::GoToPose(const std::string& name, const BT::NodeConfig& conf)
-  : BT::ActionNodeBase(name, conf)
+GoToPose::GoToPose(const std::string & name, const BT::NodeConfig & conf)
+: BT::ActionNodeBase(name, conf)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** GoToPose **");
@@ -16,7 +16,7 @@ BT::NodeStatus
 GoToPose::tick()
 {
   easynav_interfaces::msg::NavigationControl response;
-  
+
   switch (nav_client_->get_state()) {
     // No action in these states
     case easynav::GoalManagerClient::State::SENT_GOAL:
@@ -44,7 +44,7 @@ GoToPose::tick()
 
       nav_client_->reset();
       return BT::NodeStatus::SUCCESS;
-  
+
     // Manage navigating state
     case easynav::GoalManagerClient::State::ACCEPTED_AND_NAVIGATING:
       response = nav_client_->get_feedback();
@@ -60,25 +60,25 @@ GoToPose::tick()
 
     // Manage normal state, send goal to begin navigation
     case easynav::GoalManagerClient::State::IDLE:
-    {
-      Pose goal_pose;
-      BT::Result result = getInput("goal_pose", goal_pose);
+      {
+        Pose goal_pose;
+        BT::Result result = getInput("goal_pose", goal_pose);
 
-      if (!result.has_value()) { // No goal -> failure
-        RCLCPP_ERROR(node_->get_logger(), "No goal pose");
-        return BT::NodeStatus::FAILURE;
-      }
+        if (!result.has_value()) { // No goal -> failure
+          RCLCPP_ERROR(node_->get_logger(), "No goal pose");
+          return BT::NodeStatus::FAILURE;
+        }
 
       // Fill goal msg
-      PoseStamped goal;
-      goal.header.frame_id = config().blackboard->get<std::string>("map_frame");
-      goal.header.stamp = node_->now();
-      goal.pose = goal_pose;
-      nav_client_->send_goal(goal);
-  
-      RCLCPP_INFO(node_->get_logger(), "Goal sent");
-      return BT::NodeStatus::RUNNING;
-    }
+        PoseStamped goal;
+        goal.header.frame_id = config().blackboard->get<std::string>("map_frame");
+        goal.header.stamp = node_->now();
+        goal.pose = goal_pose;
+        nav_client_->send_goal(goal);
+
+        RCLCPP_INFO(node_->get_logger(), "Goal sent");
+        return BT::NodeStatus::RUNNING;
+      }
 
     default:
       RCLCPP_ERROR(node_->get_logger(), "Undefined goal manager client state");

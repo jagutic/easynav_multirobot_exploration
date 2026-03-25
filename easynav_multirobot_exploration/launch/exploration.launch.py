@@ -1,10 +1,10 @@
 import os
-from ament_index_python.packages import get_package_share_directory
 
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -17,36 +17,32 @@ def generate_launch_description():
     declare_params_file_argument = DeclareLaunchArgument(
         'params_file',
         default_value=os.path.join(pkg, 'config', 'explorer.params.yaml'),
-        description='Absolute path to parameter file'
+        description='Absolute path to parameter file',
     )
 
     declare_bt_xml_argument = DeclareLaunchArgument(
         'bt_xml_file',
         default_value=os.path.join(pkg, 'behavior_trees', 'explore.xml'),
-        description='Absolut path to behaviour tree xml file'
+        description='Absolut path to behaviour tree xml file',
     )
 
     declare_namespace_argument = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Namespace for node and topics')
+        'namespace', default_value='', description='Namespace for node and topics'
+    )
 
     explorer = Node(
         package='easynav_multirobot_exploration',
         executable='explorer',
         name='explorer',
-        parameters=[
-            params_file,
-            {'bt_xml_file': bt_xml_file}
-            ],
+        parameters=[params_file, {'bt_xml_file': bt_xml_file}],
         output='screen',
         namespace=namespace,
         remappings=[
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static'),
             ('frontier_topic', 'maps_manager_node/frontier/points'),
-            ('map_topic', 'maps_manager_node/multiplexor/map')
-        ]
+            ('map_topic', 'maps_manager_node/multiplexor/map'),
+        ],
     )
 
     ld = LaunchDescription()

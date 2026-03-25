@@ -3,11 +3,12 @@
 namespace multirobot_exploration
 {
 
-IsGoalValid::IsGoalValid(const std::string& name, const BT::NodeConfig& conf)
-  : BT::ConditionNode(name, conf)
+IsGoalValid::IsGoalValid(const std::string & name, const BT::NodeConfig & conf)
+: BT::ConditionNode(name, conf)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
-  RCLCPP_INFO(node_->get_logger(), "** IsGoalValid **");}
+  RCLCPP_INFO(node_->get_logger(), "** IsGoalValid **");
+}
 
 BT::NodeStatus IsGoalValid::tick()
 {

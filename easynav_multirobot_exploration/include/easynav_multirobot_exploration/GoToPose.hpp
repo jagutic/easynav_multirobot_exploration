@@ -30,7 +30,7 @@ public:
    * @param name Name of the node in the XML description.
    * @param conf Configuration including blackboard and port remapping.
    */
-  GoToPose(const std::string& name, const BT::NodeConfig& conf);
+  GoToPose(const std::string & name, const BT::NodeConfig & conf);
 
   /**
    * @brief Main execution loop for the asynchronous action.

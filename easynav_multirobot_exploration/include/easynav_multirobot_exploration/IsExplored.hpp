@@ -16,8 +16,8 @@ using geometry_msgs::msg::Point;
 /**
  * @class IsExplored
  * @brief Behavior Tree condition node to evaluate if the exploration mission is finished.
- * * This node checks the current state of the environment (typically evaluating 
- * the list of available frontiers). If no valid frontiers remain, it returns SUCCESS, 
+ * * This node checks the current state of the environment (typically evaluating
+ * the list of available frontiers). If no valid frontiers remain, it returns SUCCESS,
  * indicating that the area is fully explored. Otherwise, it returns FAILURE.
  */
 class IsExplored : public BT::ConditionNode
@@ -28,7 +28,7 @@ public:
    * @param name Name of the node as defined in the XML tree.
    * @param conf Configuration containing blackboard and port mapping.
    */
-  IsExplored(const std::string& name, const BT::NodeConfig& conf);
+  IsExplored(const std::string & name, const BT::NodeConfig & conf);
 
   /**
    * @brief Evaluates the exploration completion condition.
