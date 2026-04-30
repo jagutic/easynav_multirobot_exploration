@@ -2,34 +2,17 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, EmitEvent, LogInfo, RegisterEventHandler
-from launch.conditions import IfCondition
-from launch.events import matches_action
-from launch.substitutions import AndSubstitution, LaunchConfiguration, NotSubstitution
-from launch_ros.actions import LifecycleNode
-from launch_ros.event_handlers import OnStateTransition
-from launch_ros.events.lifecycle import ChangeState
-from lifecycle_msgs.msg import Transition
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import PushRosNamespace, SetRemap, SetParameter
 
 
 def generate_launch_description():
-    autostart = LaunchConfiguration('autostart')
-    use_lifecycle_manager = LaunchConfiguration('use_lifecycle_manager')
     use_sim_time = LaunchConfiguration('use_sim_time')
     slam_params_file = LaunchConfiguration('slam_params_file')
     namespace = LaunchConfiguration('namespace')
 
-    declare_autostart_cmd = DeclareLaunchArgument(
-        'autostart',
-        default_value='true',
-        description='Automatically startup the slamtoolbox. '
-        'Ignored when use_lifecycle_manager is true.',
-    )
-    declare_use_lifecycle_manager = DeclareLaunchArgument(
-        'use_lifecycle_manager',
-        default_value='false',
-        description='Enable bond connection during node activation',
-    )
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time', default_value='true', description='Use simulation/Gazebo clock'
     )
@@ -46,61 +29,39 @@ def generate_launch_description():
         'namespace', default_value='', description='Namespace for node and topics'
     )
 
-    start_sync_slam_toolbox_node = LifecycleNode(
-        parameters=[
-            slam_params_file,
-            {'use_lifecycle_manager': use_lifecycle_manager, 'use_sim_time': use_sim_time},
-        ],
-        package='slam_toolbox',
-        executable='sync_slam_toolbox_node',
-        name='slam_toolbox',
-        output='screen',
-        namespace=namespace,
-        # Make them relative
-        remappings=[
-            ('/tf', 'tf'),
-            ('/tf_static', 'tf_static'),
-            ('/map', 'local_map'),
-            ('/map_metadata', 'map_metadata'),
-            ('/scan_raw', 'scan_raw'),
-        ],
+    # Official SLAM Toolbox launcher
+    slam_toolbox_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_sync_launch.py')
+        ),
+        launch_arguments={
+            'slam_params_file': slam_params_file,
+            'use_sim_time': use_sim_time,
+        }.items()
     )
 
-    configure_event = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=matches_action(start_sync_slam_toolbox_node),
-            transition_id=Transition.TRANSITION_CONFIGURE,
-        ),
-        condition=IfCondition(AndSubstitution(autostart, NotSubstitution(use_lifecycle_manager))),
-    )
+    # Wrap SLAM Toolbox with namespace
+    slam_with_namespace = GroupAction([
+        PushRosNamespace(namespace=namespace),
 
-    activate_event = RegisterEventHandler(
-        OnStateTransition(
-            target_lifecycle_node=start_sync_slam_toolbox_node,
-            start_state='configuring',
-            goal_state='inactive',
-            entities=[
-                LogInfo(msg='[LifecycleLaunch] Slamtoolbox node is activating.'),
-                EmitEvent(
-                    event=ChangeState(
-                        lifecycle_node_matcher=matches_action(start_sync_slam_toolbox_node),
-                        transition_id=Transition.TRANSITION_ACTIVATE,
-                    )
-                ),
-            ],
-        ),
-        condition=IfCondition(AndSubstitution(autostart, NotSubstitution(use_lifecycle_manager))),
-    )
+        # Remap for namespace
+        SetRemap(src='/map', dst='local_map'),
+        SetRemap(src='/map_metadata', dst='local_map_metadata'),
+        SetRemap(src='/tf', dst='tf'),
+        SetRemap(src='/tf_static', dst='tf_static'),
+
+        SetParameter(name='map_frame', value=[namespace, '/map']),
+        SetParameter(name='odom_frame', value=[namespace, '/odom']),
+        SetParameter(name='base_frame', value=[namespace, '/base_footprint']),
+
+        slam_toolbox_launch,
+    ])
 
     ld = LaunchDescription()
 
     ld.add_action(declare_namespace_argument)
-    ld.add_action(declare_autostart_cmd)
-    ld.add_action(declare_use_lifecycle_manager)
     ld.add_action(declare_use_sim_time_argument)
     ld.add_action(declare_slam_params_file_cmd)
-    ld.add_action(start_sync_slam_toolbox_node)
-    ld.add_action(configure_event)
-    ld.add_action(activate_event)
+    ld.add_action(slam_with_namespace)
 
     return ld

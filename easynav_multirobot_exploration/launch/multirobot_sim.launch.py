@@ -7,6 +7,7 @@ from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
     OpaqueFunction,
+    TimerAction,
 )
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -16,7 +17,7 @@ import yaml
 
 
 def spawn_robots(context):
-    """Read the YAML configuration file and spawn the robots defined in it."""
+    """Read the YAML configuration file and spawn the robots defined in it sequentially."""
     config_file = LaunchConfiguration('robots_config_file').perform(context)
 
     def convert_floats_to_strings(data):
@@ -38,7 +39,12 @@ def spawn_robots(context):
     config_robots = convert_floats_to_strings(config_robots)
 
     robot_actions = []
-    for robot_args in config_robots['robots']:
+
+    # Sequential spawning with x-second delay between robots to avoid race conditions in Gazebo
+    init_delay = 5.0
+    spawn_delay = 1.0
+    
+    for idx, robot_args in enumerate(config_robots['robots']):
         spawn_robot = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 [
@@ -48,7 +54,18 @@ def spawn_robots(context):
             ),
             launch_arguments=robot_args.items(),
         )
-        robot_actions.append(spawn_robot)
+        
+        # Add spawn_delay before each robot spawn (except the first one)
+        if idx > 0:
+            delayed_spawn = TimerAction(
+                period= init_delay + (spawn_delay * idx),
+                actions=[spawn_robot],
+            )
+            robot_actions.append(delayed_spawn)
+        else:
+            robot_actions.append(spawn_robot)
+    
+    # Sequential spawning with 2-second delay between robots to avoid race conditions in Gazebo
     return robot_actions
 
 
@@ -61,13 +78,13 @@ def generate_launch_description():
     world_arg = DeclareLaunchArgument(
         'world',
         default_value=os.path.join(
-            get_package_share_directory('maze_world'), 'worlds', 'maze_small.world'
+            get_package_share_directory('aws_robomaker_small_house_world'), 'worlds', 'small_house.world'
         ),
         description='Simulation world',
     )
     config_arg = DeclareLaunchArgument(
         'config',
-        default_value=os.path.join(pkg, 'config', 'sim', 'maze_small.params.yaml'),
+        default_value=os.path.join(pkg, 'config', 'sim', 'aws_small_house.params.yaml'),
         description='File for simulated robot parameters',
     )
 
