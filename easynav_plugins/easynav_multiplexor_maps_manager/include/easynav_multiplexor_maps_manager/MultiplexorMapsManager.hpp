@@ -33,6 +33,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
+#include "tf2_ros/static_transform_broadcaster.h"
 
 #include <easynav_common/YTSession.hpp>
 #include "easynav_costmap_common/costmap_2d.hpp"
@@ -43,6 +44,8 @@
 
 namespace easynav
 {
+
+#define GLOBAL_MAP_FRAME "map"
 
 using nav_msgs::msg::OccupancyGrid;
 
@@ -121,6 +124,21 @@ private:
   BoundingBox get_global_bounds();
 
   /**
+   * @brief Creates static TF transforms for each robot's local map frame to the global map frame.
+   * * This allows ROS tools to visualize the local maps in the correct positions relative to each other.
+   * @param ns The namespace or identifier used to distinguish different robots' maps.
+   */
+  void create_static_tf(const std::string & ns);
+
+  /**
+   * @brief Creates ROS subscriptions for incoming local maps based on provided parameters.
+   * * Expects parameters to define the topic names and namespaces for each robot's map.
+   * @param ns The namespace or identifier used to distinguish different robots' maps.
+   * @param param_prefix The prefix for parameter names that specify the map topics.
+   */
+  void create_map_subscriber(const std::string & ns, const std::string & topic_key);
+
+  /**
    * @brief Merges the internal cache of local maps into src, using dst as output global map.
    * * This method handles the grid indexing translation and resolves overlapping pixel
    * values (e.g., preserving known obstacles over unknown space).
@@ -128,15 +146,18 @@ private:
    */
   void mux(Costmap2D & dst);
 
+  
   std::map<std::string, Costmap2D> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
   std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
-
+  
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;     ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
-
+  
   std::mutex maps_mutex_;                                       /// Mutex to avoid concurrency problems
   std::string fixed_map_ns_;                                    /// Identificator to local map
-  double PADDING = 0;                                           /// Constant value for safety zone around resultant muxed map.
+
+  rclcpp::Node::SharedPtr global_tf_node_;            ///< Separate node for TF broadcasting to avoid conflicts with main navigation node.
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> global_tf_broadcaster_; ///< TF broadcaster for static transforms from local map frames to global frame.
 };
 
 }  // namespace easynav

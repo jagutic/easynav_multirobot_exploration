@@ -18,15 +18,9 @@ find_package(pluginlib REQUIRED)
 find_package(yaets REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(easynav_costmap_common REQUIRED)
 find_package(OpenCV REQUIRED)
-
-# # Para frontier
-# find_package(tf2 REQUIRED)
-# find_package(tf2_ros REQUIRED)
-# find_package(tf2_geometry_msgs REQUIRED)
-# find_package(visualization_msgs REQUIRED)
-
 
 add_library(${PROJECT_NAME} SHARED
   src/easynav_multiplexor_maps_manager/MultiplexorMapsManager.cpp
@@ -42,13 +36,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   easynav_costmap_common::easynav_costmap_common
   pluginlib::pluginlib
   yaets::yaets
+  tf2_ros::tf2_ros
   ${nav_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
-  # # frontier
-  # tf2::tf2
-  # tf2_ros::tf2_ros
-  # ${tf2_geometry_msgs_TARGETS}
-  # ${visualization_msgs_TARGETS}
   ${OpenCV_LIBS}
 )
 
@@ -92,10 +82,6 @@ ament_export_dependencies(
   nav_msgs
   easynav_costmap_common
   OpenCV
-  # # frontier
-  # tf2
-  # tf2_ros
-  # tf2_geometry_msgs
-  # visualization_msgs
+  tf2_ros
 )
 ament_package()

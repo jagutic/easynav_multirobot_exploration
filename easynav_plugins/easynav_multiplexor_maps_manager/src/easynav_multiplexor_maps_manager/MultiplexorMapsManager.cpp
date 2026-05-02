@@ -1,5 +1,8 @@
 #include "easynav_multiplexor_maps_manager/MultiplexorMapsManager.hpp"
 
+#include "tf2_ros/static_transform_broadcaster.h"
+#include "tf2/LinearMath/Quaternion.h"
+
 namespace easynav
 {
 
@@ -27,13 +30,20 @@ MultiplexorMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Multiplexor Maps Manager");
 
+  // Initialize the TF broadcaster with its neccesary node in global ns
+  global_tf_node_ = std::make_shared<rclcpp::Node>(
+    "mux_global_tf_broadcaster", "/",
+    rclcpp::NodeOptions().use_global_arguments(false));
+
+  global_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(global_tf_node_);
+
   // Get the list of active robot identifiers from the parameters
   // And get the actual robot to work on
-  std::vector<std::string> namespaces;
+  std::vector<std::string> robot_namespaces;
 
-  node->declare_parameter(plugin_name + ".robot_namespaces", namespaces);
-  node->get_parameter(plugin_name + ".robot_namespaces", namespaces);
-  RCLCPP_INFO(node->get_logger(), "Maps to merge: %ld", namespaces.size());
+  node->declare_parameter(plugin_name + ".robot_namespaces", robot_namespaces);
+  node->get_parameter(plugin_name + ".robot_namespaces", robot_namespaces);
+  RCLCPP_INFO(node->get_logger(), "Maps to merge: %ld", robot_namespaces.size());
 
   node->declare_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns_);
   node->get_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns_);
@@ -42,11 +52,12 @@ MultiplexorMapsManager::on_initialize()
   // Initialize coordinates for each robot and create map subscriptions.
   float x, y, Y;
 
-  for (const auto & ns : namespaces) {
+  for (const auto & ns : robot_namespaces) {
     std::string param_prefix = plugin_name + "." + ns;
     std::string x_key = param_prefix + ".x";
     std::string y_key = param_prefix + ".y";
     std::string Y_key = param_prefix + ".Y";
+    std::string topic_key = param_prefix + ".topic";
 
     // Declare and get the initial pose (x, y, yaw) for each robot.
     node->declare_parameter(x_key, 0.0);
@@ -62,26 +73,74 @@ MultiplexorMapsManager::on_initialize()
     robots_coords_[ns].y = y;
     robots_coords_[ns].theta = Y;
 
-    // Create a subscription to the map topic for this specific robot.
-    // Using transient_local QoS ensures we receive the latest map ("latched"
-    // behavior).
-    std::string topic_name;
-    node->declare_parameter(param_prefix + ".topic", topic_name);
-    node->get_parameter(param_prefix + ".topic", topic_name);
-
-    map_subs_[ns] = node->create_subscription<OccupancyGrid>(
-        "/" + ns + "/" + topic_name,
-        rclcpp::QoS(1).transient_local().reliable(),
-        std::bind(&MultiplexorMapsManager::map_callback, this, _1));
+    // Crear suscriptor y publicar TF usando las funciones refactorizadas
+    create_map_subscriber(ns, topic_key);
   }
+  
+  // Create tf from global frame to local map frame
+  create_static_tf(fixed_map_ns_);
 
   // Establish the local robot's frame as the global coordinate origin (0,0).
   translate_robot_coords(fixed_map_ns_);
 
   muxed_map_pub_ = node->create_publisher<OccupancyGrid>(
-      node->get_fully_qualified_name() + std::string("/") + plugin_name +
-          "/map",
-      rclcpp::QoS(1).transient_local().reliable());
+    node->get_fully_qualified_name() + std::string("/") + plugin_name +
+        "/map",
+    rclcpp::QoS(1).transient_local().reliable());
+}
+
+void
+MultiplexorMapsManager::create_map_subscriber(const std::string & ns, const std::string & topic_key)
+{
+  std::string topic_name;
+  
+  get_node()->declare_parameter(topic_key, topic_name);
+  get_node()->get_parameter(topic_key, topic_name);
+
+  // Create a subscription to the map topic for this specific robot.
+  // Using transient_local QoS ensures we receive the latest map ("latched"
+  // behavior).
+  map_subs_[ns] = get_node()->create_subscription<OccupancyGrid>(
+      "/" + ns + "/" + topic_name,
+      rclcpp::QoS(1).transient_local().reliable(),
+      std::bind(&MultiplexorMapsManager::map_callback, this, _1));
+
+  RCLCPP_INFO(get_node()->get_logger(), "Subscribed to map: /%s/%s", ns.c_str(), topic_name.c_str());
+}
+
+void
+MultiplexorMapsManager::create_static_tf(const std::string & ns)
+{
+  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
+  
+  // Retrieve the stored coordinates for this robot
+  geometry_msgs::msg::Pose2D pose = robots_coords_[ns];
+
+  // Create the static transform message
+  geometry_msgs::msg::TransformStamped t;
+  t.header.stamp = get_node()->get_clock()->now();
+  t.header.frame_id = GLOBAL_MAP_FRAME;
+  t.child_frame_id = tf_info.map_frame;
+
+  // Set translation
+  t.transform.translation.x = pose.x;
+  t.transform.translation.y = pose.y;
+  t.transform.translation.z = 0.0;
+
+  // Convert yaw angle to quaternion
+  tf2::Quaternion q;
+  q.setRPY(0, 0, pose.theta);
+  t.transform.rotation.x = q.x();
+  t.transform.rotation.y = q.y();
+  t.transform.rotation.z = q.z();
+  t.transform.rotation.w = q.w();
+
+  // Publish the static transform
+  global_tf_broadcaster_->sendTransform(t);
+
+  RCLCPP_INFO(get_node()->get_logger(),
+    "Published static transform: %s -> %s with translation (%.2f, %.2f) and rotation (%.2f rad)",
+    t.header.frame_id.c_str(), t.child_frame_id.c_str(), pose.x, pose.y, pose.theta);
 }
 
 void
@@ -219,12 +278,6 @@ MultiplexorMapsManager::get_global_bounds()
   if (box.min_x > box.max_x) {
     box.min_x = box.min_y = box.max_x = box.max_y = 0.0;
   }
-
-  // Add a safety margin (PADDING) around the calculated bounds.
-  box.min_x -= PADDING;
-  box.min_y -= PADDING;
-  box.max_x += PADDING;
-  box.max_y += PADDING;
 
   return box;
 }
