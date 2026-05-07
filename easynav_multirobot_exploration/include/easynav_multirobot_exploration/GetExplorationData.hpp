@@ -4,23 +4,25 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include <mutex>
+#include <sstream>
 
 #include "rclcpp/rclcpp.hpp"
 #include "behaviortree_cpp/action_node.h"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "visualization_msgs/msg/marker.hpp"
-#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 
 // TF
 #include <tf2/utils.h>
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-
+#include <regex>
 
 namespace multirobot_exploration
 {
+  
+#define GLOBAL_MAP_FRAME "map"
 
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Point;
@@ -61,6 +63,7 @@ public:
     return BT::PortsList(
       {
         BT::OutputPort<Pose>("pose"),
+        BT::OutputPort<std::vector<Pose>>("peers_pose"),
         BT::OutputPort<std::vector<Point>>("frontier"),
         BT::OutputPort<nav_msgs::msg::OccupancyGrid>("map")
       });
@@ -68,26 +71,46 @@ public:
 
 private:
   /**
-   * @brief Obtiene la pose actual del robot (posición y orientación).
-   * Generalmente consulta la transformación (TF) entre 'map' y 'base_link'.
-   * @return geometry_msgs::msg::Pose con la ubicación actual del robot.
+   * @brief Obtiene la pose desde un frame padre a un frame hijo.
+   * @param tf_buffer Buffer de TF2 para realizar las consultas de transformaciones.
+   * @param parent_frame Frame de referencia (ej. 'map', 'global_map').
+   * @param child_frame Frame destino (ej. 'base_link', otra map de robot).
+   * @return geometry_msgs::msg::Pose con la transformación.
    */
-  geometry_msgs::msg::Pose getRobotPose();
-
-
+  geometry_msgs::msg::Pose getPose(
+    const std::string & parent_frame,
+    const std::string & child_frame,
+    tf2::BufferCore& tf_buffer
+  );
+  
+  /**
+   * @brief Obtiene las poses de todos los robots peer desde el GLOBAL_MAP_FRAME.
+   * Descubre dinámicamente los frames usando allFramesAsYAML().
+   * @return Vector de poses de otros robots.
+   */
+  std::vector<Pose> getPeersPose();
+  
+  /**
+   * @brief Parsea el YAML de frames para encontrar hijos de un frame padre.
+   * @param yaml_str String YAML del árbol de frames.
+   * @param parent_frame Frame padre a buscar.
+   * @return Vector con los frame_ids que son hijos directos del padre.
+   */
+  std::vector<std::string> extractChildFrames(const std::string & yaml_str, const std::string & parent_frame);
+    
   rclcpp::Node::SharedPtr node_;                          ///< Shared pointer to the ROS 2 node used for logging.
-
-  std::mutex frontier_mutex_;                             ///< Mutex to save frontier
+  tf2::BufferCore tf_buffer_;                             ///< Local buffer for TF tree within robot namespace.
+  tf2_ros::TransformListener tf_listener_;                ///< Local listener that populates the TF buffer.
+  
+  rclcpp::Node::SharedPtr global_tf_node_;          ///< Global node (at root namespace) for TF access.
+  tf2::BufferCore global_tf_buffer_;                      ///< Global buffer for accessing /tf without namespace.
+  std::unique_ptr<tf2_ros::TransformListener> global_tf_listener_;  ///< Global listener with global node.
+  
   Marker::SharedPtr last_frontier_;                       ///< Last frontier saved from topic
   rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;  ///< Shared pointer to subscriber to frontier topic.
 
-  std::mutex map_mutex_;                                  ///< Mutex to save map
   nav_msgs::msg::OccupancyGrid::SharedPtr last_map_;      ///< Last map saved from topic
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_sub_;       ///< Shared pointer to subscriber to map topic.
-
-  std::string tf_prefix_;                                 ///< Prefix to identify the specific robot's TF frames.
-  tf2::BufferCore tf_buffer_;                             ///< Core buffer storing the TF tree history.
-  tf2_ros::TransformListener tf_listener_;                ///< Listener that populates the TF buffer.
 };
 
 } // namespace multirobot_exploration

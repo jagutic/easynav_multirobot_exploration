@@ -30,12 +30,16 @@ MultiplexorMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Multiplexor Maps Manager");
 
-  // Initialize the TF broadcaster with its neccesary node in global ns
-  global_tf_node_ = std::make_shared<rclcpp::Node>(
-    "mux_global_tf_broadcaster", "/",
+  // Tf listeners and broadcaster for robots coordinates and transforms
+  global_tf_broadcaster_node_ = std::make_shared<rclcpp::Node>(
+    "global_tf_broadcaster_node", "/",
     rclcpp::NodeOptions().use_global_arguments(false));
+    
+  global_tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(global_tf_broadcaster_node_);
+  global_static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(global_tf_broadcaster_node_);
 
-  global_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(global_tf_node_);
+  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   // Get the list of active robot identifiers from the parameters
   // And get the actual robot to work on
@@ -77,16 +81,17 @@ MultiplexorMapsManager::on_initialize()
     create_map_subscriber(ns, topic_key);
   }
   
-  // Create tf from global frame to local map frame
-  create_static_tf(fixed_map_ns_);
-
-  // Establish the local robot's frame as the global coordinate origin (0,0).
-  translate_robot_coords(fixed_map_ns_);
-
   muxed_map_pub_ = node->create_publisher<OccupancyGrid>(
     node->get_fully_qualified_name() + std::string("/") + plugin_name +
-        "/map",
+    "/map",
     rclcpp::QoS(1).transient_local().reliable());
+
+  // Create static tf from global frame to local map frame
+  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
+  create_global_tf(GLOBAL_MAP_FRAME, tf_info.map_frame, robots_coords_[fixed_map_ns_], true);
+  
+  // Establish the local robot's frame as the global coordinate origin (0,0).
+  translate_robot_coords(fixed_map_ns_);
 }
 
 void
@@ -109,18 +114,15 @@ MultiplexorMapsManager::create_map_subscriber(const std::string & ns, const std:
 }
 
 void
-MultiplexorMapsManager::create_static_tf(const std::string & ns)
+MultiplexorMapsManager::create_global_tf(
+  const std::string& parent, const std::string& child,
+  geometry_msgs::msg::Pose2D& pose, bool static_tf = false)
 {
-  const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
-  
-  // Retrieve the stored coordinates for this robot
-  geometry_msgs::msg::Pose2D pose = robots_coords_[ns];
-
   // Create the static transform message
   geometry_msgs::msg::TransformStamped t;
   t.header.stamp = get_node()->get_clock()->now();
-  t.header.frame_id = GLOBAL_MAP_FRAME;
-  t.child_frame_id = tf_info.map_frame;
+  t.header.frame_id = parent;
+  t.child_frame_id = child;
 
   // Set translation
   t.transform.translation.x = pose.x;
@@ -135,11 +137,15 @@ MultiplexorMapsManager::create_static_tf(const std::string & ns)
   t.transform.rotation.z = q.z();
   t.transform.rotation.w = q.w();
 
-  // Publish the static transform
-  global_tf_broadcaster_->sendTransform(t);
+  // Publish the transform
+  if (static_tf) {
+    global_static_tf_broadcaster_->sendTransform(t);
+  } else {
+    global_tf_broadcaster_->sendTransform(t);
+  }
 
-  RCLCPP_INFO(get_node()->get_logger(),
-    "Published static transform: %s -> %s with translation (%.2f, %.2f) and rotation (%.2f rad)",
+  RCLCPP_DEBUG(get_node()->get_logger(),
+    "Published transform: %s -> %s with translation (%.2f, %.2f) and rotation (%.2f rad)",
     t.header.frame_id.c_str(), t.child_frame_id.c_str(), pose.x, pose.y, pose.theta);
 }
 
@@ -150,10 +156,7 @@ MultiplexorMapsManager::update(NavState & nav_state)
 
   // Mux all maps on fixed costmap and save in muxed map
   Costmap2D muxed_map;
-
-  std::unique_lock<std::mutex> lock(maps_mutex_);
   mux(muxed_map);
-  lock.unlock();
 
   // Save new map in navstate so it can be used
   nav_state.set("map.static", muxed_map);
@@ -169,6 +172,27 @@ MultiplexorMapsManager::update(NavState & nav_state)
   muxed_map_msg.header.frame_id = tf_info.map_frame;
   muxed_map_msg.header.stamp = map_stamp;
   muxed_map_pub_->publish(muxed_map_msg);
+
+  try {
+    // Get from local tf system ns/map -> ns/base_link
+    geometry_msgs::msg::Pose2D pose;
+    geometry_msgs::msg::TransformStamped tf_msg;
+
+    tf_msg = tf_buffer_->lookupTransform(tf_info.map_frame, tf_info.robot_frame, tf2::TimePointZero);
+    pose.x = tf_msg.transform.translation.x;
+    pose.y = tf_msg.transform.translation.y;
+    pose.theta = std::atan2(
+      2.0 * (tf_msg.transform.rotation.w * tf_msg.transform.rotation.z +
+            tf_msg.transform.rotation.x * tf_msg.transform.rotation.y),
+      1.0 - 2.0 * (tf_msg.transform.rotation.y * tf_msg.transform.rotation.y +
+                  tf_msg.transform.rotation.z * tf_msg.transform.rotation.z));
+
+    // Set on global tf system ns/map -> ns/base_link
+    create_global_tf(tf_info.map_frame, tf_info.robot_frame, pose, false);
+
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_ERROR(get_node()->get_logger(), "TF failed: %s", ex.what());
+  }
 }
 
 void
@@ -180,9 +204,7 @@ MultiplexorMapsManager::map_callback(const OccupancyGrid::SharedPtr map)
   std::string ns = (pos != std::string::npos) ? frame.substr(0, pos) : frame;
 
   // Cache the received map.
-  std::unique_lock<std::mutex> lock(maps_mutex_);
   maps_[ns] = Costmap2D(*map);
-  lock.unlock();
 }
 
 void
@@ -232,7 +254,7 @@ MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns)
 }
 
 BoundingBox
-MultiplexorMapsManager::get_global_bounds()
+MultiplexorMapsManager::get_bounds()
 {
   BoundingBox box;
 
@@ -301,7 +323,7 @@ MultiplexorMapsManager::mux(Costmap2D & dst)
   unsigned int h = fixed_map.getSizeInCellsY();
 
   // Resize final costmap and create aux final mat filled with NO_INFORMATION
-  BoundingBox bounds = get_global_bounds();
+  BoundingBox bounds = get_bounds();
   double aligned_ox = local_x - std::floor((local_x - bounds.min_x) / res) * res;
   double aligned_oy = local_y - std::floor((local_y - bounds.min_y) / res) * res;
 

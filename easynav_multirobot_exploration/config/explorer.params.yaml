@@ -1,24 +1,21 @@
 r1/explorer:
   ros__parameters:
     map_frame: r1/map
-    robot_frame: r1/base_footprint
+    robot_frame: r1/base_link
     odom_frame: r1/odom
     use_sim_time: true
-
 
 r2/explorer:
   ros__parameters:
     map_frame: r2/map
-    robot_frame: r2/base_footprint
+    robot_frame: r2/base_link
     odom_frame: r2/odom
     use_sim_time: true
-
-
 
 r3/explorer:
   ros__parameters:
     map_frame: r3/map
-    robot_frame: r3/base_footprint
+    robot_frame: r3/base_link
     odom_frame: r3/odom
     use_sim_time: true
 

@@ -5,12 +5,14 @@
       <ReactiveSequence>
         <GetExplorationData frontier="{f}"
                             pose="{p}"
+                            peers_pose="{pp}"
                             map="{m}"/>
         <ReactiveFallback>
           <IsExplored frontier_to_check="{f}"
                       map_to_check="{m}"/>
           <Sequence>
             <ChooseFrontierGoal robot_pose="{p}"
+                                peers_robot_pose="{pp}"
                                 robot_frontier="{f}"
                                 frontier_goal="{fg}"/>
             <GoToPose goal_pose="{fg}"/>
@@ -28,6 +30,8 @@
             editable="true">
       <input_port name="robot_pose"
                   type="geometry_msgs::msg::Pose"/>
+      <input_port name="peers_robot_pose"
+                  type="std::vector&lt;geometry_msgs::msg::Pose&gt;"/>
       <input_port name="robot_frontier"
                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <output_port name="frontier_goal"
@@ -39,7 +43,9 @@
                    type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <output_port name="pose"
                    type="geometry_msgs::msg::Pose"/>
-      <input_port name="map"
+      <output_port name="peers_pose"
+                   type="std::vector&lt;geometry_msgs::msg::Pose&gt;"/>
+      <output_port name="map"
                   type="nav_msgs::msg::OccupancyGrid"/>
     </Action>
     <Action ID="GoToPose"

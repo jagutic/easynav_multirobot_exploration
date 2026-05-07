@@ -17,8 +17,9 @@ def generate_launch_description():
 
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
-    rviz_config_file = LaunchConfiguration('rviz_config')
     use_sim_time = LaunchConfiguration('use_sim_time')
+    namespaced_rviz_config = LaunchConfiguration('namespaced_rviz_config')
+    default_rviz_config = LaunchConfiguration('default_rviz_config')
 
     # Condition to check if a namespace is used
     is_empty_namespace = EqualsSubstitution(LaunchConfiguration('namespace'), '')
@@ -33,10 +34,16 @@ def generate_launch_description():
         ),
     )
 
-    declare_rviz_config_file_cmd = DeclareLaunchArgument(
-        'rviz_config',
+    declare_namespaced_rviz_config_cmd = DeclareLaunchArgument(
+        'namespaced_rviz_config',
         default_value=os.path.join(bringup_dir, 'rviz', 'namespaced_view.rviz'),
-        description='Full path to the RVIZ config file to use',
+        description='Full path to the RVIZ config file to use when a namespace is provided',
+    )
+
+    declare_default_rviz_config_cmd = DeclareLaunchArgument(
+        'default_rviz_config',
+        default_value=os.path.join(bringup_dir, 'rviz', 'full_view.rviz'),
+        description='Full path to the default RVIZ config file to use when no namespace is provided',
     )
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -46,13 +53,13 @@ def generate_launch_description():
     # Launch rviz
     namespaced_rviz_config_file = ReplaceString(
         condition=UnlessCondition(is_empty_namespace),
-        source_file=rviz_config_file,
+        source_file=namespaced_rviz_config,
         replacements={'<robot_namespace>': ('', namespace)},
     )
 
     default_rviz_config_file = ReplaceString(
         condition=IfCondition(is_empty_namespace),
-        source_file=rviz_config_file,
+        source_file=default_rviz_config,
         replacements={'<robot_namespace>/': ('', namespace)},
     )
 
@@ -104,7 +111,8 @@ def generate_launch_description():
 
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
-    ld.add_action(declare_rviz_config_file_cmd)
+    ld.add_action(declare_namespaced_rviz_config_cmd)
+    ld.add_action(declare_default_rviz_config_cmd)
     ld.add_action(declare_use_sim_time_cmd)
 
     # Add any conditioned actions

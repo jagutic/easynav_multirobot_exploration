@@ -25,7 +25,6 @@
 
 #include <vector>
 #include <expected>
-#include <mutex>
 #include <string>
 #include <cstring>
 
@@ -34,6 +33,9 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
 
 #include <easynav_common/YTSession.hpp>
 #include "easynav_costmap_common/costmap_2d.hpp"
@@ -121,14 +123,18 @@ private:
    * @brief Computes the absolute bounding box encompassing all stored local maps.
    * @return A BoundingBox struct with the extreme min and max spatial coordinates.
    */
-  BoundingBox get_global_bounds();
+  BoundingBox get_bounds();
 
   /**
    * @brief Creates static TF transforms for each robot's local map frame to the global map frame.
    * * This allows ROS tools to visualize the local maps in the correct positions relative to each other.
-   * @param ns The namespace or identifier used to distinguish different robots' maps.
+   * @param parent The parent frame ID (global map frame).
+   * @param child The child frame ID (local map frame).
+   * @param pose The pose of the local map frame relative to the global frame.
+   * @param static Whether the transform is static.
    */
-  void create_static_tf(const std::string & ns);
+  void create_global_tf(const std::string& parent, const std::string& child,
+                geometry_msgs::msg::Pose2D& pose, bool static_tf);
 
   /**
    * @brief Creates ROS subscriptions for incoming local maps based on provided parameters.
@@ -146,18 +152,19 @@ private:
    */
   void mux(Costmap2D & dst);
 
-  
-  std::map<std::string, Costmap2D> maps_;          ///< Cache of the latest local maps, indexed by robot/frame ID.
-  std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
-  
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;     ///< Publisher for the final multiplexed global map.
+  std::map<std::string, Costmap2D> maps_;                                          ///< Cache of the latest local maps, indexed by robot/frame ID.
+  rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;                      ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
   
-  std::mutex maps_mutex_;                                       /// Mutex to avoid concurrency problems
-  std::string fixed_map_ns_;                                    /// Identificator to local map
+  std::string fixed_map_ns_;                                        /// Identificator to local map
+  std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
+  
+  rclcpp::Node::SharedPtr global_tf_broadcaster_node_;                                ///< Separate node for TF broadcasting to avoid conflicts with main navigation node.
+  std::shared_ptr<tf2_ros::TransformBroadcaster> global_tf_broadcaster_;              ///< TF broadcaster for static transforms from local map frames to global frame.
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> global_static_tf_broadcaster_; ///< TF broadcaster for static transforms from local map frames to global frame.
 
-  rclcpp::Node::SharedPtr global_tf_node_;            ///< Separate node for TF broadcasting to avoid conflicts with main navigation node.
-  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> global_tf_broadcaster_; ///< TF broadcaster for static transforms from local map frames to global frame.
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;                    ///< TF buffer for looking up existing transforms.
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;       ///< TF listener to populate the buffer with current transforms in the system.  
 };
 
 }  // namespace easynav

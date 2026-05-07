@@ -50,6 +50,7 @@ public:
     return BT::PortsList(
       {
         BT::InputPort<Pose>("robot_pose"),                     // Current location of the robot
+        BT::InputPort<std::vector<Pose>>("peers_robot_pose"),        // Current locations of peer robots
         BT::InputPort<std::vector<Point>>("robot_frontier"),   // List of candidate frontier points
         BT::OutputPort<Pose>("frontier_goal")                  // The selected navigation target
       });
