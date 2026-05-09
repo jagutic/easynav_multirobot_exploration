@@ -2,6 +2,8 @@
 #define EASYNAV_MULTIROBOT_EXPLORATION__CHOOSE_FRONTIER_GOAL_HPP
 
 #include <string>
+#include <limits>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
@@ -13,6 +15,9 @@
 
 namespace multirobot_exploration
 {
+
+#define POLICY_NEAREST_FRONTIER 0
+#define POLICY_BETTER_FRONTIER 1
 
 // Type aliases for cleaner ROS 2 message handling
 using geometry_msgs::msg::Pose;
@@ -65,7 +70,24 @@ private:
    */
   Pose calc_closest_goal(const Pose & current_pose, const std::vector<Point> & frontier);
 
+  /**
+   * @brief Helper function to determine the best frontier point based on a cost function.
+   * @param current_pose The current position of the robot.
+   * @param frontier A vector of points representing the identified frontiers.
+   * @param peers_pose A vector of poses representing the locations of peer robots.
+   * @return The selected Pose to be sent to the navigation stack.
+   */
+  Pose calc_best_goal(
+    const Pose & current_pose,
+    const std::vector<Pose> & peers_pose,
+    const std::vector<Point> & frontier
+  );
+
   rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging and time access
+
+  int policy_;                   // Exploration policy (e.g., nearest frontier, better frontier)
+  double distance_weight_;       // Weight for distance to frontier in cost function
+  double separation_weight_;     // Weight for separation from peers in cost function
 };
 
 } // namespace multirobot_exploration
