@@ -23,7 +23,7 @@ robots:
   namespace: r1
   camera: 'false'
   lidar: 'true'
-  x: 1.5
+  x: 2.0
   y: 0.0
   Y: 0.0
 

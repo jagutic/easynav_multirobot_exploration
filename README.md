@@ -1,34 +1,27 @@
 # MultiRobot Exploration
 TFG John Alejandro Gutiérrez: Exploración Multi-Robot en Easynav.
 
-## Dependencies & Prerequisites
+## Prerequisites
 
 This package has been developed and strictly tested on **Ubuntu 24.04** with **ROS 2 Kilted**.
-To successfully build and run the multi-robot exploration nodes, you need the following system and ROS 2 dependencies:
-
-* **ROS 2 Base:** `rclcpp`, `nav_msgs`, `geometry_msgs`, `visualization_msgs`
-* **TF2 Ecosystem:** `tf2_ros`, `tf2_geometry_msgs` (for global and local frame transformations).
-* **BehaviorTree.CPP (v4):** Used for the decision-making and execution flow of the exploration nodes.
-* **OpenCV (cv2):** Core requirement for the image-processing morphological algorithms used in frontier detection and maps multiplexor.
 
 
-## Installation & Build Instructions
+### Installation & Build Instructions
 
 **1. Create a workspace and clone the repository:**
 ```bash
-mkdir -p ~/easynav_mre_ws/src
-cd ~/easynav_mre_ws/src
+mkdir -p ~/easynav_mr_ws/src
+cd ~/easynav_mr_ws/src
 git clone https://github.com/jagutic/easynav_multirobot_exploration easynav_multirobot_exploration
 ```
 
 **2. Install dependencies automatically using `rosdep`:**
 Make sure you have sourced your ROS 2 installation first.
 ```bash
-cd ~/multi_ws
+cd ~/easynav_mr_ws
 rosdep update
 rosdep install --from-paths src --ignore-src -r -y
 ```
-*(Manual fallback if rosdep fails: `sudo apt install libopencv-dev ros-humble-behaviortree-cpp`)*
 
 **3. Build the packages:**
 ```bash

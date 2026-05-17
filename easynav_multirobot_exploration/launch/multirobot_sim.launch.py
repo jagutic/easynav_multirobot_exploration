@@ -45,6 +45,8 @@ def spawn_robots(context):
     spawn_delay = 1.0
     
     for idx, robot_args in enumerate(config_robots['robots']):
+        robot_args['lidar_range'] = '10.0'
+
         spawn_robot = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 [
