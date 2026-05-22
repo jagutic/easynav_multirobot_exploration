@@ -80,13 +80,13 @@ def generate_launch_description():
     world_arg = DeclareLaunchArgument(
         'world',
         default_value=os.path.join(
-            get_package_share_directory('aws_robomaker_small_house_world'), 'worlds', 'small_house.world'
+            get_package_share_directory('maze_world'), 'worlds', 'maze_small.world'
         ),
         description='Simulation world',
     )
     config_arg = DeclareLaunchArgument(
         'config',
-        default_value=os.path.join(pkg, 'config', 'sim', 'aws_small_house.params.yaml'),
+        default_value=os.path.join(pkg, 'config', 'sim', 'maze_small.params.yaml'),
         description='File for simulated robot parameters',
     )
 
