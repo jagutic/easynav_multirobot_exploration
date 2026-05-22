@@ -236,7 +236,7 @@ FrontierMapsManager::get_frontier(
                 &rect, cv::Scalar(0), cv::Scalar(0), 4 | (255 << 8) | cv::FLOODFILL_MASK_ONLY);
   reachable_actual_ = reachable_mask_(cv::Rect(1, 1, width, height));
 
-  // Intersect with dilated unknown space, to get total frontier
+  // Intersect with dilated unknown space, to get full frontier points
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
   cv::Mat frontier;
 

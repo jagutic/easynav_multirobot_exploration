@@ -10,6 +10,8 @@
 namespace multirobot_exploration
 {
 
+#define MAX_EMPTY_FRONTIER_RECEIVED 5
+
 // Type alias for cleaner ROS 2 message handling
 using geometry_msgs::msg::Point;
 
@@ -51,6 +53,7 @@ public:
 
 private:
   rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging purposes
+  int empty_frontier_counter;    // Counts how many empty frontiers have arrived
 };
 
 } // namespace multirobot_exploration

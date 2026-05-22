@@ -6,7 +6,8 @@ namespace multirobot_exploration
 IsExplored::IsExplored(
   const std::string & name,
   const BT::NodeConfig & conf)
-: BT::ConditionNode(name, conf)
+: BT::ConditionNode(name, conf),
+  empty_frontier_counter(0)
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** IsExplored **");
@@ -25,7 +26,7 @@ BT::NodeStatus IsExplored::tick()
 
 
   // Only consider finished when there are not more frontiers to explore
-  if (frontier_to_check.empty()) {
+  if (frontier_to_check.empty()  && ++empty_frontier_counter > MAX_EMPTY_FRONTIER_RECEIVED) {
     RCLCPP_INFO(node_->get_logger(), "Frontier empty, may be explored");
     return BT::NodeStatus::SUCCESS;
   }

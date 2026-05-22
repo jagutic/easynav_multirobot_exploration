@@ -135,7 +135,7 @@ GetExplorationData::getPeersPose()
       Pose peer_pose = getPose(robot_frame, peer_robot_frame, global_tf_buffer_);
       peer_poses.push_back(peer_pose);
       
-      RCLCPP_DEBUG(node_->get_logger(), "Peer robot frame %s at: (%.2f, %.2f)", 
+      RCLCPP_INFO(node_->get_logger(), "Peer robot frame %s at: (%.2f, %.2f)", 
                   peer_robot_frame.c_str(), peer_pose.position.x, peer_pose.position.y);
 
     } catch (const tf2::TransformException & ex) {
