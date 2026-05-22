@@ -57,7 +57,8 @@ public:
         BT::InputPort<Pose>("robot_pose"),                     // Current location of the robot
         BT::InputPort<std::vector<Pose>>("peers_robot_pose"),        // Current locations of peer robots
         BT::InputPort<std::vector<Point>>("robot_frontier"),   // List of candidate frontier points
-        BT::OutputPort<Pose>("frontier_goal")                  // The selected navigation target
+        BT::OutputPort<Pose>("frontier_goal"),                 // The selected navigation target
+        BT::OutputPort<double>("frontier_goal_cost")          // Cost of the chosen goal
       });
   }
 
@@ -66,18 +67,20 @@ private:
    * @brief Helper function to determine the nearest frontier point.
    * @param current_pose The current position of the robot.
    * @param frontier A vector of points representing the identified frontiers.
-   * @return The selected Pose to be sent to the navigation stack.
+   * @return The selected Pose to be sent to the navigation stack with its cost.
    */
-  Pose calc_closest_goal(const Pose & current_pose, const std::vector<Point> & frontier);
+  std::pair<geometry_msgs::msg::Pose, double> calc_closest_goal(
+    const Pose & current_pose,
+    const std::vector<Point> & frontier);
 
   /**
    * @brief Helper function to determine the best frontier point based on a cost function.
    * @param current_pose The current position of the robot.
    * @param frontier A vector of points representing the identified frontiers.
    * @param peers_pose A vector of poses representing the locations of peer robots.
-   * @return The selected Pose to be sent to the navigation stack.
+   * @return The selected Pose to be sent to the navigation stack with its cost.
    */
-  Pose calc_best_goal(
+  std::pair<geometry_msgs::msg::Pose, double> calc_best_goal(
     const Pose & current_pose,
     const std::vector<Pose> & peers_pose,
     const std::vector<Point> & frontier
@@ -85,9 +88,11 @@ private:
 
   rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging and time access
 
-  int policy_;                   // Exploration policy (e.g., nearest frontier, better frontier)
-  double distance_weight_;       // Weight for distance to frontier in cost function
-  double separation_weight_;     // Weight for separation from peers in cost function
+  int policy_;                          // Exploration policy (e.g., nearest frontier, better frontier)
+  double distance_weight_;              // Weight for distance to frontier in cost function
+  double separation_weight_;            // Weight for separation from peers in cost function
+
+  double min_cost_diff_;                // Minimum cost difference to change goal
 };
 
 } // namespace multirobot_exploration

@@ -3,31 +3,37 @@
 
 r1/explorer:
   ros__parameters:
+    use_sim_time: true
     map_frame: r1/map
     robot_frame: r1/base_link
     odom_frame: r1/odom
+
     policy: 1 # BETTER_FRONTIER
-    separation_weight: 2.0
-    distance_weight: 1.0
-    use_sim_time: true
+    separation_weight: 0.4
+    distance_weight: 0.6
+    min_cost_diff: 0.2
 
 r2/explorer:
   ros__parameters:
+    use_sim_time: true
     map_frame: r2/map
     robot_frame: r2/base_link
     odom_frame: r2/odom
+
     policy: 1 # BETTER_FRONTIER
-    separation_weight: 2.0
-    distance_weight: 1.0
-    use_sim_time: true
+    separation_weight: 0.4
+    distance_weight: 0.6
+    min_cost_diff: 0.2
 
 r3/explorer:
   ros__parameters:
+    use_sim_time: true
     map_frame: r3/map
     robot_frame: r3/base_link
     odom_frame: r3/odom
+
     policy: 1 # BETTER_FRONTIER
-    separation_weight: 2.0
-    distance_weight: 1.0
-    use_sim_time: true
+    separation_weight: 0.4
+    distance_weight: 0.6
+    min_cost_diff: 0.2
 
