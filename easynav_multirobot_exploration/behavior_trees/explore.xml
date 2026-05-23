@@ -16,7 +16,6 @@
                                 robot_frontier="{f}"
                                 frontier_goal="{fg}"
                                 frontier_goal_cost="{fgc}"/>
-            <SetBlackboard output_key="last_goal_cost" value="{fgc}"/>
             <GoToPose goal_pose="{fg}"/>
             <IsExplored frontier_to_check="{f}"
                         map_to_check="{m}"/>

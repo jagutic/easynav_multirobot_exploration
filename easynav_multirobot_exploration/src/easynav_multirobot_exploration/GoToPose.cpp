@@ -15,21 +15,51 @@ GoToPose::GoToPose(const std::string & name, const BT::NodeConfig & conf)
 BT::NodeStatus
 GoToPose::tick()
 {
+  // Manage response
   easynav_interfaces::msg::NavigationControl response;
 
   switch (nav_client_->get_state()) {
     // No action in these states
     case easynav::GoalManagerClient::State::SENT_GOAL:
+      RCLCPP_INFO(node_->get_logger(), "Goal sent, waiting for response...");
+      return BT::NodeStatus::RUNNING;
     case easynav::GoalManagerClient::State::SENT_PREEMPT:
+      RCLCPP_INFO(node_->get_logger(), "Preempt sent, waiting for response...");
       return BT::NodeStatus::RUNNING;
 
-    // Manage error state
-    case easynav::GoalManagerClient::State::ERROR:
-      RCLCPP_ERROR(node_->get_logger(), "Error with goal manager client");
-      nav_client_->reset();
-      return BT::NodeStatus::FAILURE;
+    // Manage normal state
+    case easynav::GoalManagerClient::State::IDLE:
+      // Send goal
+      if (!send_goal()) {
+        return BT::NodeStatus::FAILURE;
+      }
+      return BT::NodeStatus::RUNNING;
 
-    // Manage failure or successs navigation ending
+    // Manage navigating state
+    case easynav::GoalManagerClient::State::ACCEPTED_AND_NAVIGATING:
+      // Send goal
+      if (!send_goal()) {
+        return BT::NodeStatus::FAILURE;
+      }
+
+      // Get feedback
+      response = nav_client_->get_feedback();
+      RCLCPP_INFO(
+        node_->get_logger(),
+        "Distance to goal: %.2f Navigation time: %d sec",
+        response.distance_to_goal, response.navigation_time.sec
+      );
+      return BT::NodeStatus::RUNNING;
+
+    // Manage successful navigation
+    case easynav::GoalManagerClient::State::NAVIGATION_FINISHED:
+      response = nav_client_->get_result();
+      RCLCPP_INFO(node_->get_logger(), "%s", response.status_message.c_str());
+
+      nav_client_->reset();
+      return BT::NodeStatus::SUCCESS;
+
+    // Manage failed navigation
     case easynav::GoalManagerClient::State::NAVIGATION_CANCELLED:
     case easynav::GoalManagerClient::State::NAVIGATION_FAILED:
       response = nav_client_->get_result();
@@ -38,48 +68,13 @@ GoToPose::tick()
       nav_client_->reset();
       return BT::NodeStatus::FAILURE;
 
-    case easynav::GoalManagerClient::State::NAVIGATION_FINISHED:
-      response = nav_client_->get_result();
-      RCLCPP_INFO(node_->get_logger(), "%s", response.status_message.c_str());
-
+    // Manage error
+    case easynav::GoalManagerClient::State::ERROR:
+      RCLCPP_ERROR(node_->get_logger(), "Error with goal manager client");
       nav_client_->reset();
-      return BT::NodeStatus::SUCCESS;
+      return BT::NodeStatus::FAILURE;
 
-    // Manage navigating state
-    case easynav::GoalManagerClient::State::ACCEPTED_AND_NAVIGATING:
-      response = nav_client_->get_feedback();
-      RCLCPP_INFO(
-        node_->get_logger(),
-        "Distance to goal: %.2f\n Navigation time: %d sec %dnsec",
-        response.distance_to_goal,
-        response.navigation_time.sec,
-        response.navigation_time.nanosec
-      );
-
-      return BT::NodeStatus::RUNNING;
-
-    // Manage normal state, send goal to begin navigation
-    case easynav::GoalManagerClient::State::IDLE:
-      {
-        Pose goal_pose;
-        BT::Result result = getInput("goal_pose", goal_pose);
-
-        if (!result.has_value()) { // No goal -> failure
-          RCLCPP_ERROR(node_->get_logger(), "No goal pose");
-          return BT::NodeStatus::FAILURE;
-        }
-
-      // Fill goal msg
-        PoseStamped goal;
-        goal.header.frame_id = config().blackboard->get<std::string>("map_frame");
-        goal.header.stamp = node_->now();
-        goal.pose = goal_pose;
-        nav_client_->send_goal(goal);
-
-        RCLCPP_INFO(node_->get_logger(), "Goal sent");
-        return BT::NodeStatus::RUNNING;
-      }
-
+    // Manage undefined
     default:
       RCLCPP_ERROR(node_->get_logger(), "Undefined goal manager client state");
       nav_client_->reset();
@@ -91,8 +86,30 @@ void
 GoToPose::halt()
 {
   nav_client_->cancel();
-  nav_client_->reset();
   RCLCPP_INFO(node_->get_logger(), "GoToPose halted.");
+}
+
+bool
+GoToPose::send_goal()
+{
+  // Get goal from BB
+  Pose goal_pose;
+  BT::Result result = getInput("goal_pose", goal_pose);
+
+  if (!result.has_value()) { // No goal -> failure
+    RCLCPP_ERROR(node_->get_logger(), "No goal pose");
+    return false;
+  }
+
+  // Send goal with easynav client
+  PoseStamped goal;
+  goal.header.frame_id = config().blackboard->get<std::string>("map_frame");
+  goal.header.stamp = node_->now();
+  goal.pose = goal_pose;
+
+  nav_client_->send_goal(goal);
+  RCLCPP_INFO(node_->get_logger(), "Goal sent");
+  return true;
 }
 
 } // namespace multirobot_exploration

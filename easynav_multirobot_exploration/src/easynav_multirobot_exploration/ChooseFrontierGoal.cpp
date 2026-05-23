@@ -102,13 +102,13 @@ ChooseFrontierGoal::tick()
     }
 
   } else {      
-    RCLCPP_INFO(node_->get_logger(), "First execution, no previous goal cost to compare yet");
+    RCLCPP_INFO(node_->get_logger(), "No last goal cost yet");
   }
 
   // Set or change goal
   setOutput("frontier_goal", frontier_goal);
   setOutput("frontier_goal_cost", goal_cost);
-  RCLCPP_INFO(node_->get_logger(), "Frontier goal selected, with cost: %.2f", goal_cost);
+  RCLCPP_INFO(node_->get_logger(), "New frontier goal selected, with cost: %.2f", goal_cost);
 
   return BT::NodeStatus::SUCCESS;
 }

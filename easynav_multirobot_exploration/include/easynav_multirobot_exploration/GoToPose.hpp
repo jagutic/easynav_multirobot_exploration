@@ -57,6 +57,13 @@ public:
   }
 
 private:
+  /**
+   * @brief Helper function to send the navigation goal using the GoalManagerClient.
+   * @return true if the goal was sent successfully, false otherwise.
+   * This function encapsulates the logic for retrieving the goal from the blackboard and sending it to the navigation system.
+   */
+  bool send_goal();
+
   rclcpp::Node::SharedPtr node_;                    // Pointer to the ROS 2 node for logging and timing
   easynav::GoalManagerClient::SharedPtr nav_client_; // Client to interface with the easynav navigation system
 };

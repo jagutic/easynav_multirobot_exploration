@@ -48,7 +48,7 @@ r1/maps_manager_node:
     frontier:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
-      proximity_radius: 0.3 # Must be greater than system node position tolerance
+      proximity_radius: 0.4 # Must be greater than system node position tolerance
       obstacle_threshold: 40
       clustering: true
       dbscan_eps_px: 0
@@ -69,15 +69,16 @@ r1/sensors_node:
     forget_time: 0.5
     sensors: [laser1]
     perception_default_frame: odom
-    laser1: {topic: scan_raw, type: sensor_msgs/msg/LaserScan, group: points}
-    camera1: {topic: rgbd_camera/points, type: sensor_msgs/msg/PointCloud2, group: points}
+    laser1: {topic: scan_raw, type: sensor_msgs/msg/LaserScan}
+    camera1: {topic: rgbd_camera/points, type: sensor_msgs/msg/PointCloud2}
 
 r1/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
-    position_tolerance: 0.2
-    angle_tolerance: 0.5
+    allow_preempt_goal: true
+    position_tolerance: 0.4
+    angle_tolerance: 1.0
     tf_prefix: r1
 
 
@@ -132,7 +133,7 @@ r2/maps_manager_node:
     frontier:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
-      proximity_radius: 0.3 # Must be greater than system node position tolerance
+      proximity_radius: 0.4 # Must be greater than system node position tolerance
       obstacle_threshold: 40
       clustering: true
       dbscan_eps_px: 0
@@ -153,17 +154,17 @@ r2/sensors_node:
     forget_time: 0.5
     sensors: [laser1]
     perception_default_frame: odom
-    laser1: {topic: scan_raw, type: sensor_msgs/msg/LaserScan, group: points}
-    camera1: {topic: rgbd_camera/points, type: sensor_msgs/msg/PointCloud2, group: points}
+    laser1: {topic: scan_raw, type: sensor_msgs/msg/LaserScan}
+    camera1: {topic: rgbd_camera/points, type: sensor_msgs/msg/PointCloud2}
 
 r2/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
-    position_tolerance: 0.2
-    angle_tolerance: 0.5
+    allow_preempt_goal: true
+    position_tolerance: 0.4
+    angle_tolerance: 1.0
     tf_prefix: r2
-
 
 
 
@@ -217,7 +218,7 @@ r3/maps_manager_node:
     frontier:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
-      proximity_radius: 0.3 # Must be greater than system node position tolerance
+      proximity_radius: 0.4 # Must be greater than system node position tolerance
       obstacle_threshold: 40
       clustering: true
       dbscan_eps_px: 0
@@ -238,13 +239,14 @@ r3/sensors_node:
     forget_time: 0.5
     sensors: [laser1]
     perception_default_frame: odom
-    laser1: {topic: scan_raw, type: sensor_msgs/msg/LaserScan, group: points}
-    camera1: {topic: rgbd_camera/points, type: sensor_msgs/msg/PointCloud2, group: points}
+    laser1: {topic: scan_raw, type: sensor_msgs/msg/LaserScan}
+    camera1: {topic: rgbd_camera/points, type: sensor_msgs/msg/PointCloud2}
 
 r3/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
-    position_tolerance: 0.2
-    angle_tolerance: 0.5
+    allow_preempt_goal: true
+    position_tolerance: 0.4
+    angle_tolerance: 1.0
     tf_prefix: r3
