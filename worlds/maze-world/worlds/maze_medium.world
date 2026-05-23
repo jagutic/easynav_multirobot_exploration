@@ -27,7 +27,7 @@
     </spherical_coordinates>
     <gui fullscreen="false">
       <camera name="user_camera">
-        <pose>-8.8758 -12.5361 61.8986 0.0 1.2097900000000008 -0.011782000000000003</pose>
+        <pose>-5.9172 -8.3574 41.2657 0.0 1.2097900000000008 -0.011782000000000003</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -96,16 +96,16 @@
       <self_collide>false</self_collide>
     </model>
     <model name="laberinto_completo">
-      <pose>-12.0 9.0 0.0 0.0 0.0 0.0</pose>
+      <pose>-8.0 6.0 0.0 0.0 0.0 0.0</pose>
       <model name="6m_wall_new">
         <link name="Wall_0">
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -121,10 +121,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -156,7 +156,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>2.9963 2.2087 0.0 0.0 0.0 0.0</pose>
+        <pose>1.9976 1.4725 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_0">
@@ -164,10 +164,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -183,10 +183,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -218,19 +218,19 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>-1.3587 -1.8841 0.0 0.0 0.0 -1.553410027118094</pose>
+        <pose>-0.9058 -1.256 0.0 0.0 0.0 -1.553410027118094</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="3m_wall_new">
-        <pose>14.7195 -11.8436 -1.023 0.08624170387613793 -0.0004881718548780227 -1.5858199912794726</pose>
+        <pose>9.813 -7.8957 -0.682 0.08624170387613793 -0.0004881718548780227 -1.5858199912794726</pose>
         <link name="Wall_45">
           <collision name="3m_wall_newc">
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -246,10 +246,10 @@
             </surface>
           </collision>
           <visual name="3m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -288,10 +288,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -307,10 +307,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -342,7 +342,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>3.3926 -11.191 0.0 0.0 0.0 -3.131000000206361</pose>
+        <pose>2.2617 -7.4607 0.0 0.0 0.0 -3.131000000206361</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="basic_box_new">
@@ -360,10 +360,10 @@
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
           </inertial>
           <collision name="collision">
-            <pose>0.0 0.0 0.75 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>1.5 1.5 1.5</size>
+                <size>1.0 1.0 1.0</size>
               </box>
             </geometry>
             <max_contacts>10</max_contacts>
@@ -386,7 +386,7 @@
               <mesh>
                 <uri>
                   model://basic_box_new/meshes/basic_box.dae</uri>
-                <scale>3.825 3.825 3.825</scale>
+                <scale>2.55 2.55 2.55</scale>
               </mesh>
             </geometry>
           </visual>
@@ -395,7 +395,7 @@
           <kinematic>false</kinematic>
           <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
         </link>
-        <pose>2.2618 1.3462 -0.0 1.7122439300393877e-09 -2.2477247520147068e-13 1.0645508024857774e-06</pose>
+        <pose>1.5079 0.8975 -0.0 1.7122439300393877e-09 -2.2477247520147068e-13 1.0645508024857774e-06</pose>
         <static>false</static>
         <self_collide>false</self_collide>
       </model>
@@ -414,10 +414,10 @@
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
           </inertial>
           <collision name="collision">
-            <pose>0.0 0.0 0.75 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>1.5 1.5 1.5</size>
+                <size>1.0 1.0 1.0</size>
               </box>
             </geometry>
             <max_contacts>10</max_contacts>
@@ -440,7 +440,7 @@
               <mesh>
                 <uri>
                   model://basic_box_new/meshes/basic_box.dae</uri>
-                <scale>3.825 3.825 3.825</scale>
+                <scale>2.55 2.55 2.55</scale>
               </mesh>
             </geometry>
           </visual>
@@ -449,7 +449,7 @@
           <kinematic>false</kinematic>
           <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
         </link>
-        <pose>2.2628 -19.4354 -0.0 -4.709588893871962e-09 2.2647758412336744e-13 5.759065026983031e-07</pose>
+        <pose>1.5085 -12.9569 -0.0 -4.709588893871962e-09 2.2647758412336744e-13 5.759065026983031e-07</pose>
         <static>false</static>
         <self_collide>false</self_collide>
       </model>
@@ -468,10 +468,10 @@
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
           </inertial>
           <collision name="collision">
-            <pose>0.0 0.0 0.75 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>1.5 1.5 1.5</size>
+                <size>1.0 1.0 1.0</size>
               </box>
             </geometry>
             <max_contacts>10</max_contacts>
@@ -494,7 +494,7 @@
               <mesh>
                 <uri>
                   model://basic_box_new/meshes/basic_box.dae</uri>
-                <scale>3.825 3.825 3.825</scale>
+                <scale>2.55 2.55 2.55</scale>
               </mesh>
             </geometry>
           </visual>
@@ -503,7 +503,7 @@
           <kinematic>false</kinematic>
           <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
         </link>
-        <pose>2.266 -17.9121 -0.0 2.585247548211485e-10 1.0847398264591749e-06 4.132978820262056e-08</pose>
+        <pose>1.5107 -11.9414 -0.0 2.585247548211485e-10 1.0847398264591749e-06 4.132978820262056e-08</pose>
         <static>false</static>
         <self_collide>false</self_collide>
       </model>
@@ -512,10 +512,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -531,10 +531,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -566,7 +566,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>11.8458 2.2208 0.0 0.0 0.0 0.0</pose>
+        <pose>7.8972 1.4805 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_clone_0">
@@ -574,10 +574,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -593,10 +593,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -628,7 +628,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>20.7042 2.2318 0.0 0.0 0.0 0.0</pose>
+        <pose>13.8028 1.4879 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_1">
@@ -636,10 +636,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -655,10 +655,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -690,7 +690,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>2.924 -20.2329 0.0 0.0 0.0 0.0</pose>
+        <pose>1.9493 -13.4886 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_4">
@@ -698,10 +698,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -717,10 +717,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -752,7 +752,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>11.8668 -20.2225 0.0 0.0 0.0 0.0</pose>
+        <pose>7.9112 -13.4817 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_5">
@@ -760,10 +760,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -779,10 +779,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -814,7 +814,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>20.7955 -20.2187 0.0 0.0 0.0 0.0</pose>
+        <pose>13.8637 -13.4791 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_3">
@@ -822,10 +822,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -841,10 +841,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -876,19 +876,19 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>11.76 -3.7545 0.0 0.0 0.0 0.0</pose>
+        <pose>7.84 -2.503 0.0 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="3m_wall_new_0">
-        <pose>18.4075 -3.7845 0.0 0.0 0.0 0.0</pose>
+        <pose>12.2717 -2.523 0.0 0.0 0.0 0.0</pose>
         <link name="Wall_45">
           <collision name="3m_wall_newc">
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -904,10 +904,10 @@
             </surface>
           </collision>
           <visual name="3m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -946,10 +946,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -965,10 +965,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1000,19 +1000,19 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>11.9749 -14.2305 -1.0283 0.0 0.0 0.0</pose>
+        <pose>7.9833 -9.487 -0.6855 0.0 0.0 0.0</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="3m_wall_new_1">
-        <pose>18.3633 -14.2337 0.0 0.0 0.0 0.0</pose>
+        <pose>12.2422 -9.4891 0.0 0.0 0.0 0.0</pose>
         <link name="Wall_45">
           <collision name="3m_wall_newc">
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1028,10 +1028,10 @@
             </surface>
           </collision>
           <visual name="3m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1070,10 +1070,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1089,10 +1089,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1124,7 +1124,7 @@
           </inertial>
         </link>
         <static>true</static>
-        <pose>20.6131 -8.2027 0.0 0.0 0.0 -1.570800035717629</pose>
+        <pose>13.7421 -5.4684 0.0 0.0 0.0 -1.570800035717629</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="basic_box_new_clone">
@@ -1142,10 +1142,10 @@
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
           </inertial>
           <collision name="collision">
-            <pose>0.0 0.0 0.75 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>1.5 1.5 1.5</size>
+                <size>1.0 1.0 1.0</size>
               </box>
             </geometry>
             <max_contacts>10</max_contacts>
@@ -1168,7 +1168,7 @@
               <mesh>
                 <uri>
                   model://basic_box_new/meshes/basic_box.dae</uri>
-                <scale>3.825 3.825 3.825</scale>
+                <scale>2.55 2.55 2.55</scale>
               </mesh>
             </geometry>
           </visual>
@@ -1177,7 +1177,7 @@
           <kinematic>false</kinematic>
           <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
         </link>
-        <pose>8.3506 -2.892 -0.0 -4.158265219850175e-09 -8.893153603227375e-14 4.268067306791361e-08</pose>
+        <pose>5.5671 -1.928 -0.0 -4.158265219850175e-09 -8.893153603227375e-14 4.268067306791361e-08</pose>
         <static>false</static>
         <self_collide>false</self_collide>
       </model>
@@ -1196,10 +1196,10 @@
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
           </inertial>
           <collision name="collision">
-            <pose>0.0 0.0 0.75 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>1.5 1.5 1.5</size>
+                <size>1.0 1.0 1.0</size>
               </box>
             </geometry>
             <max_contacts>10</max_contacts>
@@ -1222,7 +1222,7 @@
               <mesh>
                 <uri>
                   model://basic_box_new/meshes/basic_box.dae</uri>
-                <scale>3.825 3.825 3.825</scale>
+                <scale>2.55 2.55 2.55</scale>
               </mesh>
             </geometry>
           </visual>
@@ -1231,12 +1231,12 @@
           <kinematic>false</kinematic>
           <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
         </link>
-        <pose>14.8891 1.3583 -0.0 4.428687148442918e-09 -8.962359620817858e-10 7.987631320872566e-07</pose>
+        <pose>9.9261 0.9055 -0.0 4.428687148442918e-09 -8.962359620817858e-10 7.987631320872566e-07</pose>
         <static>false</static>
         <self_collide>false</self_collide>
       </model>
       <model name="unit_cylinder_clone">
-        <pose>20.51 -18.4167 2.4467 6.881880470781287e-09 1.1349583015682024e-08 0.0012454194678728338</pose>
+        <pose>13.6733 -12.2778 1.6312 6.881880470781287e-09 1.1349583015682024e-08 0.0012454194678728338</pose>
         <link name="link">
           <inertial>
             <mass>1</mass>
@@ -1294,7 +1294,7 @@
         <self_collide>false</self_collide>
       </model>
       <model name="unit_cylinder_clone_0">
-        <pose>17.4788 -15.3489 2.4467 5.311936419538773e-09 7.096570982423164e-10 0.0012457663612064805</pose>
+        <pose>11.6525 -10.2326 1.6312 5.311936419538773e-09 7.096570982423164e-10 0.0012457663612064805</pose>
         <link name="link">
           <inertial>
             <mass>1</mass>
@@ -1352,7 +1352,7 @@
         <self_collide>false</self_collide>
       </model>
       <model name="unit_cylinder_clone_1">
-        <pose>13.4932 -18.2659 2.4467 -1.2606160550775862e-07 1.8522972243601208e-07 0.0012461504160919592</pose>
+        <pose>8.9955 -12.1773 1.6312 -1.2606160550775862e-07 1.8522972243601208e-07 0.0012461504160919592</pose>
         <link name="link">
           <inertial>
             <mass>1</mass>
@@ -1424,10 +1424,10 @@
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
           </inertial>
           <collision name="collision">
-            <pose>0.0 0.0 0.75 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>1.5 1.5 1.5</size>
+                <size>1.0 1.0 1.0</size>
               </box>
             </geometry>
             <max_contacts>10</max_contacts>
@@ -1450,7 +1450,7 @@
               <mesh>
                 <uri>
                   model://basic_box_new/meshes/basic_box.dae</uri>
-                <scale>3.825 3.825 3.825</scale>
+                <scale>2.55 2.55 2.55</scale>
               </mesh>
             </geometry>
           </visual>
@@ -1459,7 +1459,7 @@
           <kinematic>false</kinematic>
           <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
         </link>
-        <pose>8.2847 -15.093 -0.0 3.484604871934535e-09 -1.2837488019406033e-12 1.168478893861769e-06</pose>
+        <pose>5.5232 -10.062 -0.0 3.484604871934535e-09 -1.2837488019406033e-12 1.168478893861769e-06</pose>
         <static>false</static>
         <self_collide>false</self_collide>
       </model>
@@ -1468,10 +1468,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1487,10 +1487,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1510,7 +1510,7 @@
           <kinematic>false</kinematic>
         </link>
         <static>true</static>
-        <pose>-1.1998 -10.6799 0.0 0.0 0.0 -1.5534100448028527</pose>
+        <pose>-0.7999 -7.1199 0.0 0.0 0.0 -1.5534100448028527</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_0_1_1">
@@ -1518,10 +1518,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1537,10 +1537,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1560,7 +1560,7 @@
           <kinematic>false</kinematic>
         </link>
         <static>true</static>
-        <pose>-1.0838 -18.8964 0.0 0.0 0.0 -1.5534100448028527</pose>
+        <pose>-0.7225 -12.5976 0.0 0.0 0.0 -1.5534100448028527</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_0_clone_clone_1">
@@ -1568,10 +1568,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1587,10 +1587,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1610,7 +1610,7 @@
           <kinematic>false</kinematic>
         </link>
         <static>true</static>
-        <pose>25.0722 -2.1726 0.0 0.0 0.0 -1.5707999672671704</pose>
+        <pose>16.7148 -1.4484 0.0 0.0 0.0 -1.5707999672671704</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_0_clone_clone_1_1">
@@ -1618,10 +1618,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1637,10 +1637,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1660,7 +1660,7 @@
           <kinematic>false</kinematic>
         </link>
         <static>true</static>
-        <pose>25.1084 -9.7081 0.0 0.0 0.0 -1.5707999672671704</pose>
+        <pose>16.739 -6.472 0.0 0.0 0.0 -1.5707999672671704</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="6m_wall_new_0_clone_clone_1_1_1">
@@ -1668,10 +1668,10 @@
           <collision name="6m_wall_newc">
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1687,10 +1687,10 @@
             </surface>
           </collision>
           <visual name="6m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>9.0 0.225 4.5</size>
+                <size>6.0 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1710,19 +1710,19 @@
           <kinematic>false</kinematic>
         </link>
         <static>true</static>
-        <pose>25.1392 -15.8306 0.0 0.0 0.0 -1.5707999672671704</pose>
+        <pose>16.7595 -10.5537 0.0 0.0 0.0 -1.5707999672671704</pose>
         <self_collide>false</self_collide>
       </model>
       <model name="3m_wall_new_2_1_1_1">
-        <pose>7.4451 -3.7782 0.0 0.0 0.0 0.0</pose>
+        <pose>4.9634 -2.5188 0.0 0.0 0.0 0.0</pose>
         <link name="Wall_45">
           <collision name="3m_wall_newc">
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <max_contacts>10</max_contacts>
             <surface>
               <contact>
@@ -1738,10 +1738,10 @@
             </surface>
           </collision>
           <visual name="3m_wall_newv">
-            <pose>0.0 0.0 2.25 0.0 0.0 0.0</pose>
+            <pose>0.0 0.0 1.5 0.0 0.0 0.0</pose>
             <geometry>
               <box>
-                <size>4.725 0.225 4.5</size>
+                <size>3.15 0.15 3.0</size>
               </box>
             </geometry>
             <material>
@@ -1765,7 +1765,7 @@
       </model>
     </model>
     <light name="sun" type="directional">
-      <pose>0.0 0.0 15.0 0.0 0.0 0.0</pose>
+      <pose>0.0 0.0 10.0 0.0 0.0 0.0</pose>
       <cast_shadows>false</cast_shadows>
       <intensity>1</intensity>
       <direction>-0.5 0.10000000000000001 -0.90000000000000002</direction>

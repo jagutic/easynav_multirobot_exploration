@@ -23,22 +23,25 @@ robots:
   namespace: r1
   camera: 'false'
   lidar: 'true'
-  x: 1.5
-  y: 0.0
-  Y: 0.0
+  use_sim_time: 'true'
+  x: 0.0
+  y: -2.0
+  Y: 1.57
 
 - name: kobuki_2
   namespace: r2
   camera: 'false'
   lidar: 'true'
+  use_sim_time: 'true'
   x: -7.0
-  y: -3.0
-  Y: 0.0
+  y: -2.0
+  Y: 3.14
 
 - name: kobuki_3
   namespace: r3
   camera: 'false'
   lidar: 'true'
+  use_sim_time: 'true'
   x: 7.0
-  y: -3.0
+  y: -2.0
   Y: 0.0

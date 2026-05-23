@@ -5,13 +5,13 @@ r1/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.15
-      max_angular_speed: 0.25
+      max_linear_speed: 0.2
+      max_angular_speed: 0.4
       look_ahead_dist: 0.4
-      k_rot: 0.5
-      k_p: 1.0
+      k_rot: 1.5
+      k_p: 1.2
       k_i: 0.0
-      k_d: 0.3
+      k_d: 0.15
 
 r1/localizer_node:
   ros__parameters:
@@ -34,7 +34,7 @@ r1/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
       inflation:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 0.8
+        inflation_radius: 1.0
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
@@ -42,14 +42,14 @@ r1/maps_manager_node:
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r1"
       robot_namespaces: ["r1", "r2", "r3"]
-      r1: {x: 2.0, y: 0.0, Y: 0.0, topic: "local_map"}
-      r2: {x: -3.5, y: -2.0, Y: 0.0, topic: "local_map"}
-      r3: {x: 3.5, y: 3.0, Y: 0.0, topic: "local_map"}
+      r1: {x: 0.0, y: 0.0, Y: 0.0, topic: "local_map"}
+      r2: {x: 0.0, y: -3.0, Y: 0.0, topic: "local_map"}
+      r3: {x: 0.0, y: 6.0, Y: 0.0, topic: "local_map"}
     frontier:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3 # Must be greater than system node position tolerance
-      obstacle_threshold: 50
+      obstacle_threshold: 40
       clustering: true
       dbscan_eps_px: 0
       dbscan_min_points: 10
@@ -89,13 +89,13 @@ r2/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.15
-      max_angular_speed: 0.25
+      max_linear_speed: 0.2
+      max_angular_speed: 0.4
       look_ahead_dist: 0.4
-      k_rot: 0.5
-      k_p: 1.0
+      k_rot: 1.5
+      k_p: 1.2
       k_i: 0.0
-      k_d: 0.3
+      k_d: 0.15
 
 r2/localizer_node:
   ros__parameters:
@@ -118,7 +118,7 @@ r2/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
       inflation:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 0.8
+        inflation_radius: 1.0
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
@@ -126,14 +126,14 @@ r2/maps_manager_node:
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r2"
       robot_namespaces: ["r1", "r2", "r3"]
-      r1: {x: 2.0, y: 0.0, Y: 0.0, topic: "local_map"}
-      r2: {x: -3.5, y: -2.0, Y: 0.0, topic: "local_map"}
-      r3: {x: 3.5, y: 3.0, Y: 0.0, topic: "local_map"}
+      r1: {x: 0.0, y: 0.0, Y: 0.0, topic: "local_map"}
+      r2: {x: 0.0, y: -3.0, Y: 0.0, topic: "local_map"}
+      r3: {x: 0.0, y: 6.0, Y: 0.0, topic: "local_map"}
     frontier:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3 # Must be greater than system node position tolerance
-      obstacle_threshold: 50
+      obstacle_threshold: 40
       clustering: true
       dbscan_eps_px: 0
       dbscan_min_points: 10
@@ -174,13 +174,13 @@ r3/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.15
-      max_angular_speed: 0.25
+      max_linear_speed: 0.2
+      max_angular_speed: 0.4
       look_ahead_dist: 0.4
-      k_rot: 0.5
-      k_p: 1.0
+      k_rot: 1.5
+      k_p: 1.2
       k_i: 0.0
-      k_d: 0.3
+      k_d: 0.15
 
 r3/localizer_node:
   ros__parameters:
@@ -203,7 +203,7 @@ r3/maps_manager_node:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/ObstaclesFilter
       inflation:
         plugin: easynav_costmap_maps_manager/CostmapMapsManager/InflationFilter
-        inflation_radius: 0.8
+        inflation_radius: 1.0
         cost_scaling_factor: 8.0
         inscribed_radius: 0.05
     multiplexor:
@@ -211,14 +211,14 @@ r3/maps_manager_node:
       plugin: easynav_multiplexor_maps_manager/MultiplexorMapsManager
       fixed_map_ns: "r3"
       robot_namespaces: ["r1", "r2", "r3"]
-      r1: {x: 2.0, y: 0.0, Y: 0.0, topic: "local_map"}
-      r2: {x: -3.5, y: -2.0, Y: 0.0, topic: "local_map"}
-      r3: {x: 3.5, y: 3.0, Y: 0.0, topic: "local_map"}
+      r1: {x: 0.0, y: 0.0, Y: 0.0, topic: "local_map"}
+      r2: {x: 0.0, y: -3.0, Y: 0.0, topic: "local_map"}
+      r3: {x: 0.0, y: 6.0, Y: 0.0, topic: "local_map"}
     frontier:
       freq: 5.0
       plugin: easynav_frontier_maps_manager/FrontierMapsManager
       proximity_radius: 0.3 # Must be greater than system node position tolerance
-      obstacle_threshold: 50
+      obstacle_threshold: 40
       clustering: true
       dbscan_eps_px: 0
       dbscan_min_points: 10

@@ -1,0 +1,856 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.6">
+    <world name="hospital">
+        <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+            <render_engine>ogre2</render_engine>
+        </plugin>
+        <gravity>0 0 -9.8</gravity>
+        <physics default="0" name="default_physics" type="ode">
+            <max_step_size>0.001</max_step_size>
+            <real_time_factor>1</real_time_factor>
+            <real_time_update_rate>1000</real_time_update_rate>
+        </physics>
+        <model name="aws_robomaker_hospital_floor_01_floor_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_floor_01_floor</uri>
+            </include>
+            <pose>0.011069 -0.041622 0 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_floor_01_walls_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_floor_01_walls</uri>
+            </include>
+            <pose>-0.013823 -0.013783 0 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_nursesstation_01_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_nursesstation_01</uri>
+            </include>
+            <pose>0 1.5 0 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_elevator_01_portal_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_elevator_01_portal</uri>
+            </include>
+            <pose>-1.50654 19.4813 0.19 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_elevator_01_portal_2">
+            <include>
+                <uri>model://aws_robomaker_hospital_elevator_01_portal</uri>
+            </include>
+            <pose>1.51134 19.487 0.19 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_elevator_01_car_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_elevator_01_car</uri>
+            </include>
+            <pose>-1.49587 19.35 0.19 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_elevator_01_car_2">
+            <include>
+                <uri>model://aws_robomaker_hospital_elevator_01_car</uri>
+            </include>
+            <pose>1.5407 19.35 0.19 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_elevator_01_door_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_elevator_01_door</uri>
+            </include>
+            <pose>-1.51 19.35 0.19 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_elevator_01_door_2">
+            <include>
+                <uri>model://aws_robomaker_hospital_elevator_01_door</uri>
+            </include>
+            <pose>1.52843 19.3627 0.19 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>-11.0216 -13.8069 0 0 -0 1.55358</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_closed_01_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_closed_01</uri>
+            </include>
+            <pose>-11.022 -7.27757 0 0 -0 1.57907</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_2">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>11.1417 -21.4039 0 0 0 -1.55117</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_3">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>11.1068 -17.8472 0 0 0 -1.55117</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_4">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>11.1374 -14.1551 0 0 0 -1.55117</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_5">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>-11.0332 -17.61 0 0 -0 1.55358</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_6">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>-11.0086 -21.7566 0 0 -0 1.55358</pose>
+        </model>
+        <model name="CGMClassic_1">
+            <include>
+                <uri>model://CGMClassic</uri>
+            </include>
+            <pose>11.1777 -18.4129 0 0 0 -1.5656</pose>
+        </model>
+        <!-- Removed 60%+ of decor and redundant models for performance. -->
+        <model name="CGMClassic_2">
+            <include>
+                <uri>model://CGMClassic</uri>
+            </include>
+            <pose>11.1179 -14.6493 0 0 0 -1.5656</pose>
+        </model>
+        <model name="InstrumentCart1_1">
+            <include>
+                <uri>model://InstrumentCart1</uri>
+            </include>
+            <pose>-11.6115 -12.2426 0 0 -0 0</pose>
+        </model>
+        <model name="SurgicalTrolley_1">
+            <include>
+                <uri>model://SurgicalTrolley</uri>
+            </include>
+            <pose>11.4301 3.56328 0 0 -0 0</pose>
+        </model>
+        <model name="InstrumentCart2_1">
+            <include>
+                <uri>model://InstrumentCart2</uri>
+            </include>
+            <pose>-12.0906 -1.87329 0.051875 0 -0 1.57773</pose>
+        </model>
+        <model name="MetalCabinet_1">
+            <include>
+                <uri>model://MetalCabinet</uri>
+            </include>
+            <pose>-11.1128 11.6546 0 0 -0 0</pose>
+        </model>
+        <model name="BedTable_1">
+            <include>
+                <uri>model://BedTable</uri>
+            </include>
+            <pose>-10.4759 1.39442 0.001186 0 2e-06 0</pose>
+        </model>
+        <model name="BedsideTable_1">
+            <include>
+                <uri>model://BedsideTable</uri>
+            </include>
+            <pose>-12.0922 -2.61243 0.000179 1e-06 -0 0.05292</pose>
+        </model>
+        <model name="aws_robomaker_hospital_floor_01_ceiling_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_floor_01_ceiling</uri>
+            </include>
+            <pose>0.016552 0.050728 0 0 -0 0</pose>
+        </model>
+        <model name="aws_robomaker_hospital_ramp_01_1">
+            <include>
+                <uri>model://aws_robomaker_hospital_ramp_01</uri>
+            </include>
+            <pose>-1.70996 16.3685 0 0 -0 0</pose>
+        </model>
+        <model name="AnesthesiaMachine_1">
+            <include>
+                <uri>model://AnesthesiaMachine</uri>
+            </include>
+            <pose>2.55303 -21.7619 0 0 0 -1.56931</pose>
+        </model>
+        <model name="Shower_1">
+            <include>
+                <uri>model://Shower</uri>
+            </include>
+            <pose>-1.07422 -16.1332 0 0 -0 0</pose>
+        </model>
+        <model name="SurgicalTrolleyMed_1">
+            <include>
+                <uri>model://SurgicalTrolleyMed</uri>
+            </include>
+            <pose>-2.81558 -19.9072 0 0 0 -1.56931</pose>
+        </model>
+        <model name="StorageRackCovered_1">
+            <include>
+                <uri>model://StorageRackCovered</uri>
+            </include>
+            <pose>0.941826 -22.3963 -0 0 -0 3.13389</pose>
+        </model>
+        <model name="KitchenSink_1">
+            <include>
+                <uri>model://KitchenSink</uri>
+            </include>
+            <pose>3.06236 -11.8809 -0.001614 0 -0 3.1391</pose>
+        </model>
+        <model name="Toilet_1">
+            <include>
+                <uri>model://Toilet</uri>
+            </include>
+            <pose>0.464009 -11.8023 0.00545 0 0.017484 0</pose>
+        </model>
+        <model name="CGMClassic_9">
+            <include>
+                <uri>model://CGMClassic</uri>
+            </include>
+            <pose>11.3613 -21.8867 0 0 0 -1.5656</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_half_open_01_7">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_half_open_01</uri>
+            </include>
+            <pose>-11.0426 0.066126 0 0 -0 1.56614</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_closed_01_2">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_closed_01</uri>
+            </include>
+            <pose>11.0303 -3.70124 0 0 0 -1.58306</pose>
+        </model>
+        <model name="aws_robomaker_hospital_curtain_closed_01_3">
+            <include>
+                <uri>model://aws_robomaker_hospital_curtain_closed_01</uri>
+            </include>
+            <pose>10.9586 0.159483 0 0 0 -1.58306</pose>
+        </model>
+        <model name="TrolleyBed_2">
+            <include>
+                <uri>model://TrolleyBed</uri>
+            </include>
+            <pose>1.55325 -19.2199 -1e-06 0 -2e-06 0.007695</pose>
+        </model>
+        <model name="MalePatientBed_1">
+            <include>
+                <uri>model://MalePatientBed</uri>
+            </include>
+            <pose>11.3771 -7.38891 0.001655 -1e-06 -5e-06 3.11598</pose>
+        </model>
+
+        <light name="ceiling_light_0" type="spot">
+            <pose>-0.194533 13.8034 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_1" type="spot">
+            <pose>6.30005 8.9551 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_2" type="spot">
+            <pose>0.212387 2.1354 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_3" type="spot">
+            <pose>-5.81057 7.18327 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_4" type="spot">
+            <pose>-4.54396 -3.67312 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_5" type="spot">
+            <pose>-4.37087 -14.4782 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_6" type="spot">
+            <pose>-4.39457 -24.5382 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_7" type="spot">
+            <pose>-4.89858 -33.5301 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_8" type="spot">
+            <pose>4.63967 -24.4587 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_9" type="spot">
+            <pose>4.92633 -14.3923 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_10" type="spot">
+            <pose>4.7009 -3.77715 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_11" type="spot">
+            <pose>-9.02467 14.516 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_12" type="spot">
+            <pose>9.12495 14.4234 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_13" type="spot">
+            <pose>9.49822 -5.56304 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_14" type="spot">
+            <pose>-9.46806 -4.74662 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_15" type="spot">
+            <pose>-9.46885 -19.0778 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_16" type="spot">
+            <pose>-9.42207 -28.0708 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_17" type="spot">
+            <pose>1.66302 -11.4026 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_18" type="spot">
+            <pose>-1.64839 -19.4418 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_19" type="spot">
+            <pose>1.85793 -19.3856 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_20" type="spot">
+            <pose>-3.74086 -4.44142 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_21" type="spot">
+            <pose>-1.7167 -11.3151 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_22" type="spot">
+            <pose>-9.60933 -14.3792 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_23" type="spot">
+            <pose>-8.89647 0.199867 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_24" type="spot">
+            <pose>8.80325 1.99908 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_25" type="spot">
+            <pose>10.6153 10.2443 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_26" type="spot">
+            <pose>10.7071 5.95677 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_27" type="spot">
+            <pose>-10.6266 10.4097 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_28" type="spot">
+            <pose>-10.7712 6.05323 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_29" type="spot">
+            <pose>-9.64585 -30.5079 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_30" type="spot">
+            <pose>-11.9169 -24.6051 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0941176 0.0941176 0.0941176 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_31" type="spot">
+            <pose>-4.29701 11.4852 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_32" type="spot">
+            <pose>3.41329 12.0406 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+        <light name="ceiling_light_33" type="spot">
+            <pose>-0.181496 7.28878 2.8 0 -0 0</pose>
+            <diffuse>0.494118 0.494118 0.494118 1</diffuse>
+            <specular>0.0901961 0.0901961 0.0901961 1</specular>
+            <direction>0 0 -1</direction>
+            <attenuation>
+                <range>20</range>
+                <constant>0.8</constant>
+                <linear>0.1</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <cast_shadows>0</cast_shadows>
+            <spot>
+                <inner_angle>1.0</inner_angle>
+                <outer_angle>2.5</outer_angle>
+                <falloff>1</falloff>
+            </spot>
+        </light>
+    </world>
+</sdf>
