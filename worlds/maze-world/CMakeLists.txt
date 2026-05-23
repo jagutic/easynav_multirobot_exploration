@@ -3,7 +3,7 @@ project(maze_world)
 
 find_package(ament_cmake_ros REQUIRED)
 
-install(DIRECTORY worlds models maps
+install(DIRECTORY worlds models
     DESTINATION share/${PROJECT_NAME}
 )
 

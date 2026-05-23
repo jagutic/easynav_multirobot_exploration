@@ -31,11 +31,15 @@
 #include <opencv2/opencv.hpp>
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
-#include "geometry_msgs/msg/pose2_d.hpp"
-#include "tf2_ros/static_transform_broadcaster.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_ros/transform_listener.h"
-#include "tf2_ros/buffer.h"
+#include "geometry_msgs/msg/pose.hpp"
+
+#include <tf2/utils.hpp>
+#include "tf2_ros/static_transform_broadcaster.hpp"
+#include "tf2_ros/transform_broadcaster.hpp"
+#include "tf2_ros/transform_listener.hpp"
+#include "tf2_ros/buffer.hpp"
+#include "tf2/LinearMath/Quaternion.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 #include <easynav_common/YTSession.hpp>
 #include "easynav_costmap_common/costmap_2d.hpp"
@@ -134,7 +138,7 @@ private:
    * @param static Whether the transform is static.
    */
   void create_global_tf(const std::string& parent, const std::string& child,
-                geometry_msgs::msg::Pose2D& pose, bool static_tf);
+                geometry_msgs::msg::Pose& pose, bool static_tf);
 
   /**
    * @brief Creates ROS subscriptions for incoming local maps based on provided parameters.
@@ -152,12 +156,14 @@ private:
    */
   void mux(Costmap2D & dst);
 
+  Costmap2D muxed_map_;                                                        ///< The resulting global map after multiplexing all local maps.
+
   std::map<std::string, Costmap2D> maps_;                                          ///< Cache of the latest local maps, indexed by robot/frame ID.
   rclcpp::Publisher<OccupancyGrid>::SharedPtr muxed_map_pub_;                      ///< Publisher for the final multiplexed global map.
   std::map<std::string, rclcpp::Subscription<OccupancyGrid>::SharedPtr> map_subs_; ///< Map of active ROS 2 subscriptions.
   
   std::string fixed_map_ns_;                                        /// Identificator to local map
-  std::map<std::string, geometry_msgs::msg::Pose2D> robots_coords_; ///< Local offsets to translate map grids to the global frame.
+  std::map<std::string, geometry_msgs::msg::Pose> robots_coords_; ///< Local offsets to translate map grids to the global frame.
   
   rclcpp::Node::SharedPtr global_tf_broadcaster_node_;                                ///< Separate node for TF broadcasting to avoid conflicts with main navigation node.
   std::shared_ptr<tf2_ros::TransformBroadcaster> global_tf_broadcaster_;              ///< TF broadcaster for static transforms from local map frames to global frame.

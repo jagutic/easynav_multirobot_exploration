@@ -58,11 +58,14 @@ int main(int argc, char **argv)
   RCLCPP_INFO(node->get_logger(), "\t");
   RCLCPP_INFO(node->get_logger(), "INIT EXPLORER...");
 
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(node);
+
   bool finish = false;
   while (!finish && rclcpp::ok()) {
     finish = tree.rootNode()->executeTick() != BT::NodeStatus::RUNNING;
 
-    rclcpp::spin_some(node);
+    executor.spin_some();
     rate.sleep();
   }
 

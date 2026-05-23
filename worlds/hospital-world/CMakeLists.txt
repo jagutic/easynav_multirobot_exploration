@@ -3,7 +3,7 @@ project(hospital_world)
 
 find_package(ament_cmake_ros REQUIRED)
 
-install(DIRECTORY worlds models maps photos
+install(DIRECTORY worlds models photos
     DESTINATION share/${PROJECT_NAME}
 )
 

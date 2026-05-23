@@ -1,8 +1,5 @@
 #include "easynav_multiplexor_maps_manager/MultiplexorMapsManager.hpp"
 
-#include "tf2_ros/static_transform_broadcaster.h"
-#include "tf2/LinearMath/Quaternion.h"
-
 namespace easynav
 {
 
@@ -11,14 +8,6 @@ using std::placeholders::_1;
 
 MultiplexorMapsManager::MultiplexorMapsManager()
 {
-  // NavState::register_printer<Costmap2D>(
-  //   [](const Costmap2D & map) {
-  //     std::ostringstream oss;
-  //     oss << "Costmap2D of (" << map.getSizeInCellsX() << " x " <<
-  //     map.getSizeInCellsY()
-  //         << ") with resolution " << map.getResolution();
-  //     return oss.str();
-  //   });
 }
 
 MultiplexorMapsManager::~MultiplexorMapsManager() {}
@@ -30,7 +19,6 @@ MultiplexorMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
   RCLCPP_INFO(node->get_logger(), "Loading Multiplexor Maps Manager");
 
-  // Tf listeners and broadcaster for robots coordinates and transforms
   global_tf_broadcaster_node_ = std::make_shared<rclcpp::Node>(
     "global_tf_broadcaster_node", "/",
     rclcpp::NodeOptions().use_global_arguments(false));
@@ -41,8 +29,6 @@ MultiplexorMapsManager::on_initialize()
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-  // Get the list of active robot identifiers from the parameters
-  // And get the actual robot to work on
   std::vector<std::string> robot_namespaces;
 
   node->declare_parameter(plugin_name + ".robot_namespaces", robot_namespaces);
@@ -53,7 +39,6 @@ MultiplexorMapsManager::on_initialize()
   node->get_parameter(plugin_name + ".fixed_map_ns", fixed_map_ns_);
   RCLCPP_INFO(node->get_logger(), "Fixed map ns: %s", fixed_map_ns_.c_str());
 
-  // Initialize coordinates for each robot and create map subscriptions.
   float x, y, Y;
 
   for (const auto & ns : robot_namespaces) {
@@ -63,7 +48,6 @@ MultiplexorMapsManager::on_initialize()
     std::string Y_key = param_prefix + ".Y";
     std::string topic_key = param_prefix + ".topic";
 
-    // Declare and get the initial pose (x, y, yaw) for each robot.
     node->declare_parameter(x_key, 0.0);
     node->declare_parameter(y_key, 0.0);
     node->declare_parameter(Y_key, 0.0);
@@ -72,12 +56,15 @@ MultiplexorMapsManager::on_initialize()
     node->get_parameter(y_key, y);
     node->get_parameter(Y_key, Y);
 
-    // Store the initial pose in the local cache.
-    robots_coords_[ns].x = x;
-    robots_coords_[ns].y = y;
-    robots_coords_[ns].theta = Y;
+    // Migración de Pose2D a Pose
+    robots_coords_[ns].position.x = x;
+    robots_coords_[ns].position.y = y;
+    robots_coords_[ns].position.z = 0.0;
+    
+    tf2::Quaternion q;
+    q.setRPY(0, 0, Y);
+    robots_coords_[ns].orientation = tf2::toMsg(q);
 
-    // Crear suscriptor y publicar TF usando las funciones refactorizadas
     create_map_subscriber(ns, topic_key);
   }
   
@@ -86,11 +73,9 @@ MultiplexorMapsManager::on_initialize()
     "/map",
     rclcpp::QoS(1).transient_local().reliable());
 
-  // Create static tf from global frame to local map frame
   const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
   create_global_tf(GLOBAL_MAP_FRAME, tf_info.map_frame, robots_coords_[fixed_map_ns_], true);
   
-  // Establish the local robot's frame as the global coordinate origin (0,0).
   translate_robot_coords(fixed_map_ns_);
 }
 
@@ -102,9 +87,6 @@ MultiplexorMapsManager::create_map_subscriber(const std::string & ns, const std:
   get_node()->declare_parameter(topic_key, topic_name);
   get_node()->get_parameter(topic_key, topic_name);
 
-  // Create a subscription to the map topic for this specific robot.
-  // Using transient_local QoS ensures we receive the latest map ("latched"
-  // behavior).
   map_subs_[ns] = get_node()->create_subscription<OccupancyGrid>(
       "/" + ns + "/" + topic_name,
       rclcpp::QoS(1).transient_local().reliable(),
@@ -116,28 +98,19 @@ MultiplexorMapsManager::create_map_subscriber(const std::string & ns, const std:
 void
 MultiplexorMapsManager::create_global_tf(
   const std::string& parent, const std::string& child,
-  geometry_msgs::msg::Pose2D& pose, bool static_tf = false)
+  geometry_msgs::msg::Pose& pose, bool static_tf = false)
 {
-  // Create the static transform message
   geometry_msgs::msg::TransformStamped t;
   t.header.stamp = get_node()->get_clock()->now();
   t.header.frame_id = parent;
   t.child_frame_id = child;
 
-  // Set translation
-  t.transform.translation.x = pose.x;
-  t.transform.translation.y = pose.y;
-  t.transform.translation.z = 0.0;
+  t.transform.translation.x = pose.position.x;
+  t.transform.translation.y = pose.position.y;
+  t.transform.translation.z = pose.position.z;
 
-  // Convert yaw angle to quaternion
-  tf2::Quaternion q;
-  q.setRPY(0, 0, pose.theta);
-  t.transform.rotation.x = q.x();
-  t.transform.rotation.y = q.y();
-  t.transform.rotation.z = q.z();
-  t.transform.rotation.w = q.w();
+  t.transform.rotation = pose.orientation;
 
-  // Publish the transform
   if (static_tf) {
     global_static_tf_broadcaster_->sendTransform(t);
   } else {
@@ -146,7 +119,8 @@ MultiplexorMapsManager::create_global_tf(
 
   RCLCPP_DEBUG(get_node()->get_logger(),
     "Published transform: %s -> %s with translation (%.2f, %.2f) and rotation (%.2f rad)",
-    t.header.frame_id.c_str(), t.child_frame_id.c_str(), pose.x, pose.y, pose.theta);
+    t.header.frame_id.c_str(), t.child_frame_id.c_str(), 
+    pose.position.x, pose.position.y, tf2::getYaw(pose.orientation));
 }
 
 void
@@ -154,40 +128,33 @@ MultiplexorMapsManager::update(NavState & nav_state)
 {
   EASYNAV_TRACE_EVENT;
 
-  // Mux all maps on fixed costmap and save in muxed map
-  Costmap2D muxed_map;
-  mux(muxed_map);
+  // Set base map in BB
+  mux(muxed_map_);
 
-  // Save new map in navstate so it can be used
-  nav_state.set("map.static", muxed_map);
-  nav_state.set("map.static.update", true);
+  muxed_map_.touch();
+  nav_state.set("map.base", muxed_map_);
 
-  // Publish map for visualization
   const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
   rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
 
   OccupancyGrid muxed_map_msg;
-  muxed_map.toOccupancyGridMsg(muxed_map_msg);
+  muxed_map_.toOccupancyGridMsg(muxed_map_msg);
 
   muxed_map_msg.header.frame_id = tf_info.map_frame;
   muxed_map_msg.header.stamp = map_stamp;
   muxed_map_pub_->publish(muxed_map_msg);
 
   try {
-    // Get from local tf system ns/map -> ns/base_link
-    geometry_msgs::msg::Pose2D pose;
+    geometry_msgs::msg::Pose pose;
     geometry_msgs::msg::TransformStamped tf_msg;
 
     tf_msg = tf_buffer_->lookupTransform(tf_info.map_frame, tf_info.robot_frame, tf2::TimePointZero);
-    pose.x = tf_msg.transform.translation.x;
-    pose.y = tf_msg.transform.translation.y;
-    pose.theta = std::atan2(
-      2.0 * (tf_msg.transform.rotation.w * tf_msg.transform.rotation.z +
-            tf_msg.transform.rotation.x * tf_msg.transform.rotation.y),
-      1.0 - 2.0 * (tf_msg.transform.rotation.y * tf_msg.transform.rotation.y +
-                  tf_msg.transform.rotation.z * tf_msg.transform.rotation.z));
+    
+    pose.position.x = tf_msg.transform.translation.x;
+    pose.position.y = tf_msg.transform.translation.y;
+    pose.position.z = tf_msg.transform.translation.z;
+    pose.orientation = tf_msg.transform.rotation;
 
-    // Set on global tf system ns/map -> ns/base_link
     create_global_tf(tf_info.map_frame, tf_info.robot_frame, pose, false);
 
   } catch (const tf2::TransformException & ex) {
@@ -198,58 +165,53 @@ MultiplexorMapsManager::update(NavState & nav_state)
 void
 MultiplexorMapsManager::map_callback(const OccupancyGrid::SharedPtr map)
 {
-  // Extract the robot ID from the frame_id string (e.g., "r1/map" -> "r1").
   std::string frame = map->header.frame_id;
   size_t pos = frame.find('/');
   std::string ns = (pos != std::string::npos) ? frame.substr(0, pos) : frame;
 
-  // Cache the received map.
   maps_[ns] = Costmap2D(*map);
 }
 
 void
 MultiplexorMapsManager::translate_robot_coords(std::string fixed_ns)
 {
-  // Verify the reference robot exists in our coordinate list.
   if (robots_coords_.find(fixed_ns) == robots_coords_.end()) {
     RCLCPP_ERROR(get_node()->get_logger(), "%s not in robot list",
                  fixed_ns.c_str());
     return;
   }
 
-  // Retrieve the pose of the reference robot to use as the new origin.
-  geometry_msgs::msg::Pose2D origin = robots_coords_[fixed_ns];
-  double ox = origin.x;
-  double oy = origin.y;
-  double oth = origin.theta;
+  geometry_msgs::msg::Pose origin = robots_coords_[fixed_ns];
+  double ox = origin.position.x;
+  double oy = origin.position.y;
+  double oth = tf2::getYaw(origin.orientation);
 
-  // Precompute trigonometric values for rotation.
   double c = std::cos(oth);
   double s = std::sin(oth);
 
-  std::map<std::string, geometry_msgs::msg::Pose2D> coords_transformed;
+  std::map<std::string, geometry_msgs::msg::Pose> coords_transformed;
 
-  // Transform all other robots' coordinates relative to this new origin.
   for (const auto &[id, p] : robots_coords_) {
-    geometry_msgs::msg::Pose2D p_new;
+    geometry_msgs::msg::Pose p_new;
 
-    // Translate position relative to origin.
-    double dx = p.x - ox;
-    double dy = p.y - oy;
+    double dx = p.position.x - ox;
+    double dy = p.position.y - oy;
 
-    // Rotate position to align with origin's orientation.
-    p_new.x = (dx * c) + (dy * s);
-    p_new.y = -(dx * s) + (dy * c);
+    p_new.position.x = (dx * c) + (dy * s);
+    p_new.position.y = -(dx * s) + (dy * c);
+    p_new.position.z = 0.0;
 
-    // Adjust orientation relative to origin's yaw.
-    p_new.theta = p.theta - oth;
-    // Normalize angle to [-PI, PI].
-    p_new.theta = std::atan2(std::sin(p_new.theta), std::cos(p_new.theta));
+    double p_theta = tf2::getYaw(p.orientation);
+    double new_theta = p_theta - oth;
+    new_theta = std::atan2(std::sin(new_theta), std::cos(new_theta));
+
+    tf2::Quaternion q;
+    q.setRPY(0, 0, new_theta);
+    p_new.orientation = tf2::toMsg(q);
 
     coords_transformed[id] = p_new;
   }
 
-  // Overwrite the internal coordinate list with the transformed values.
   robots_coords_ = coords_transformed;
 }
 
@@ -258,45 +220,33 @@ MultiplexorMapsManager::get_bounds()
 {
   BoundingBox box;
 
-  // Iterate through all available maps to find the global min/max coordinates.
   for (const auto &[id, map] : maps_) {
     if (map.getSizeInCellsX() == 0 || map.getSizeInCellsY() == 0) {continue;}
 
-    geometry_msgs::msg::Pose2D pose = robots_coords_[id];
-    double c = std::cos(pose.theta);
-    double s = std::sin(pose.theta);
+    geometry_msgs::msg::Pose pose = robots_coords_[id];
+    double theta = tf2::getYaw(pose.orientation);
+    double c = std::cos(theta);
+    double s = std::sin(theta);
 
-    // Calculate map dimensions in meters.
     double w = map.getSizeInMetersX();
     double h = map.getSizeInMetersY();
     double ox = map.getOriginX();
     double oy = map.getOriginY();
 
-    // Define the four corners of the local map.
     double local_corners_x[4] = {ox, ox + w, ox + w, ox};
     double local_corners_y[4] = {oy, oy, oy + h, oy + h};
 
-    // Transform each corner to the global frame and update bounding box.
     for (int i = 0; i < 4; i++) {
-      double gx = pose.x + (local_corners_x[i] * c - local_corners_y[i] * s);
-      double gy = pose.y + (local_corners_x[i] * s + local_corners_y[i] * c);
+      double gx = pose.position.x + (local_corners_x[i] * c - local_corners_y[i] * s);
+      double gy = pose.position.y + (local_corners_x[i] * s + local_corners_y[i] * c);
 
-      if (gx < box.min_x) {
-        box.min_x = gx;
-      }
-      if (gx > box.max_x) {
-        box.max_x = gx;
-      }
-      if (gy < box.min_y) {
-        box.min_y = gy;
-      }
-      if (gy > box.max_y) {
-        box.max_y = gy;
-      }
+      if (gx < box.min_x) {box.min_x = gx;}
+      if (gx > box.max_x) {box.max_x = gx;}
+      if (gy < box.min_y) {box.min_y = gy;}
+      if (gy > box.max_y) {box.max_y = gy;}
     }
   }
 
-  // Handle case where no valid bounds were found.
   if (box.min_x > box.max_x) {
     box.min_x = box.min_y = box.max_x = box.max_y = 0.0;
   }
@@ -307,22 +257,18 @@ MultiplexorMapsManager::get_bounds()
 void
 MultiplexorMapsManager::mux(Costmap2D & dst)
 {
-
-  // Get fixed map from the list
   const Costmap2D & fixed_map = maps_[fixed_map_ns_];
   if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
     RCLCPP_WARN(get_node()->get_logger(), "Not fixed map yet");
     return;
   }
 
-  // Get fixed map data
   double res = fixed_map.getResolution();
   double local_x = fixed_map.getOriginX();
   double local_y = fixed_map.getOriginY();
   unsigned int w = fixed_map.getSizeInCellsX();
   unsigned int h = fixed_map.getSizeInCellsY();
 
-  // Resize final costmap and create aux final mat filled with NO_INFORMATION
   BoundingBox bounds = get_bounds();
   double aligned_ox = local_x - std::floor((local_x - bounds.min_x) / res) * res;
   double aligned_oy = local_y - std::floor((local_y - bounds.min_y) / res) * res;
@@ -334,63 +280,51 @@ MultiplexorMapsManager::mux(Costmap2D & dst)
   dst.resetMapToValue(0, 0, new_w, new_h, easynav::NO_INFORMATION);
   cv::Mat dst_mat(new_h, new_w, CV_8UC1, dst.getCharMap());
 
-  // Copy fixed mat to dst mat on origin position
   int offset_x = std::round((local_x - dst.getOriginX()) / res);
   int offset_y = std::round((local_y - dst.getOriginY()) / res);
 
   cv::Mat fixed_mat(h, w, CV_8UC1, fixed_map.getCharMap());
   fixed_mat.copyTo(dst_mat(cv::Rect(offset_x, offset_y, w, h)));
 
-  // Buffer for affine transformation.
   cv::Mat warped;
   cv::Point2f src_points[3], dst_points[3];
 
-  // Merge other robots maps into the expanded mat.
   for (const auto &[ns, incoming_map] : maps_) {
     if (ns == fixed_map_ns_) {continue;}
     if (incoming_map.getSizeInCellsX() == 0 || incoming_map.getSizeInCellsY() == 0) {continue;}
 
-    // Use costmap for data correspondecy
     cv::Mat incoming_mat(incoming_map.getSizeInCellsY(),
       incoming_map.getSizeInCellsX(), CV_8UC1,
       incoming_map.getCharMap());
-    geometry_msgs::msg::Pose2D pose = robots_coords_[ns];
+      
+    geometry_msgs::msg::Pose pose = robots_coords_[ns];
+    double theta = tf2::getYaw(pose.orientation);
 
-    // Define 3 points (origin, top-right, bottom-left) to compute the affine
-    // transform.
     src_points[0] = {0.f, 0.f};
-    src_points[1] = {static_cast<float>(incoming_map.getSizeInCellsX()),
-      0.f};
-    src_points[2] = {0.f,
-      static_cast<float>(incoming_map.getSizeInCellsY())};
+    src_points[1] = {static_cast<float>(incoming_map.getSizeInCellsX()), 0.f};
+    src_points[2] = {0.f, static_cast<float>(incoming_map.getSizeInCellsY())};
 
-    float c = std::cos(pose.theta);
-    float s = std::sin(pose.theta);
+    float c = std::cos(theta);
+    float s = std::sin(theta);
     float ox = incoming_map.getOriginX();
     float oy = incoming_map.getOriginY();
     float r = incoming_map.getResolution();
 
-    // Transform the 3 source points to the destination pixel coordinates on the
-    // global canvas.
     for (int i = 0; i < 3; ++i) {
       float mx = ox + src_points[i].x * r;
       float my = oy + src_points[i].y * r;
 
-      // Apply rotation and translation.
-      float wx = pose.x + (mx * c - my * s);
-      float wy = pose.y + (mx * s + my * c);
+      float wx = pose.position.x + (mx * c - my * s);
+      float wy = pose.position.y + (mx * s + my * c);
 
-      // Convert back to grid indices relative to new origin.
       dst_points[i].x = (wx - dst.getOriginX()) / res;
       dst_points[i].y = (wy - dst.getOriginY()) / res;
     }
 
-    // Apply the affine warp to align the remote map with the global frame.
     cv::Mat M = cv::getAffineTransform(src_points, dst_points);
     cv::warpAffine(incoming_mat, warped, M, dst_mat.size(), cv::INTER_NEAREST,
                    cv::BORDER_CONSTANT, cv::Scalar(easynav::NO_INFORMATION));
 
-    // Copy valid data only if we dont have info about that space
     cv::Mat valid_mask = (dst_mat == easynav::NO_INFORMATION) &
       (warped != easynav::NO_INFORMATION);
     warped.copyTo(dst_mat, valid_mask);

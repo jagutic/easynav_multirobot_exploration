@@ -32,6 +32,10 @@ def spawn_robots(context):
             return [convert_floats_to_strings(i) for i in data]
         elif isinstance(data, float):
             return str(data)
+        elif isinstance(data, bool):
+            return str(data).lower()
+        elif data is None:
+            return '' # Convierte campos vacíos de YAML a texto vacío, evitando el NoneType
         else:
             return data
 
