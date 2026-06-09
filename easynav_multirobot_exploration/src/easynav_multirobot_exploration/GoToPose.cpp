@@ -21,32 +21,38 @@ GoToPose::tick()
   switch (nav_client_->get_state()) {
     // No action in these states
     case easynav::GoalManagerClient::State::SENT_GOAL:
-      RCLCPP_INFO(node_->get_logger(), "Goal sent, waiting for response...");
+      RCLCPP_INFO(node_->get_logger(), "GOAL SENT");
       return BT::NodeStatus::RUNNING;
     case easynav::GoalManagerClient::State::SENT_PREEMPT:
-      RCLCPP_INFO(node_->get_logger(), "Preempt sent, waiting for response...");
+      RCLCPP_INFO(node_->get_logger(), "PREEMPT SENT");
       return BT::NodeStatus::RUNNING;
 
     // Manage normal state
     case easynav::GoalManagerClient::State::IDLE:
+      RCLCPP_INFO(node_->get_logger(), "IDLE");
+
       // Send goal
       if (!send_goal()) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to send goal");
         return BT::NodeStatus::FAILURE;
       }
       return BT::NodeStatus::RUNNING;
 
     // Manage navigating state
     case easynav::GoalManagerClient::State::ACCEPTED_AND_NAVIGATING:
-      // Send goal
-      if (!send_goal()) {
-        return BT::NodeStatus::FAILURE;
-      }
+      RCLCPP_INFO(node_->get_logger(), "NAVIGATING");
+
+      // // Send goal
+      // if (!send_goal()) {
+      //   RCLCPP_ERROR(node_->get_logger(), "Failed to send goal, ACCEPTED_AND_NAVIGATING");
+      //   return BT::NodeStatus::FAILURE;
+      // }
 
       // Get feedback
       response = nav_client_->get_feedback();
       RCLCPP_INFO(
         node_->get_logger(),
-        "Distance to goal: %.2f Navigation time: %d sec",
+        "FEEDBACK: Distance to goal: %.2f, Navigation time: %d sec",
         response.distance_to_goal, response.navigation_time.sec
       );
       return BT::NodeStatus::RUNNING;
@@ -54,7 +60,7 @@ GoToPose::tick()
     // Manage successful navigation
     case easynav::GoalManagerClient::State::NAVIGATION_FINISHED:
       response = nav_client_->get_result();
-      RCLCPP_INFO(node_->get_logger(), "%s", response.status_message.c_str());
+      RCLCPP_INFO(node_->get_logger(), "NAVIGATION FINISHED: %s", response.status_message.c_str());
 
       nav_client_->reset();
       return BT::NodeStatus::SUCCESS;
@@ -63,20 +69,20 @@ GoToPose::tick()
     case easynav::GoalManagerClient::State::NAVIGATION_CANCELLED:
     case easynav::GoalManagerClient::State::NAVIGATION_FAILED:
       response = nav_client_->get_result();
-      RCLCPP_WARN(node_->get_logger(), "%s", response.status_message.c_str());
+      RCLCPP_WARN(node_->get_logger(), "NAVIGATION FAILED: %s", response.status_message.c_str());
 
       nav_client_->reset();
       return BT::NodeStatus::FAILURE;
 
     // Manage error
     case easynav::GoalManagerClient::State::ERROR:
-      RCLCPP_ERROR(node_->get_logger(), "Error with goal manager client");
+      RCLCPP_ERROR(node_->get_logger(), "GoalManagerClient ERROR");
       nav_client_->reset();
       return BT::NodeStatus::FAILURE;
 
     // Manage undefined
     default:
-      RCLCPP_ERROR(node_->get_logger(), "Undefined goal manager client state");
+      RCLCPP_ERROR(node_->get_logger(), "GoalManagerClient UNDEFINED STATE");
       nav_client_->reset();
       return BT::NodeStatus::FAILURE;
   }
@@ -107,8 +113,9 @@ GoToPose::send_goal()
   goal.header.stamp = node_->now();
   goal.pose = goal_pose;
 
+  RCLCPP_INFO(node_->get_logger(), "Sending goal to (%.2f, %.2f)", goal.pose.position.x,
+      goal.pose.position.y);
   nav_client_->send_goal(goal);
-  RCLCPP_INFO(node_->get_logger(), "Goal sent");
   return true;
 }
 

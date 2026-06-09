@@ -18,7 +18,7 @@ import yaml
 
 def spawn_robots(context):
     """Read the YAML configuration file and spawn the robots defined in it sequentially."""
-    config_file = LaunchConfiguration('robots_config_file').perform(context)
+    config_file = LaunchConfiguration('config').perform(context)
 
     def convert_floats_to_strings(data):
         """
@@ -35,19 +35,20 @@ def spawn_robots(context):
         elif isinstance(data, bool):
             return str(data).lower()
         elif data is None:
-            return '' # Convierte campos vacíos de YAML a texto vacío, evitando el NoneType
+            return ''  # Convierte campos vacíos de YAML a texto vacío, evitando el NoneType
         else:
             return data
 
-    config_robots = yaml.safe_load(open(config_file))
-    config_robots = convert_floats_to_strings(config_robots)
+    with open(config_file) as f:
+        config_robots = yaml.safe_load(f)
 
+    config_robots = convert_floats_to_strings(config_robots)
     robot_actions = []
 
     # Sequential spawning with x-second delay between robots to avoid race conditions in Gazebo
     init_delay = 5.0
     spawn_delay = 1.0
-    
+
     for idx, robot_args in enumerate(config_robots['robots']):
         robot_args['lidar_range'] = '10.0'
 
@@ -60,17 +61,17 @@ def spawn_robots(context):
             ),
             launch_arguments=robot_args.items(),
         )
-        
+
         # Add spawn_delay before each robot spawn (except the first one)
         if idx > 0:
             delayed_spawn = TimerAction(
-                period= init_delay + (spawn_delay * idx),
+                period=init_delay + (spawn_delay * idx),
                 actions=[spawn_robot],
             )
             robot_actions.append(delayed_spawn)
         else:
             robot_actions.append(spawn_robot)
-    
+
     # Sequential spawning with 2-second delay between robots to avoid race conditions in Gazebo
     return robot_actions
 
@@ -79,7 +80,6 @@ def generate_launch_description():
     pkg = get_package_share_directory('easynav_multirobot_exploration')
 
     world = LaunchConfiguration('world')
-    config = LaunchConfiguration('config')
 
     world_arg = DeclareLaunchArgument(
         'world',
@@ -92,12 +92,6 @@ def generate_launch_description():
         'config',
         default_value=os.path.join(pkg, 'config', 'sim', 'maze_small.params.yaml'),
         description='File for simulated robot parameters',
-    )
-
-    robots_config_arg = DeclareLaunchArgument(
-        'robots_config_file',
-        default_value=config,
-        description='YAML file with the configuration of the robots to be spawned',
     )
 
     gui_arg = DeclareLaunchArgument(
@@ -148,7 +142,6 @@ def generate_launch_description():
     ld.add_action(world_arg)
     ld.add_action(config_arg)
     ld.add_action(gui_arg)
-    ld.add_action(robots_config_arg)
     ld.add_action(ros_gz_bridge)
     ld.add_action(gazebo_server)
     ld.add_action(gazebo_client)

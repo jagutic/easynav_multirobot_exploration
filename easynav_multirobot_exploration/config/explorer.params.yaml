@@ -4,6 +4,7 @@
 r1/explorer:
   ros__parameters:
     use_sim_time: true
+    rate: 2.0 # hz
     map_frame: r1/map
     robot_frame: r1/base_link
     odom_frame: r1/odom
@@ -16,6 +17,7 @@ r1/explorer:
 r2/explorer:
   ros__parameters:
     use_sim_time: true
+    rate: 2.0 # hz
     map_frame: r2/map
     robot_frame: r2/base_link
     odom_frame: r2/odom
@@ -28,6 +30,7 @@ r2/explorer:
 r3/explorer:
   ros__parameters:
     use_sim_time: true
+    rate: 2.0 # hz
     map_frame: r3/map
     robot_frame: r3/base_link
     odom_frame: r3/odom

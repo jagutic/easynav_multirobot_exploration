@@ -43,7 +43,7 @@ def generate_launch_description():
     declare_default_rviz_config_cmd = DeclareLaunchArgument(
         'default_rviz_config',
         default_value=os.path.join(bringup_dir, 'rviz', 'full_view.rviz'),
-        description='Full path to the default RVIZ config file to use when no namespace is provided',
+        description='Full path to the default RVIZ config file to use when no namespace provided',
     )
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(

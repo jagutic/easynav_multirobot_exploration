@@ -22,14 +22,14 @@ ChooseFrontierGoal::ChooseFrontierGoal(
   node_->get_parameter("min_cost_diff", min_cost_diff_);
 
   switch (policy_) {
-  case POLICY_NEAREST_FRONTIER:
-    RCLCPP_INFO(node_->get_logger(), "Using policy: NEAREST_FRONTIER");
-    break;
-  case POLICY_BETTER_FRONTIER:
-    RCLCPP_INFO(node_->get_logger(), "Using policy: BETTER_FRONTIER");
-    break;
-  default:
-    RCLCPP_WARN(node_->get_logger(), "Unknown policy, defaulting to NEAREST_FRONTIER");
+    case POLICY_NEAREST_FRONTIER:
+      RCLCPP_INFO(node_->get_logger(), "Using policy: NEAREST_FRONTIER");
+      break;
+    case POLICY_BETTER_FRONTIER:
+      RCLCPP_INFO(node_->get_logger(), "Using policy: BETTER_FRONTIER");
+      break;
+    default:
+      RCLCPP_WARN(node_->get_logger(), "Unknown policy, defaulting to NEAREST_FRONTIER");
   }
 
   RCLCPP_INFO(node_->get_logger(), "Distance weight: %.2f", distance_weight_);
@@ -70,20 +70,21 @@ ChooseFrontierGoal::tick()
 
   switch (policy_) {
   // Choose closest frontier point to robot
-  case POLICY_NEAREST_FRONTIER:
-    std::tie(frontier_goal, goal_cost) = calc_closest_goal(robot_pose, robot_frontier);
-    break;
+    case POLICY_NEAREST_FRONTIER:
+      std::tie(frontier_goal, goal_cost) = calc_closest_goal(robot_pose, robot_frontier);
+      break;
 
   // Choose best frontier point according to cost function (distance to robot and distance to peers)
-  case POLICY_BETTER_FRONTIER:
-    getInput("peers_robot_pose", peers_robot_pose);
-    std::tie(frontier_goal, goal_cost) = calc_best_goal(robot_pose, peers_robot_pose, robot_frontier);
-    break;
+    case POLICY_BETTER_FRONTIER:
+      getInput("peers_robot_pose", peers_robot_pose);
+      std::tie(frontier_goal, goal_cost) = calc_best_goal(robot_pose, peers_robot_pose,
+        robot_frontier);
+      break;
 
   // Undefined state
-  default:
-    RCLCPP_ERROR(node_->get_logger(), "Policy undefined");
-    return BT::NodeStatus::FAILURE;
+    default:
+      RCLCPP_ERROR(node_->get_logger(), "Policy undefined");
+      return BT::NodeStatus::FAILURE;
   }
 
   // Avoid constant change in goal
@@ -95,13 +96,13 @@ ChooseFrontierGoal::tick()
       // Keep current goal if the new one is not much better
       RCLCPP_INFO(
         node_->get_logger(),
-        "Not changing goal, cost difference: %.2f", 
+        "Not changing goal, cost difference: %.2f",
         std::abs(last_goal_cost - goal_cost)
       );
       return BT::NodeStatus::SUCCESS;
     }
 
-  } else {      
+  } else {
     RCLCPP_INFO(node_->get_logger(), "No last goal cost yet");
   }
 
@@ -137,7 +138,7 @@ ChooseFrontierGoal::calc_closest_goal(
   geometry_msgs::msg::Pose frontier_goal;
   frontier_goal.position.x = frontier[best_idx].x;
   frontier_goal.position.y = frontier[best_idx].y;
-  
+
   // Orientate goal as vector robot->goal
   double yaw = std::atan2(
     frontier[best_idx].y - pose.position.y, frontier[best_idx].x - pose.position.x);
@@ -151,7 +152,7 @@ ChooseFrontierGoal::calc_closest_goal(
 
 std::pair<geometry_msgs::msg::Pose, double>
 ChooseFrontierGoal::calc_best_goal(
-  const geometry_msgs::msg::Pose & pose, 
+  const geometry_msgs::msg::Pose & pose,
   const std::vector<geometry_msgs::msg::Pose> & peers_pose,
   const std::vector<geometry_msgs::msg::Point> & frontier)
 {
@@ -181,12 +182,12 @@ ChooseFrontierGoal::calc_best_goal(
       }
     } else {
       // If no peers, treat the closest peer distance as 0 so it doesn't affect the cost
-      min_dist_to_peer_sq = 0.0; 
+      min_dist_to_peer_sq = 0.0;
     }
 
     double true_dist_robot = std::sqrt(dist_to_robot_sq);
     double true_dist_peer = std::sqrt(min_dist_to_peer_sq);
-    
+
     // Minimize distance to robot and maximize distance to the CLOSEST peer
     double cost = (distance_weight_ * true_dist_robot) - (separation_weight_ * true_dist_peer);
     if (cost < min_cost) {
@@ -199,7 +200,7 @@ ChooseFrontierGoal::calc_best_goal(
   geometry_msgs::msg::Pose frontier_goal;
   frontier_goal.position.x = frontier[best_idx].x;
   frontier_goal.position.y = frontier[best_idx].y;
-  
+
   // Orientate goal as vector robot->goal
   double yaw = std::atan2(
     frontier[best_idx].y - pose.position.y, frontier[best_idx].x - pose.position.x);

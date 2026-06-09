@@ -21,7 +21,7 @@
 
 namespace multirobot_exploration
 {
-  
+
 #define GLOBAL_MAP_FRAME "map"
 
 using geometry_msgs::msg::Pose;
@@ -80,32 +80,34 @@ private:
   geometry_msgs::msg::Pose getPose(
     const std::string & parent_frame,
     const std::string & child_frame,
-    tf2::BufferCore& tf_buffer
+    tf2::BufferCore & tf_buffer
   );
-  
+
   /**
    * @brief Obtiene las poses de todos los robots peer desde el GLOBAL_MAP_FRAME.
    * Descubre dinámicamente los frames usando allFramesAsYAML().
    * @return Vector de poses de otros robots.
    */
   std::vector<Pose> getPeersPose();
-  
+
   /**
    * @brief Parsea el YAML de frames para encontrar hijos de un frame padre.
    * @param yaml_str String YAML del árbol de frames.
    * @param parent_frame Frame padre a buscar.
    * @return Vector con los frame_ids que son hijos directos del padre.
    */
-  std::vector<std::string> extractChildFrames(const std::string & yaml_str, const std::string & parent_frame);
-    
+  std::vector<std::string> extractChildFrames(
+    const std::string & yaml_str,
+    const std::string & parent_frame);
+
   rclcpp::Node::SharedPtr node_;                          ///< Shared pointer to the ROS 2 node used for logging.
   tf2::BufferCore tf_buffer_;                             ///< Local buffer for TF tree within robot namespace.
   tf2_ros::TransformListener tf_listener_;                ///< Local listener that populates the TF buffer.
-  
+
   rclcpp::Node::SharedPtr global_tf_node_;          ///< Global node (at root namespace) for TF access.
   tf2::BufferCore global_tf_buffer_;                      ///< Global buffer for accessing /tf without namespace.
   std::unique_ptr<tf2_ros::TransformListener> global_tf_listener_;  ///< Global listener with global node.
-  
+
   Marker::SharedPtr last_frontier_;                       ///< Last frontier saved from topic
   rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;  ///< Shared pointer to subscriber to frontier topic.
 

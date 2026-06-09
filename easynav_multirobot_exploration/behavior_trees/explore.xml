@@ -10,7 +10,7 @@
         <ReactiveFallback>
           <IsExplored frontier_to_check="{f}"
                       map_to_check="{m}"/>
-          <ReactiveSequence>
+          <Sequence>
             <ChooseFrontierGoal robot_pose="{p}"
                                 peers_robot_pose="{pp}"
                                 robot_frontier="{f}"
@@ -19,7 +19,7 @@
             <GoToPose goal_pose="{fg}"/>
             <IsExplored frontier_to_check="{f}"
                         map_to_check="{m}"/>
-          </ReactiveSequence>
+          </Sequence>
         </ReactiveFallback>
       </ReactiveSequence>
     </RetryUntilSuccessful>

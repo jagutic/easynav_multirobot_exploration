@@ -5,7 +5,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import PushRosNamespace, SetRemap, SetParameter
+from launch_ros.actions import PushRosNamespace, SetParameter, SetRemap
+
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -31,30 +32,31 @@ def generate_launch_description():
     # Official SLAM Toolbox launcher
     slam_toolbox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_sync_launch.py')
+            os.path.join(
+                get_package_share_directory('slam_toolbox'), 'launch', 'online_sync_launch.py'
+            )
         ),
         launch_arguments={
             'slam_params_file': slam_params_file,
             'use_sim_time': use_sim_time,
-        }.items()
+        }.items(),
     )
 
     # Wrap SLAM Toolbox with namespace
-    slam_with_namespace = GroupAction([
-        PushRosNamespace(namespace=namespace),
-
-        # Remap for namespace
-        SetRemap(src='/map', dst='local_map'),
-        SetRemap(src='/map_metadata', dst='local_map_metadata'),
-        SetRemap(src='/tf', dst='tf'),
-        SetRemap(src='/tf_static', dst='tf_static'),
-
-        SetParameter(name='map_frame', value=[namespace, '/map']),
-        SetParameter(name='odom_frame', value=[namespace, '/odom']),
-        SetParameter(name='base_frame', value=[namespace, '/base_footprint']),
-
-        slam_toolbox_launch,
-    ])
+    slam_with_namespace = GroupAction(
+        [
+            PushRosNamespace(namespace=namespace),
+            # Remap for namespace
+            SetRemap(src='/map', dst='local_map'),
+            SetRemap(src='/map_metadata', dst='local_map_metadata'),
+            SetRemap(src='/tf', dst='tf'),
+            SetRemap(src='/tf_static', dst='tf_static'),
+            SetParameter(name='map_frame', value=[namespace, '/map']),
+            SetParameter(name='odom_frame', value=[namespace, '/odom']),
+            SetParameter(name='base_frame', value=[namespace, '/base_footprint']),
+            slam_toolbox_launch,
+        ]
+    )
 
     ld = LaunchDescription()
 

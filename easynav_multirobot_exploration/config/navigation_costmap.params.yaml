@@ -5,9 +5,9 @@ r1/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.2
+      max_linear_speed: 0.3
       max_angular_speed: 0.4
-      look_ahead_dist: 0.4
+      look_ahead_dist: 0.3
       k_rot: 1.5
       k_p: 1.2
       k_i: 0.0
@@ -18,8 +18,8 @@ r1/localizer_node:
     use_sim_time: true
     localizer_types: [lazy]
     lazy:
-      rt_freq: 50.0
-      freq: 5.0
+      rt_freq: 30.0
+      freq: 10.0
       plugin: easynav_lazy_localizer/LazyLocalizer
 
 r1/maps_manager_node:
@@ -59,7 +59,7 @@ r1/planner_node:
     use_sim_time: true
     planner_types: [costmap]
     costmap:
-      freq: 0.5
+      freq: 1.0
       plugin: easynav_costmap_planner/CostmapPlanner
       cost_factor: 10.0
 
@@ -76,6 +76,8 @@ r1/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
+    freq: 30.0
+    rt_freq: 50.0
     allow_preempt_goal: true
     position_tolerance: 0.4
     angle_tolerance: 1.0
@@ -90,9 +92,9 @@ r2/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.2
+      max_linear_speed: 0.3
       max_angular_speed: 0.4
-      look_ahead_dist: 0.4
+      look_ahead_dist: 0.3
       k_rot: 1.5
       k_p: 1.2
       k_i: 0.0
@@ -103,8 +105,8 @@ r2/localizer_node:
     use_sim_time: true
     localizer_types: [lazy]
     lazy:
-      rt_freq: 50.0
-      freq: 5.0
+      rt_freq: 30.0
+      freq: 10.0
       plugin: easynav_lazy_localizer/LazyLocalizer
 
 r2/maps_manager_node:
@@ -144,7 +146,7 @@ r2/planner_node:
     use_sim_time: true
     planner_types: [costmap]
     costmap:
-      freq: 0.5
+      freq: 1.0
       plugin: easynav_costmap_planner/CostmapPlanner
       cost_factor: 10.0
 
@@ -161,6 +163,8 @@ r2/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
+    freq: 30.0
+    rt_freq: 50.0
     allow_preempt_goal: true
     position_tolerance: 0.4
     angle_tolerance: 1.0
@@ -175,9 +179,9 @@ r3/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.2
+      max_linear_speed: 0.3
       max_angular_speed: 0.4
-      look_ahead_dist: 0.4
+      look_ahead_dist: 0.3
       k_rot: 1.5
       k_p: 1.2
       k_i: 0.0
@@ -188,8 +192,8 @@ r3/localizer_node:
     use_sim_time: true
     localizer_types: [lazy]
     lazy:
-      rt_freq: 50.0
-      freq: 5.0
+      rt_freq: 30.0
+      freq: 10.0
       plugin: easynav_lazy_localizer/LazyLocalizer
 
 r3/maps_manager_node:
@@ -229,7 +233,7 @@ r3/planner_node:
     use_sim_time: true
     planner_types: [costmap]
     costmap:
-      freq: 0.5
+      freq: 1.0
       plugin: easynav_costmap_planner/CostmapPlanner
       cost_factor: 10.0
 
@@ -246,6 +250,8 @@ r3/system_node:
   ros__parameters:
     use_sim_time: true
     use_real_time: false
+    freq: 30.0
+    rt_freq: 50.0
     allow_preempt_goal: true
     position_tolerance: 0.4
     angle_tolerance: 1.0

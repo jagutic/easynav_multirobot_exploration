@@ -18,7 +18,8 @@ GetExplorationData::GetExplorationData(
   global_tf_node_ = std::make_shared<rclcpp::Node>(
     "global_tf_node_listener", "/",
     rclcpp::NodeOptions().use_global_arguments(false));
-  global_tf_listener_ = std::make_unique<tf2_ros::TransformListener>(global_tf_buffer_, global_tf_node_);
+  global_tf_listener_ = std::make_unique<tf2_ros::TransformListener>(global_tf_buffer_,
+      global_tf_node_);
 
   // Update frontier through topic
   frontier_sub_ = node_->create_subscription<Marker>(
@@ -58,21 +59,23 @@ GetExplorationData::tick()
     setOutput("pose", pose);
     setOutput("frontier", last_frontier_->points);
     setOutput("map", *last_map_);
-    
+
     // Get peers poses and save in BB
     std::vector<Pose> peers = getPeersPose();
     if (!peers.empty()) {
       setOutput("peers_pose", peers);
-      RCLCPP_DEBUG(node_->get_logger(), "Found %ld peer robots", peers.size());
     } else {
-      RCLCPP_DEBUG(node_->get_logger(), "No peer robots found");
+      RCLCPP_WARN(node_->get_logger(), "No peer robots found");
     }
 
-    RCLCPP_INFO(node_->get_logger(), "Exploration data saved to blackboard");
+    RCLCPP_INFO(node_->get_logger(),
+      "Data Saved. Robot at: (%.2f, %.2f). Peers found: %zu",
+      pose.position.x, pose.position.y, peers.size()
+    );
     return BT::NodeStatus::SUCCESS;
 
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_DEBUG(node_->get_logger(), "TF failed: %s", ex.what());
+    RCLCPP_ERROR(node_->get_logger(), "TF failed: %s", ex.what());
     return BT::NodeStatus::FAILURE;
   }
 }
@@ -81,7 +84,7 @@ Pose
 GetExplorationData::getPose(
   const std::string & parent_frame,
   const std::string & child_frame,
-  tf2::BufferCore& tf_buffer)
+  tf2::BufferCore & tf_buffer)
 {
   Pose pose;
   geometry_msgs::msg::TransformStamped tf_msg;
@@ -116,13 +119,14 @@ GetExplorationData::getPeersPose()
   std::vector<std::string> peers_map_frames = extractChildFrames(tf_yaml, GLOBAL_MAP_FRAME);
 
   // Recursively extract robot frames from each discovered map frame
-  for (const auto& peer_map_frame : peers_map_frames) {
+  for (const auto & peer_map_frame : peers_map_frames) {
     std::vector<std::string> peers_robot_frame = extractChildFrames(tf_yaml, peer_map_frame);
-    peers_robot_frames.insert(peers_robot_frames.end(), peers_robot_frame.begin(), peers_robot_frame.end());
+    peers_robot_frames.insert(peers_robot_frames.end(), peers_robot_frame.begin(),
+        peers_robot_frame.end());
   }
-  
+
   // For each discovered peer robot frame, get the relative pose
-  for (const auto& peer_robot_frame : peers_robot_frames) {
+  for (const auto & peer_robot_frame : peers_robot_frames) {
     std::string robot_frame = config().blackboard->get<std::string>("robot_frame");
 
     // Skip if it's the current robot's map frame
@@ -131,15 +135,15 @@ GetExplorationData::getPeersPose()
     }
 
     // Use the global TF buffer to get the pose
-    try {    
+    try {
       Pose peer_pose = getPose(robot_frame, peer_robot_frame, global_tf_buffer_);
       peer_poses.push_back(peer_pose);
-      
-      RCLCPP_INFO(node_->get_logger(), "Peer robot frame %s at: (%.2f, %.2f)", 
+
+      RCLCPP_DEBUG(node_->get_logger(), "Peer robot frame %s at: (%.2f, %.2f)",
                   peer_robot_frame.c_str(), peer_pose.position.x, peer_pose.position.y);
 
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_ERROR(node_->get_logger(), "Could not get transform for %s: %s", 
+      RCLCPP_ERROR(node_->get_logger(), "Could not get transform for %s: %s",
                   peer_robot_frame.c_str(), ex.what());
     }
   }
@@ -147,7 +151,9 @@ GetExplorationData::getPeersPose()
 }
 
 std::vector<std::string>
-GetExplorationData::extractChildFrames(const std::string & yaml_str, const std::string & parent_frame)
+GetExplorationData::extractChildFrames(
+  const std::string & yaml_str,
+  const std::string & parent_frame)
 {
   std::vector<std::string> child_frames;
   std::istringstream stream(yaml_str);
@@ -167,7 +173,6 @@ GetExplorationData::extractChildFrames(const std::string & yaml_str, const std::
     if (std::regex_match(line, match, frame_regex)) {
       current_frame = match[1].str();
     }
-
     // Check if this line contains the parent field
     else if (std::regex_match(line, match, parent_regex)) {
       if (match[1].str() == parent_frame && !current_frame.empty()) {

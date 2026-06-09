@@ -24,17 +24,20 @@ int main(int argc, char **argv)
   factory.registerNodeType<multirobot_exploration::IsExplored>("IsExplored");
 
   // Parameters to set in blackboard
+  float rate = 1.0f;
   std::string map_frame, robot_frame, odom_frame;
   auto blackboard = BT::Blackboard::create();
   auto node = std::make_shared<rclcpp::Node>("explorer");
 
-  node->declare_parameter("map_frame", map_frame);
-  node->declare_parameter("robot_frame", robot_frame);
-  node->declare_parameter("odom_frame", odom_frame);
+  node->declare_parameter("map_frame", "");
+  node->declare_parameter("robot_frame", "");
+  node->declare_parameter("odom_frame", "");
+  node->declare_parameter("rate", rate);
 
   node->get_parameter("map_frame", map_frame);
   node->get_parameter("robot_frame", robot_frame);
   node->get_parameter("odom_frame", odom_frame);
+  node->get_parameter("rate", rate);
 
   blackboard->set<rclcpp::Node::SharedPtr>("node", node);
   blackboard->set<std::string>("map_frame", map_frame);
@@ -54,7 +57,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  rclcpp::Rate rate(1); // 1 hz
+  rclcpp::Rate node_rate(rate); // hz
   RCLCPP_INFO(node->get_logger(), "\t");
   RCLCPP_INFO(node->get_logger(), "INIT EXPLORER...");
 
@@ -63,10 +66,11 @@ int main(int argc, char **argv)
 
   bool finish = false;
   while (!finish && rclcpp::ok()) {
-    finish = tree.rootNode()->executeTick() != BT::NodeStatus::RUNNING;
+    // Spin setting maxtime to half the period
+    executor.spin_all(std::chrono::milliseconds(static_cast<int>(1000 / rate) / 2));
 
-    executor.spin_some();
-    rate.sleep();
+    finish = tree.rootNode()->executeTick() != BT::NodeStatus::RUNNING;
+    node_rate.sleep();
   }
 
   RCLCPP_INFO(node->get_logger(), "END EXPLORER...");

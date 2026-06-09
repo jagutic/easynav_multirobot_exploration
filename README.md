@@ -25,7 +25,11 @@ rosdep install --from-paths src --ignore-src -r -y
 
 **3. Build the packages:**
 ```bash
-colcon build --symlink-install
+# Slam toolbox
+colcon build --packages-select slam_toolbox --cmake-args   -DCMAKE_MODULE_PATH=~/qt_bridge   -DFORCE_QT6=ON   -DCMAKE_BUILD_TYPE=Release
+
+# Skip navmap pkgs, not used
+colcon build --packages-skip easynav_navmap_maps_manager easynav_navmap_planner easynav_navmap_localizer
 ```
 
 **4. Source the workspace:**
@@ -117,16 +121,14 @@ robot maintains its own TF tree.
 ### EasyNav plugins
 - **Lazy Localizer**: A lightweight localization plugin designed to **reuse SLAM published TFs**. Ensures that different localization sources do not collide or create jumps in the transform tree during the exploration process, where both SLAM and Navigation nned to be executed at the same time.
 
-- **Multiplexor MapsManager**: Works **under** Costmap MapsManager. Receive all maps to mux through the topic passed as parameter. Uses **OpenCV** to handle the merging of multiple `OccupancyGrid` into a global map. This allows robots to share their knowledge of the world. Set this new muxed map as static map for all easynav system.
+- **Multiplexor MapsManager**: Works **over** Costmap MapsManager. Subscribes to each robot’s local map topic from the configured namespaces, then uses **OpenCV** to merge multiple `OccupancyGrid` costmaps into a single shared global map. It anchors the merged world around a fixed robot namespace, handles each robot’s relative pose offsets, and writes the final result into `map.base` so the rest of the `easynav` stack can consume a unified base map. Also publishes the fused `OccupancyGrid` for RViz debugging and shared visualization across the fleet.
 
-- **Frontier MapsManager**: Works **over** Costmap MapsManager. Using dynamic map saved at navstate (blackboard), extract frontier between free space and the rest of the map using **OpenCV** morphological filters. Erase noise for better use. Publishes frontier points for behaviours to use it, and saves it in navstate (blackboard) for debugging.
+- **Frontier MapsManager**: Works **over** Costmap MapsManager. Using dynamic map saved at `navstate` (blackboard), extract frontier between free space and the rest of the map using **OpenCV** morphological filters. Uses **DBSCAN clustering** to group frontier points. Publishes them for globla use and saves them in `navstate` for debbuging.
 
 ### Exploration Behaviour
 The autonomous decision-making flow is orchestrated using a **reactive Behavior Tree** (powered by BehaviorTree.CPP). Instead of pre-calculating a global exploration path, the robot continuously adapts to the environment in real-time.
 
 - **The Exploration Loop:** The system cyclically fetches the latest frontier points and dynamic maps from the blackboard, applies a **closest-frontier** policy to select the optimal target, and dispatches the goal to the `easynav` navigation stack. If a goal fails or is reached, the tree reacts instantly to select the next best frontier.
-
-- **Mission Completion:** To determine when to stop, the behavior relies on the **IsExploredModel**, a custom-trained **CNN** (Convolutional Neural Network) that visually classifies the global map to decide if the area is fully explored, triggering a clean mission termination.
 
 >*Note: For a detailed technical breakdown of the specific BT action and condition nodes (e.g., `ChooseFrontierGoal`, `GoToPose`), please refer to the [easynav_multirobot_exploration package README](easynav_multirobot_exploration/README.md).*
 
