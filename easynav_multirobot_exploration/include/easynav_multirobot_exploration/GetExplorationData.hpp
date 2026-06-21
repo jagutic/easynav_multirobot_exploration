@@ -1,5 +1,5 @@
-#ifndef EASYNAV_MULTIROBOT_EXPLORATION__GET_POSE_HPP
-#define EASYNAV_MULTIROBOT_EXPLORATION__GET_POSE_HPP
+#ifndef EASYNAV_MULTIROBOT_EXPLORATION__GET_EXPLORATION_DATA_HPP
+#define EASYNAV_MULTIROBOT_EXPLORATION__GET_EXPLORATION_DATA_HPP
 
 #include <string>
 #include <vector>
@@ -8,7 +8,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "behaviortree_cpp/action_node.h"
-#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 
@@ -19,7 +18,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include <regex>
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 #define GLOBAL_MAP_FRAME "map"
@@ -64,8 +63,7 @@ public:
       {
         BT::OutputPort<Pose>("pose"),
         BT::OutputPort<std::vector<Pose>>("peers_pose"),
-        BT::OutputPort<std::vector<Point>>("frontier"),
-        BT::OutputPort<nav_msgs::msg::OccupancyGrid>("map")
+        BT::OutputPort<std::vector<Point>>("frontier")
       });
   }
 
@@ -110,11 +108,8 @@ private:
 
   Marker::SharedPtr last_frontier_;                       ///< Last frontier saved from topic
   rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;  ///< Shared pointer to subscriber to frontier topic.
-
-  nav_msgs::msg::OccupancyGrid::SharedPtr last_map_;      ///< Last map saved from topic
-  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_sub_;       ///< Shared pointer to subscriber to map topic.
 };
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
-#endif // EASYNAV_MULTIROBOT_EXPLORATION__GET_POSE_HPP
+#endif // EASYNAV_MULTIROBOT_EXPLORATION__GET_EXPLORATION_DATA_HPP

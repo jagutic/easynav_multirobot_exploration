@@ -1,6 +1,6 @@
 #include "easynav_multirobot_exploration/IsExplored.hpp"
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 IsExplored::IsExplored(
@@ -33,10 +33,10 @@ BT::NodeStatus IsExplored::tick()
   return BT::NodeStatus::FAILURE;
 }
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 #include "behaviortree_cpp/bt_factory.h"
 BT_REGISTER_NODES(factory)
 {
-  factory.registerNodeType<multirobot_exploration::IsExplored>("IsExplored");
+  factory.registerNodeType<easynav_multirobot_exploration::IsExplored>("IsExplored");
 }

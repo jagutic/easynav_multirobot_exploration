@@ -1,5 +1,5 @@
-#ifndef EASYNAV_MULTIROBOT_EXPLORATION__IS_EXPLORED_COMPLETE_HPP
-#define EASYNAV_MULTIROBOT_EXPLORATION__IS_EXPLORED_COMPLETE_HPP
+#ifndef EASYNAV_MULTIROBOT_EXPLORATION__IS_EXPLORED_HPP
+#define EASYNAV_MULTIROBOT_EXPLORATION__IS_EXPLORED_HPP
 
 #include <string>
 
@@ -7,7 +7,7 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "behaviortree_cpp/condition_node.h"
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 // Type alias for cleaner ROS 2 message handling
@@ -45,7 +45,6 @@ public:
     return BT::PortsList(
       {
         BT::InputPort<std::vector<Point>>("frontier_to_check"), // List of current frontier points
-        BT::InputPort<nav_msgs::msg::OccupancyGrid>("map_to_check") // Current map state
       });
   }
 
@@ -53,6 +52,6 @@ private:
   rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging purposes
 };
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
-#endif // EASYNAV_MULTIROBOT_EXPLORATION__IS_EXPLORED_COMPLETE_HPP
+#endif // EASYNAV_MULTIROBOT_EXPLORATION__IS_EXPLORED_HPP

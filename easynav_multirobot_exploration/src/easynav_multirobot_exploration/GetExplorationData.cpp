@@ -1,6 +1,6 @@
 #include "easynav_multirobot_exploration/GetExplorationData.hpp"
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 GetExplorationData::GetExplorationData(
@@ -28,20 +28,12 @@ GetExplorationData::GetExplorationData(
       last_frontier_ = marker;
     }
   );
-
-  // Update map through topic
-  map_sub_ = node_->create_subscription<nav_msgs::msg::OccupancyGrid>(
-    "map_topic", rclcpp::QoS(10).transient_local().reliable(),
-    [&](const nav_msgs::msg::OccupancyGrid::SharedPtr map) {
-      last_map_ = map;
-    }
-  );
 }
 
 BT::NodeStatus
 GetExplorationData::tick()
 {
-  if (!last_frontier_ || !last_map_) {
+  if (!last_frontier_) {
     RCLCPP_WARN(node_->get_logger(), "Not enough exploration data");
     return BT::NodeStatus::FAILURE;
   }
@@ -58,15 +50,9 @@ GetExplorationData::tick()
     // Save data in BB
     setOutput("pose", pose);
     setOutput("frontier", last_frontier_->points);
-    setOutput("map", *last_map_);
-
-    // Get peers poses and save in BB
+  
     std::vector<Pose> peers = getPeersPose();
-    if (!peers.empty()) {
-      setOutput("peers_pose", peers);
-    } else {
-      RCLCPP_WARN(node_->get_logger(), "No peer robots found");
-    }
+    if (!peers.empty()) setOutput("peers_pose", peers);
 
     RCLCPP_INFO(node_->get_logger(),
       "Data Saved. Robot at: (%.2f, %.2f). Peers found: %zu",
@@ -185,11 +171,11 @@ GetExplorationData::extractChildFrames(
   return child_frames;
 }
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 
 #include "behaviortree_cpp/bt_factory.h"
 BT_REGISTER_NODES(factory)
 {
-  factory.registerNodeType<multirobot_exploration::GetExplorationData>("GetExplorationData");
+  factory.registerNodeType<easynav_multirobot_exploration::GetExplorationData>("GetExplorationData");
 }

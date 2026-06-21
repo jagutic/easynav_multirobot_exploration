@@ -7,7 +7,7 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "behaviortree_cpp/condition_node.h"
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 using geometry_msgs::msg::Pose;
@@ -31,6 +31,6 @@ private:
   Pose last_goal_;
 };
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 #endif // EASYNAV_MULTIROBOT_EXPLORATION__IS_GOAL_VALID_HPP

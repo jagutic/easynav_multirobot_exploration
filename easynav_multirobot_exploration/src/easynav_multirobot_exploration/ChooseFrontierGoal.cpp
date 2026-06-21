@@ -1,6 +1,6 @@
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 ChooseFrontierGoal::ChooseFrontierGoal(
@@ -211,10 +211,10 @@ ChooseFrontierGoal::calc_best_goal(
   return std::make_pair(frontier_goal, min_cost);
 }
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 #include "behaviortree_cpp/bt_factory.h"
 BT_REGISTER_NODES(factory)
 {
-  factory.registerNodeType<multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
+  factory.registerNodeType<easynav_multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
 }

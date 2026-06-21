@@ -13,7 +13,7 @@
 #include "behaviortree_cpp/action_node.h"
 
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 #define POLICY_NEAREST_FRONTIER 0
@@ -95,6 +95,6 @@ private:
   double min_cost_diff_;                // Minimum cost difference to change goal
 };
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 #endif // EASYNAV_MULTIROBOT_EXPLORATION__CHOOSE_FRONTIER_GOAL_HPP

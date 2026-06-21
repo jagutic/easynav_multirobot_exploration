@@ -9,7 +9,7 @@
 #include "easynav_system/GoalManagerClient.hpp"
 
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 // Type aliases for easier message handling
@@ -68,6 +68,6 @@ private:
   easynav::GoalManagerClient::SharedPtr nav_client_; // Client to interface with the easynav navigation system
 };
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 #endif // EASYNAV_MULTIROBOT_EXPLORATION__GO_TO_POSE_HPP

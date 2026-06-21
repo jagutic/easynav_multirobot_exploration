@@ -1,6 +1,6 @@
 #include "easynav_multirobot_exploration/IsGoalValid.hpp"
 
-namespace multirobot_exploration
+namespace easynav_multirobot_exploration
 {
 
 IsGoalValid::IsGoalValid(const std::string & name, const BT::NodeConfig & conf)
@@ -15,10 +15,10 @@ BT::NodeStatus IsGoalValid::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-} // namespace multirobot_exploration
+} // namespace easynav_multirobot_exploration
 
 #include "behaviortree_cpp/bt_factory.h"
 BT_REGISTER_NODES(factory)
 {
-  factory.registerNodeType<multirobot_exploration::IsGoalValid>("IsGoalValid");
+  factory.registerNodeType<easynav_multirobot_exploration::IsGoalValid>("IsGoalValid");
 }

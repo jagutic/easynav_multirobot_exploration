@@ -1,28 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="explore">
-    <RetryUntilSuccessful num_attempts="-1">
-      <ReactiveSequence>
-        <GetExplorationData frontier="{f}"
-                            pose="{p}"
-                            peers_pose="{pp}"
-                            map="{m}"/>
-        <ReactiveFallback>
-          <IsExplored frontier_to_check="{f}"
-                      map_to_check="{m}"/>
-          <Sequence>
-            <ChooseFrontierGoal robot_pose="{p}"
-                                peers_robot_pose="{pp}"
-                                robot_frontier="{f}"
-                                frontier_goal="{fg}"
-                                frontier_goal_cost="{fgc}"/>
-            <GoToPose goal_pose="{fg}"/>
-            <IsExplored frontier_to_check="{f}"
-                        map_to_check="{m}"/>
-          </Sequence>
-        </ReactiveFallback>
+    <ReactiveSequence>
+      <GetExplorationData frontier="{f}"
+                          pose="{p}"
+                          peers_pose="{pp}"/>
+      <ReactiveFallback>
+        <IsExplored frontier_to_check="{f}"/>
+        <Sequence>
+          <ChooseFrontierGoal robot_pose="{p}"
+                              peers_robot_pose="{pp}"
+                              robot_frontier="{f}"
+                              frontier_goal="{fg}"
+                              frontier_goal_cost="{fgc}"/>
+          <GoToPose goal_pose="{fg}"/>
+          <IsExplored frontier_to_check="{f}"/>
+        </Sequence>
+      </ReactiveFallback>
       </ReactiveSequence>
-    </RetryUntilSuccessful>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
@@ -48,8 +43,6 @@
                    type="geometry_msgs::msg::Pose"/>
       <output_port name="peers_pose"
                    type="std::vector&lt;geometry_msgs::msg::Pose&gt;"/>
-      <output_port name="map"
-                   type="nav_msgs::msg::OccupancyGrid"/>
     </Action>
     <Action ID="GoToPose"
             editable="true">
@@ -60,8 +53,6 @@
                editable="true">
       <input_port name="frontier_to_check"
                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
-      <input_port name="map_to_check"
-                  type="nav_msgs::msg::OccupancyGrid"/>
     </Condition>
   </TreeNodesModel>
 
