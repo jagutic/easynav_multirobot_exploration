@@ -89,7 +89,7 @@ MultiplexorMapsManager::create_map_subscriber(const std::string & ns, const std:
 
   map_subs_[ns] = get_node()->create_subscription<OccupancyGrid>(
       "/" + ns + "/" + topic_name,
-      rclcpp::QoS(1).transient_local().reliable(),
+      rclcpp::QoS(1).durability_volatile().best_effort(),
       std::bind(&MultiplexorMapsManager::map_callback, this, _1));
 
   RCLCPP_INFO(get_node()->get_logger(), "Subscribed to map: /%s/%s", ns.c_str(), topic_name.c_str());

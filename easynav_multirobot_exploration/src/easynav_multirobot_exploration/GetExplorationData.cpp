@@ -23,7 +23,7 @@ GetExplorationData::GetExplorationData(
 
   // Update frontier through topic
   frontier_sub_ = node_->create_subscription<Marker>(
-    "frontier_topic", rclcpp::QoS(10).transient_local().reliable(),
+    "frontier_topic", rclcpp::QoS(10).durability_volatile().reliable(),
     [&](const Marker::SharedPtr marker) {
       last_frontier_ = marker;
     }

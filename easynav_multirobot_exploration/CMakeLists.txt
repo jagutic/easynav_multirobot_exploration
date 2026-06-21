@@ -5,6 +5,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -30,6 +31,7 @@ set(plugin_libs
   is_explored
 )
 
+# Libraries
 foreach(bt_plugin ${plugin_libs})
   target_include_directories(${bt_plugin} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -50,14 +52,29 @@ foreach(bt_plugin ${plugin_libs})
   target_compile_definitions(${bt_plugin} PRIVATE BT_PLUGIN_EXPORT)
 endforeach()
 
+add_library(${PROJECT_NAME} SHARED src/${PROJECT_NAME}/utils/MapDataSaver.cpp)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(${PROJECT_NAME}
+  rclcpp::rclcpp
+  ${nav_msgs_TARGETS}
+)
 
+# Executables
 add_executable(explorer src/explorer.cpp)
 target_link_libraries(explorer PUBLIC ${plugin_libs})
 
+add_executable(save_map_data src/save_map_data.cpp)
+target_link_libraries(save_map_data ${PROJECT_NAME})
 
+# Install
 install(TARGETS
   ${plugin_libs}
+  ${PROJECT_NAME}
   explorer
+  save_map_data
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
