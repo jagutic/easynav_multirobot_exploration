@@ -46,8 +46,9 @@ The autonomous exploration is driven by BTs defined in the `behavior_trees/` dir
 
 ### Core BT Nodes Provided:
 * **`GetExplorationData` (Action):** Fetches current robot pose, frontier points, and map data from the TF tree and costmap via `NavState`.
-* **`ChooseFrontierGoal` (Action):** Evaluates available frontiers and selects the optimal next goal (currently using the closest-point policy).
-* **`GoToPose` (Action):** Interfaces with the `easynav` GoalManagerClient to send navigation goals and monitor feedback.
+* **`ChooseFrontierGoal` (Action):** Evaluates available frontiers and selects the optimal next goal (nearest or best-cost policy). Outputs a `PoseWithCost` (`exploration_interfaces::msg::PoseWithCost`) containing the target pose and its associated cost.
+* **`ProcessGoal` (Action):** Receives the `PoseWithCost` from the blackboard and extracts the `geometry_msgs::msg::Pose` for consumption by `GoToPose`. Acts as a decoupling layer between goal selection and navigation.
+* **`GoToPose` (Action):** Interfaces with the `easynav` GoalManagerClient to send navigation goals reactively — resending on every tick if the goal has changed, with same-goal detection to avoid redundant sends.
 * **`IsExplored` (Condition):** Evaluates if the environment is fully mapped. Currently returns SUCCESS when frontier received is empty.
 
 ### BT structure:
@@ -67,7 +68,7 @@ This is the core configuration for the `easynav_system`. It defines how the cost
 ### 2. `explorer.params.yaml`
 Parameters specifically for the Behavior Tree execution node (`explorer`).
 * **`bt_xml_file`**: Default path to the Behavior Tree logic.
-* **Goal Selection**: Thresholds for the "closest-frontier" policy.
+* **Goal Selection**: Policy selector (`policy`) and weights (`distance_weight`, `separation_weight`) for the frontier scoring function.
 * **IsExplored Model**: Path and confidence thresholds for the CNN-based exploration completion classifier.
 
 ### 3. `slam_namespaced.params.yaml`

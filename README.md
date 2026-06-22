@@ -128,9 +128,16 @@ robot maintains its own TF tree.
 ### Exploration Behaviour
 The autonomous decision-making flow is orchestrated using a **reactive Behavior Tree** (powered by BehaviorTree.CPP). Instead of pre-calculating a global exploration path, the robot continuously adapts to the environment in real-time.
 
-- **The Exploration Loop:** The system cyclically fetches the latest frontier points and dynamic maps from the blackboard, applies a **closest-frontier** policy to select the optimal target, and dispatches the goal to the `easynav` navigation stack. If a goal fails or is reached, the tree reacts instantly to select the next best frontier.
+- **The Exploration Loop:** The system cyclically fetches the latest frontier points and robot poses from the blackboard, applies a configurable frontier-scoring policy (`NEAREST` or `BEST_COST`) to select the optimal target, and dispatches the goal to the `easynav` navigation stack via a `PoseWithCost` message. A cost-hysteresis filter (`ProcessGoal`) prevents oscillations in goal selection. The tree reacts instantly to frontier changes: if a better goal appears mid-navigation, it re-routes the robot without waiting for the current goal to complete.
 
->*Note: For a detailed technical breakdown of the specific BT action and condition nodes (e.g., `ChooseFrontierGoal`, `GoToPose`), please refer to the [easynav_multirobot_exploration package README](easynav_multirobot_exploration/README.md).*
+>*Note: For a detailed technical breakdown of the specific BT action and condition nodes (e.g., `ChooseFrontierGoal`, `ProcessGoal`, `GoToPose`), please refer to the [easynav_multirobot_exploration package README](easynav_multirobot_exploration/README.md).*
+
+### Custom Interfaces
+The package `exploration_interfaces` defines the ROS 2 message types used internally by the exploration system:
+
+| Message | Fields | Description |
+|---|---|---|
+| `PoseWithCost` | `geometry_msgs/Pose pose`, `float64 cost` | Bundles a navigation target pose with its selection cost, used to pass goals between `ChooseFrontierGoal` and `ProcessGoal`. |
 
 ### Simulation Environments
 Collection of Gazebo environments used for multi-robot validation:
