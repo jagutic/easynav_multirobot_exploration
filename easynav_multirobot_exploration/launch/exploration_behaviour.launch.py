@@ -40,7 +40,7 @@ def generate_launch_description():
 
     declare_save_map_path_argument = DeclareLaunchArgument(
         'data_path',
-        default_value=os.path.expanduser('~/Documentos/Uni/TFG/TFG_ws/src/easynav_multirobot_exploration/easynav_multirobot_exploration/utils/'),
+        default_value=os.path.expanduser('~/Documentos/Uni/TFG/TFG_ws/src/easynav_multirobot_exploration/easynav_multirobot_exploration/data/'),
         description='Path to save map data CSV'
     )
 
