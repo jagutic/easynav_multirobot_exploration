@@ -85,6 +85,7 @@ ChooseFrontierGoal::tick()
 
   // Set goal
   setOutput("frontier_goal", frontier_goal);
+  RCLCPP_INFO(node_->get_logger(), "Possible frontier goal with cost: %.2f", frontier_goal.cost);
   return BT::NodeStatus::SUCCESS;
 }
 

@@ -2,6 +2,7 @@
 #define EASYNAV_MULTIROBOT_EXPLORATION__PROCESS_GOAL_HPP
 
 #include <string>
+#include <optional>
 
 #include "rclcpp/rclcpp.hpp"
 #include "exploration_interfaces/msg/pose_with_cost.hpp"
@@ -31,7 +32,7 @@ public:
 private:
   rclcpp::Node::SharedPtr node_;
 
-  double* last_cost_;
+  std::optional<double> last_cost_;
   double min_cost_diff_;                                      // Minimum cost difference to change goal
 };
 

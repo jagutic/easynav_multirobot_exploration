@@ -5,8 +5,8 @@ r1/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.3
-      max_angular_speed: 0.4
+      max_linear_speed: 0.35
+      max_angular_speed: 0.45
       look_ahead_dist: 0.3
       k_rot: 1.5
       k_p: 1.2
@@ -92,8 +92,8 @@ r2/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.3
-      max_angular_speed: 0.4
+      max_linear_speed: 0.35
+      max_angular_speed: 0.45
       look_ahead_dist: 0.3
       k_rot: 1.5
       k_p: 1.2
@@ -179,8 +179,8 @@ r3/controller_node:
     simple:
       rt_freq: 30.0 
       plugin: easynav_simple_controller/SimpleController
-      max_linear_speed: 0.3
-      max_angular_speed: 0.4
+      max_linear_speed: 0.35
+      max_angular_speed: 0.45
       look_ahead_dist: 0.3
       k_rot: 1.5
       k_p: 1.2

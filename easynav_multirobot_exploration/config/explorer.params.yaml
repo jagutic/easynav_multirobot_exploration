@@ -11,9 +11,9 @@ r1/explorer:
     odom_frame: r1/odom
 
     policy: 1 # BETTER_FRONTIER
-    separation_weight: 0.4
-    distance_weight: 0.8
-    min_cost_diff: 0.2
+    separation_weight: 0.6
+    distance_weight: 0.9
+    min_cost_diff: 0.4
 
 r2/explorer:
   ros__parameters:
@@ -25,9 +25,9 @@ r2/explorer:
     odom_frame: r2/odom
 
     policy: 1 # BETTER_FRONTIER
-    separation_weight: 0.4
-    distance_weight: 0.8
-    min_cost_diff: 0.2
+    separation_weight: 0.6
+    distance_weight: 0.9
+    min_cost_diff: 0.4
 
 r3/explorer:
   ros__parameters:
@@ -39,7 +39,7 @@ r3/explorer:
     odom_frame: r3/odom
 
     policy: 1 # BETTER_FRONTIER
-    separation_weight: 0.4
-    distance_weight: 0.8
-    min_cost_diff: 0.2
+    separation_weight: 0.6
+    distance_weight: 0.9
+    min_cost_diff: 0.4
 

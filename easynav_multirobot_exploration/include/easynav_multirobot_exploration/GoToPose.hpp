@@ -1,6 +1,7 @@
 #ifndef EASYNAV_MULTIROBOT_EXPLORATION__GO_TO_POSE_HPP
 #define EASYNAV_MULTIROBOT_EXPLORATION__GO_TO_POSE_HPP
 
+#include <optional>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
@@ -66,7 +67,7 @@ private:
   rclcpp::Node::SharedPtr node_;                    // Pointer to the ROS 2 node for logging and timing
   easynav::GoalManagerClient::SharedPtr nav_client_; // Client to interface with the easynav navigation system
 
-  Pose* last_goal_pose_;                           // Stores the last goal sent
+  std::optional<Pose> last_goal_pose_;             // Stores the last goal sent
 };
 
 } // namespace easynav_multirobot_exploration

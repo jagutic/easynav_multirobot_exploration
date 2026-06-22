@@ -21,7 +21,7 @@
 
     resolution: 0.05
     min_laser_range: 0.3                  
-    max_laser_range: 2.9             
+    max_laser_range: 8.0             
 
     minimum_time_interval: 0.2
     transform_timeout: 0.2

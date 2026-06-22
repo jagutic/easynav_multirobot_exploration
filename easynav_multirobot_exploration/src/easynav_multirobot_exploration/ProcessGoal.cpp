@@ -1,4 +1,5 @@
 #include "easynav_multirobot_exploration/ProcessGoal.hpp"
+#include <optional>
 
 namespace easynav_multirobot_exploration
 {
@@ -27,25 +28,22 @@ BT::NodeStatus ProcessGoal::tick()
   }
 
   // Avoid constant change in goal
-  if (last_cost_ && std::abs(*last_cost_ - goal_with_cost.cost) < min_cost_diff_) {
+  if (last_cost_.has_value() && std::abs(last_cost_.value() - goal_with_cost.cost) < min_cost_diff_) {
 
     // Keep current goal if the new one is not much better
     RCLCPP_INFO(
       node_->get_logger(),
-      "Not changing goal, cost difference: %.2f",
-      std::abs(*last_cost_ - goal_with_cost.cost)
+      "Goal Invalid -> (cost diff: %.2f)",
+      std::abs(last_cost_.value() - goal_with_cost.cost)
     );
     return BT::NodeStatus::SUCCESS;
   }
 
   // Save new cost and output goal
-  if (!last_cost_) {
-    last_cost_ = new double();
-  }
-  *last_cost_ = goal_with_cost.cost;
+  last_cost_ = goal_with_cost.cost;
 
   setOutput("goal", goal_with_cost.pose);
-  RCLCPP_INFO(node_->get_logger(), "New goal selected with cost: %.2f", goal_with_cost.cost);
+  RCLCPP_INFO(node_->get_logger(), "Goal Valid -> (cost: %.2f)", goal_with_cost.cost);
   return BT::NodeStatus::SUCCESS;
 }
 

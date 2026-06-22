@@ -1,4 +1,5 @@
 #include "easynav_multirobot_exploration/GoToPose.hpp"
+#include <optional>
 
 namespace easynav_multirobot_exploration
 {
@@ -108,7 +109,8 @@ GoToPose::send_goal()
   }
 
   // Same goal, not resending
-  if (last_goal_pose_ && *last_goal_pose_ == goal_pose) {
+  if (last_goal_pose_.has_value() && *last_goal_pose_ == goal_pose) {
+    RCLCPP_DEBUG(node_->get_logger(), "Not sending goal to easynav, same as last one.");
     return true;
   }
 
@@ -118,15 +120,12 @@ GoToPose::send_goal()
   goal.header.stamp = node_->now();
   goal.pose = goal_pose;
 
-  RCLCPP_DEBUG(node_->get_logger(), "Sending goal to (%.2f, %.2f)", goal.pose.position.x,
+  RCLCPP_INFO(node_->get_logger(), "Sending goal to (%.2f, %.2f)", goal.pose.position.x,
       goal.pose.position.y);
   nav_client_->send_goal(goal);
 
   // Update last goal pose
-  if (!last_goal_pose_) {
-    last_goal_pose_ = new Pose();
-  }
-  *last_goal_pose_ = goal_pose;
+  last_goal_pose_ = goal_pose;
   return true;
 }
 

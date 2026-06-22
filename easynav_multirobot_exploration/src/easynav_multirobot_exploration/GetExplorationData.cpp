@@ -50,13 +50,13 @@ GetExplorationData::tick()
     // Save data in BB
     setOutput("pose", pose);
     setOutput("frontier", last_frontier_->points);
-  
-    std::vector<Pose> peers = getPeersPose();
-    if (!peers.empty()) setOutput("peers_pose", peers);
 
+    std::vector<Pose> peers = getPeersPose();
+    setOutput("peers_pose", peers);
+    
     RCLCPP_INFO(node_->get_logger(),
-      "Data Saved. Robot at: (%.2f, %.2f). Peers found: %zu",
-      pose.position.x, pose.position.y, peers.size()
+      "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu",
+      pose.position.x, pose.position.y, peers.size(), last_frontier_->points.size()
     );
     return BT::NodeStatus::SUCCESS;
 
