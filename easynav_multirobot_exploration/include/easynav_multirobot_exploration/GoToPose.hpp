@@ -8,7 +8,6 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "easynav_system/GoalManagerClient.hpp"
 
-
 namespace easynav_multirobot_exploration
 {
 
@@ -66,6 +65,8 @@ private:
 
   rclcpp::Node::SharedPtr node_;                    // Pointer to the ROS 2 node for logging and timing
   easynav::GoalManagerClient::SharedPtr nav_client_; // Client to interface with the easynav navigation system
+
+  Pose* last_goal_pose_;                           // Stores the last goal sent
 };
 
 } // namespace easynav_multirobot_exploration

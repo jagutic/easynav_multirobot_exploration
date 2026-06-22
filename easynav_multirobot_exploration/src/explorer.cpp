@@ -5,7 +5,7 @@
 #include "behaviortree_cpp/bt_factory.h"
 
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
-#include "easynav_multirobot_exploration/IsGoalValid.hpp"
+#include "easynav_multirobot_exploration/ProcessGoal.hpp"
 #include "easynav_multirobot_exploration/GoToPose.hpp"
 #include "easynav_multirobot_exploration/GetExplorationData.hpp"
 #include "easynav_multirobot_exploration/IsExplored.hpp"
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
   BT::BehaviorTreeFactory factory;
   factory.registerNodeType<easynav_multirobot_exploration::ChooseFrontierGoal>("ChooseFrontierGoal");
-  factory.registerNodeType<easynav_multirobot_exploration::IsGoalValid>("IsGoalValid");
+  factory.registerNodeType<easynav_multirobot_exploration::ProcessGoal>("ProcessGoal");
   factory.registerNodeType<easynav_multirobot_exploration::GoToPose>("GoToPose");
   factory.registerNodeType<easynav_multirobot_exploration::GetExplorationData>("GetExplorationData");
   factory.registerNodeType<easynav_multirobot_exploration::IsExplored>("IsExplored");

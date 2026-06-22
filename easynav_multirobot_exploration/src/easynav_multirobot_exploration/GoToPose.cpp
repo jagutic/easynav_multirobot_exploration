@@ -42,11 +42,11 @@ GoToPose::tick()
     case easynav::GoalManagerClient::State::ACCEPTED_AND_NAVIGATING:
       RCLCPP_INFO(node_->get_logger(), "NAVIGATING");
 
-      // // Send goal
-      // if (!send_goal()) {
-      //   RCLCPP_ERROR(node_->get_logger(), "Failed to send goal, ACCEPTED_AND_NAVIGATING");
-      //   return BT::NodeStatus::FAILURE;
-      // }
+      // Send goal
+      if (!send_goal()) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to send goal, ACCEPTED_AND_NAVIGATING");
+        return BT::NodeStatus::FAILURE;
+      }
 
       // Get feedback
       response = nav_client_->get_feedback();
@@ -107,15 +107,26 @@ GoToPose::send_goal()
     return false;
   }
 
+  // Same goal, not resending
+  if (last_goal_pose_ && *last_goal_pose_ == goal_pose) {
+    return true;
+  }
+
   // Send goal with easynav client
   PoseStamped goal;
   goal.header.frame_id = config().blackboard->get<std::string>("map_frame");
   goal.header.stamp = node_->now();
   goal.pose = goal_pose;
 
-  RCLCPP_INFO(node_->get_logger(), "Sending goal to (%.2f, %.2f)", goal.pose.position.x,
+  RCLCPP_DEBUG(node_->get_logger(), "Sending goal to (%.2f, %.2f)", goal.pose.position.x,
       goal.pose.position.y);
   nav_client_->send_goal(goal);
+
+  // Update last goal pose
+  if (!last_goal_pose_) {
+    last_goal_pose_ = new Pose();
+  }
+  *last_goal_pose_ = goal_pose;
   return true;
 }
 

@@ -16,9 +16,10 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(easynav_system REQUIRED)
+find_package(exploration_interfaces REQUIRED)
 
 add_library(choose_frontier_goal_bt_node SHARED src/${PROJECT_NAME}/ChooseFrontierGoal.cpp)
-add_library(is_goal_valid_bt_node SHARED src/${PROJECT_NAME}/IsGoalValid.cpp)
+add_library(is_goal_valid_bt_node SHARED src/${PROJECT_NAME}/ProcessGoal.cpp)
 add_library(go_to_pose_bt_node SHARED src/${PROJECT_NAME}/GoToPose.cpp)
 add_library(get_exploration_data_bt_node SHARED src/${PROJECT_NAME}/GetExplorationData.cpp)
 add_library(is_explored SHARED src/${PROJECT_NAME}/IsExplored.cpp)
@@ -47,6 +48,7 @@ foreach(bt_plugin ${plugin_libs})
     ${nav_msgs_TARGETS}
     ${visualization_msgs_TARGETS}
     ${geometry_msgs_TARGETS}
+    exploration_interfaces::exploration_interfaces
     ${tf2_geometry_msgs_TARGETS}
   )
   target_compile_definitions(${bt_plugin} PRIVATE BT_PLUGIN_EXPORT)

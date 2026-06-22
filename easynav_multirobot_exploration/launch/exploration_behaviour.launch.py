@@ -26,7 +26,7 @@ def generate_launch_description():
 
     declare_bt_xml_argument = DeclareLaunchArgument(
         'bt_xml_file',
-        default_value=os.path.join(pkg, 'behavior_trees', 'explore_sequential.xml'),
+        default_value=os.path.join(pkg, 'behavior_trees', 'explore.xml'),
         description='Absolut path to behaviour tree xml file',
     )
 

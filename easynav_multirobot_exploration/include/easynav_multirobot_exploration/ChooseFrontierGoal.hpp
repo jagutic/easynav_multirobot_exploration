@@ -9,6 +9,7 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "visualization_msgs/msg/marker.hpp"
+#include "exploration_interfaces/msg/pose_with_cost.hpp"
 
 #include "behaviortree_cpp/action_node.h"
 
@@ -23,6 +24,7 @@ namespace easynav_multirobot_exploration
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Point;
 using visualization_msgs::msg::Marker;
+using exploration_interfaces::msg::PoseWithCost;
 
 /**
  * @class ChooseFrontierGoal
@@ -57,8 +59,7 @@ public:
         BT::InputPort<Pose>("robot_pose"),                     // Current location of the robot
         BT::InputPort<std::vector<Pose>>("peers_robot_pose"),        // Current locations of peer robots
         BT::InputPort<std::vector<Point>>("robot_frontier"),   // List of candidate frontier points
-        BT::OutputPort<Pose>("frontier_goal"),                 // The selected navigation target
-        BT::OutputPort<double>("frontier_goal_cost")          // Cost of the chosen goal
+        BT::OutputPort<PoseWithCost>("frontier_goal")                 // The selected navigation target
       });
   }
 
@@ -69,7 +70,7 @@ private:
    * @param frontier A vector of points representing the identified frontiers.
    * @return The selected Pose to be sent to the navigation stack with its cost.
    */
-  std::pair<geometry_msgs::msg::Pose, double> calc_closest_goal(
+  PoseWithCost calc_closest_goal(
     const Pose & current_pose,
     const std::vector<Point> & frontier);
 
@@ -80,7 +81,7 @@ private:
    * @param peers_pose A vector of poses representing the locations of peer robots.
    * @return The selected Pose to be sent to the navigation stack with its cost.
    */
-  std::pair<geometry_msgs::msg::Pose, double> calc_best_goal(
+  PoseWithCost calc_best_goal(
     const Pose & current_pose,
     const std::vector<Pose> & peers_pose,
     const std::vector<Point> & frontier
@@ -91,8 +92,6 @@ private:
   int policy_;                          // Exploration policy (e.g., nearest frontier, better frontier)
   double distance_weight_;              // Weight for distance to frontier in cost function
   double separation_weight_;            // Weight for separation from peers in cost function
-
-  double min_cost_diff_;                // Minimum cost difference to change goal
 };
 
 } // namespace easynav_multirobot_exploration

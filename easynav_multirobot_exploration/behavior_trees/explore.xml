@@ -7,17 +7,18 @@
                           peers_pose="{pp}"/>
       <ReactiveFallback>
         <IsExplored frontier_to_check="{f}"/>
-        <Sequence>
+        <ReactiveSequence>
           <ChooseFrontierGoal robot_pose="{p}"
                               peers_robot_pose="{pp}"
                               robot_frontier="{f}"
-                              frontier_goal="{fg}"
-                              frontier_goal_cost="{fgc}"/>
-          <GoToPose goal_pose="{fg}"/>
+                              frontier_goal="{fg}"/>
+          <ProcessGoal goal_with_cost="{fg}"
+                        goal="{g}"/>
+          <GoToPose goal_pose="{g}"/>
           <IsExplored frontier_to_check="{f}"/>
-        </Sequence>
+        </ReactiveSequence>
       </ReactiveFallback>
-      </ReactiveSequence>
+    </ReactiveSequence>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
@@ -31,9 +32,7 @@
       <input_port name="robot_frontier"
                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <output_port name="frontier_goal"
-                   type="geometry_msgs::msg::Pose"/>
-      <output_port name="frontier_goal_cost"
-                   type="double"/>
+                   type="exploration_interfaces::msg::PoseWithCost"/>
     </Action>
     <Action ID="GetExplorationData"
             editable="true">
@@ -54,6 +53,13 @@
       <input_port name="frontier_to_check"
                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
     </Condition>
+    <Action ID="ProcessGoal"
+            editable="true">
+      <input_port name="goal_with_cost"
+                  type="exploration_interfaces::msg::PoseWithCost"/>
+      <output_port name="goal"
+                   type="geometry_msgs::msg::Pose"/>
+    </Action>
   </TreeNodesModel>
 
 </root>
