@@ -23,7 +23,6 @@ BT::NodeStatus IsExplored::tick()
     return BT::NodeStatus::FAILURE;
   }
 
-
   // Only consider finished when there are not more frontiers to explore
   if (frontier_to_check.empty()) {
     RCLCPP_INFO(node_->get_logger(), "No more frontiers to explore !!!");

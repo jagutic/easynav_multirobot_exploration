@@ -66,6 +66,8 @@ int main(int argc, char **argv)
 
   bool finish = false;
   while (!finish && rclcpp::ok()) {
+    RCLCPP_INFO(node->get_logger(), "\t");
+
     // Maxtime is half the period
     executor.spin_all(std::chrono::milliseconds(static_cast<int>(1000 / freq) / 2));
     finish = tree.rootNode()->executeTick() == BT::NodeStatus::SUCCESS;

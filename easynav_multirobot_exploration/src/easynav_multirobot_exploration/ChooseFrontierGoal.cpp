@@ -73,8 +73,7 @@ ChooseFrontierGoal::tick()
   // Choose best frontier point according to cost function (distance to robot and distance to peers)
     case POLICY_BETTER_FRONTIER:
       getInput("peers_robot_pose", peers_robot_pose);
-      frontier_goal = calc_best_goal(robot_pose, peers_robot_pose,
-        robot_frontier);
+      frontier_goal = calc_best_goal(robot_pose, peers_robot_pose, robot_frontier);
       break;
 
   // Undefined state
@@ -85,7 +84,7 @@ ChooseFrontierGoal::tick()
 
   // Set goal
   setOutput("frontier_goal", frontier_goal);
-  RCLCPP_INFO(node_->get_logger(), "Possible frontier goal with cost: %.2f", frontier_goal.cost);
+  RCLCPP_INFO(node_->get_logger(), "Best frontier candidate with cost: %.2f", frontier_goal.cost);
   return BT::NodeStatus::SUCCESS;
 }
 

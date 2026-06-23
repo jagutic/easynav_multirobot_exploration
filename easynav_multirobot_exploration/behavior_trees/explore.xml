@@ -13,7 +13,8 @@
                               robot_frontier="{f}"
                               frontier_goal="{fg}"/>
           <ProcessGoal goal_with_cost="{fg}"
-                        goal="{g}"/>
+                       goals_list="{f}"
+                       goal="{g}"/>
           <GoToPose goal_pose="{g}"/>
           <IsExplored frontier_to_check="{f}"/>
         </ReactiveSequence>
@@ -57,6 +58,8 @@
             editable="true">
       <input_port name="goal_with_cost"
                   type="exploration_interfaces::msg::PoseWithCost"/>
+      <input_port name="goals_list"
+                  type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
       <output_port name="goal"
                    type="geometry_msgs::msg::Pose"/>
     </Action>

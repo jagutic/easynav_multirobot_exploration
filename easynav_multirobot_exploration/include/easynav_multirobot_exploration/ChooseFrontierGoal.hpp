@@ -87,11 +87,11 @@ private:
     const std::vector<Point> & frontier
   );
 
-  rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging and time access
+  rclcpp::Node::SharedPtr node_;
 
-  int policy_;                          // Exploration policy (e.g., nearest frontier, better frontier)
-  double distance_weight_;              // Weight for distance to frontier in cost function
-  double separation_weight_;            // Weight for separation from peers in cost function
+  int policy_;
+  double distance_weight_;
+  double separation_weight_;
 };
 
 } // namespace easynav_multirobot_exploration

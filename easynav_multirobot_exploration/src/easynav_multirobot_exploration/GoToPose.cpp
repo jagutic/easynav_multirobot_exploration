@@ -20,15 +20,12 @@ GoToPose::tick()
   easynav_interfaces::msg::NavigationControl response;
 
   switch (nav_client_->get_state()) {
-    // No action in these states
+    // No action
     case easynav::GoalManagerClient::State::SENT_GOAL:
-      RCLCPP_INFO(node_->get_logger(), "GOAL SENT");
-      return BT::NodeStatus::RUNNING;
     case easynav::GoalManagerClient::State::SENT_PREEMPT:
-      RCLCPP_INFO(node_->get_logger(), "PREEMPT SENT");
       return BT::NodeStatus::RUNNING;
 
-    // Manage normal state
+    // Not executing, send goal
     case easynav::GoalManagerClient::State::IDLE:
       RCLCPP_INFO(node_->get_logger(), "IDLE");
 
@@ -39,7 +36,7 @@ GoToPose::tick()
       }
       return BT::NodeStatus::RUNNING;
 
-    // Manage navigating state
+    // Send goal if necessary and get feedback
     case easynav::GoalManagerClient::State::ACCEPTED_AND_NAVIGATING:
       RCLCPP_INFO(node_->get_logger(), "NAVIGATING");
 
@@ -66,13 +63,14 @@ GoToPose::tick()
       nav_client_->reset();
       return BT::NodeStatus::SUCCESS;
 
-    // Manage failed navigation
+    // Manage not successful navigation
     case easynav::GoalManagerClient::State::NAVIGATION_CANCELLED:
     case easynav::GoalManagerClient::State::NAVIGATION_FAILED:
       response = nav_client_->get_result();
-      RCLCPP_WARN(node_->get_logger(), "NAVIGATION FAILED: %s", response.status_message.c_str());
+      RCLCPP_WARN(node_->get_logger(), "NAVIGATION FAILED or CANCELLED: %s", response.status_message.c_str());
 
       nav_client_->reset();
+      last_goal_pose_.reset();
       return BT::NodeStatus::FAILURE;
 
     // Manage error
@@ -101,16 +99,14 @@ GoToPose::send_goal()
 {
   // Get goal from BB
   Pose goal_pose;
-  BT::Result result = getInput("goal_pose", goal_pose);
-
-  if (!result.has_value()) { // No goal -> failure
+  if (!getInput("goal_pose", goal_pose).has_value()) {
     RCLCPP_ERROR(node_->get_logger(), "No goal pose");
     return false;
   }
 
   // Same goal, not resending
   if (last_goal_pose_.has_value() && *last_goal_pose_ == goal_pose) {
-    RCLCPP_DEBUG(node_->get_logger(), "Not sending goal to easynav, same as last one.");
+    RCLCPP_INFO(node_->get_logger(), "Same goal, not resending");
     return true;
   }
 
