@@ -7,6 +7,8 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "behaviortree_cpp/condition_node.h"
 
+#define MAX_CHECKINGS 10
+
 namespace easynav_multirobot_exploration
 {
 
@@ -50,6 +52,8 @@ public:
 
 private:
   rclcpp::Node::SharedPtr node_; // Pointer to the ROS 2 node for logging purposes
+
+  int checkings_;                // Security counter 
 };
 
 } // namespace easynav_multirobot_exploration

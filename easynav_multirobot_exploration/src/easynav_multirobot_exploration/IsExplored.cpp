@@ -10,6 +10,9 @@ IsExplored::IsExplored(
 {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** IsExplored **");
+  RCLCPP_INFO(node_->get_logger(), "Security checkings: %d", MAX_CHECKINGS);
+
+  checkings_ = 0;
 }
 
 BT::NodeStatus IsExplored::tick()
@@ -26,7 +29,11 @@ BT::NodeStatus IsExplored::tick()
   // Only consider finished when there are not more frontiers to explore
   if (frontier_to_check.empty()) {
     RCLCPP_INFO(node_->get_logger(), "No more frontiers to explore !!!");
-    return BT::NodeStatus::SUCCESS;
+
+    if (++checkings_ >= MAX_CHECKINGS) {
+      RCLCPP_INFO(node_->get_logger(), "Security checkings: %d, exploration ended", checkings_);
+      return BT::NodeStatus::SUCCESS;
+    }
   }
 
   return BT::NodeStatus::FAILURE;

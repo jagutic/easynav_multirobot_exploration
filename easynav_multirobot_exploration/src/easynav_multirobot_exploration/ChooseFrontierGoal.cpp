@@ -56,7 +56,7 @@ ChooseFrontierGoal::tick()
   }
 
   if (robot_frontier.empty()) {
-    RCLCPP_ERROR(node_->get_logger(), "Frontier empty");
+    RCLCPP_INFO(node_->get_logger(), "Frontier empty, not choosing frontier goal");
     return BT::NodeStatus::FAILURE;
   }
 
