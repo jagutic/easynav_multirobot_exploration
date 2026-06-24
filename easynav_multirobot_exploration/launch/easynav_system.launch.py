@@ -9,9 +9,9 @@ import yaml
 
 
 def launch_easynav_setup(context, *args, **kwargs):
-    sim_config_path = LaunchConfiguration('sim_config_file').perform(context)
+    sim_config_path = LaunchConfiguration('robots_config').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time')
-    navigation_params_file = LaunchConfiguration('navigation_params_file')
+    navigation_config = LaunchConfiguration('navigation_config')
     namespace = LaunchConfiguration('namespace')
 
     with open(sim_config_path) as file:
@@ -38,7 +38,7 @@ def launch_easynav_setup(context, *args, **kwargs):
         package='easynav_system',
         executable='system_main',
         namespace=namespace,
-        parameters=[navigation_params_file, {'use_sim_time': use_sim_time}, overrides],
+        parameters=[navigation_config, {'use_sim_time': use_sim_time}, overrides],
         remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static')],
         output='screen',
     )
@@ -50,8 +50,8 @@ def generate_launch_description():
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time', default_value='true', description='Use simulation/Gazebo clock'
     )
-    declare_navigation_params_file_cmd = DeclareLaunchArgument(
-        'navigation_params_file',
+    declare_navigation_config_file_cmd = DeclareLaunchArgument(
+        'navigation_config',
         default_value=os.path.join(
             get_package_share_directory('easynav_multirobot_exploration'),
             'config',
@@ -62,8 +62,8 @@ def generate_launch_description():
     declare_namespace_argument = DeclareLaunchArgument(
         'namespace', default_value='', description='Namespace for node and topics'
     )
-    declare_sim_config_file_cmd = DeclareLaunchArgument(
-        'sim_config_file',
+    declare_robots_config_file_cmd = DeclareLaunchArgument(
+        'robots_config',
         default_value=os.path.join(
             get_package_share_directory('easynav_multirobot_exploration'),
             'config',
@@ -77,8 +77,8 @@ def generate_launch_description():
 
     ld.add_action(declare_namespace_argument)
     ld.add_action(declare_use_sim_time_argument)
-    ld.add_action(declare_navigation_params_file_cmd)
-    ld.add_action(declare_sim_config_file_cmd)
+    ld.add_action(declare_navigation_config_file_cmd)
+    ld.add_action(declare_robots_config_file_cmd)
 
     ld.add_action(OpaqueFunction(function=launch_easynav_setup))
 
