@@ -112,17 +112,16 @@ GetExplorationData::getPeersPose()
   }
 
   // For each discovered peer robot frame, get the relative pose
-  for (const auto & peer_robot_frame : peers_robot_frames) {
-    std::string robot_frame = config().blackboard->get<std::string>("robot_frame");
+  std::string map_frame = config().blackboard->get<std::string>("map_frame");
+  std::string robot_frame = config().blackboard->get<std::string>("robot_frame");
 
+  for (const auto & peer_robot_frame : peers_robot_frames) {
     // Skip if it's the current robot's map frame
-    if (peer_robot_frame == robot_frame) {
-      continue;
-    }
+    if (peer_robot_frame == robot_frame) continue;
 
     // Use the global TF buffer to get the pose
     try {
-      Pose peer_pose = getPose(robot_frame, peer_robot_frame, global_tf_buffer_);
+      Pose peer_pose = getPose(map_frame, peer_robot_frame, global_tf_buffer_);
       peer_poses.push_back(peer_pose);
 
       RCLCPP_DEBUG(node_->get_logger(), "Peer robot frame %s at: (%.2f, %.2f)",
