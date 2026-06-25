@@ -10,12 +10,12 @@ r1/explorer:
     robot_frame: r1/base_link
     odom_frame: r1/odom
 
-    policy: 1 # BETTER_FRONTIER
-    separation_weight: 0.6
-    distance_weight: 0.9
+    policy: 1
+    separation_weight: 0.7
+    distance_weight: 0.8
 
-    proximity_threshold: 0.25
-    improvement_ratio: 0.35
+    proximity_threshold: 1.5
+    improvement_ratio: 0.4
 
 r2/explorer:
   ros__parameters:
@@ -26,12 +26,12 @@ r2/explorer:
     robot_frame: r2/base_link
     odom_frame: r2/odom
 
-    policy: 1 # BETTER_FRONTIER
-    separation_weight: 0.6
-    distance_weight: 0.9
+    policy: 1
+    separation_weight: 0.7
+    distance_weight: 0.8
 
-    proximity_threshold: 0.25
-    improvement_ratio: 0.35
+    proximity_threshold: 1.5
+    improvement_ratio: 0.4
 
 r3/explorer:
   ros__parameters:
@@ -42,9 +42,9 @@ r3/explorer:
     robot_frame: r3/base_link
     odom_frame: r3/odom
 
-    policy: 1 # BETTER_FRONTIER
-    separation_weight: 0.6
-    distance_weight: 0.9
+    policy: 1
+    separation_weight: 0.7
+    distance_weight: 0.8
 
-    proximity_threshold: 0.25
-    improvement_ratio: 0.35
+    proximity_threshold: 1.5
+    improvement_ratio: 0.4
