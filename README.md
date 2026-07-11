@@ -24,6 +24,7 @@ TFG John Alejandro Gutiérrez: Exploración Multi-Robot en Easynav.
     </td>
   </tr>
 </table>
+
 ## Prerequisites
 
 This package has been developed and strictly tested on **Ubuntu 24.04** with **ROS 2 Kilted**.
