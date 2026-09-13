@@ -63,7 +63,7 @@ private:
   rclcpp::Node::SharedPtr node_;                    // ROS 2 node
   std::optional<PoseWithCost> last_goal_;                       // Last committed goal with cost
 
-  double proximity_threshold_;                      // meters: radius to consider a frontier point is the same
+  double still_alive_radius_;                      // meters: radius to consider a frontier point is the same
   int repetition_threshold_;                        // Number of consecutive times a goal can be sent before blacklisting
   double improvement_ratio_;                        // switch only if new_cost < current_cost * this value  
 };

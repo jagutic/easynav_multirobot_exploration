@@ -146,12 +146,15 @@ Collection of Gazebo environments used for multi-robot validation:
 - **Maze (Small version)**: Fast-iteration environment for quick tests.
 
 ### TO-DO
-- Goals blacklist.
+
+- Goal Separation Metric
+
+- Real Proximity Metric
 
 - Reactive goals.
  
-- Reinforcement Learning for exploration behaviour.
+- Reinforcement Learning for exploration behaviour.?
 
 - Automatic multiplexor map coordination.
- 
-- Common map global topic?
+
+- Goals blacklist.?

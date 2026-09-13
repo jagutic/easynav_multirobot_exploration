@@ -1,5 +1,11 @@
-# NEAREST_FRONTIER 0
-# BETTER_FRONTIER 1
+# PROXIMITY POLICY
+# 0 = EUCLIDEAN
+# 1 = REAL
+
+# SEPARATION POLICY
+# 0 = NONE
+# 1 = POSITION
+# 2 = GOAL
 
 r1/explorer:
   ros__parameters:
@@ -10,11 +16,12 @@ r1/explorer:
     robot_frame: r1/base_link
     odom_frame: r1/odom
 
-    policy: 1
+    proximity_policy: 0
+    proximity_weight: 0.8
+    separation_policy: 1
     separation_weight: 0.7
-    distance_weight: 0.8
 
-    proximity_threshold: 1.5
+    still_alive_radius: 1.5
     improvement_ratio: 0.4
 
 r2/explorer:
@@ -26,11 +33,12 @@ r2/explorer:
     robot_frame: r2/base_link
     odom_frame: r2/odom
 
-    policy: 1
+    proximity_policy: 0
+    proximity_weight: 0.8
+    separation_policy: 1
     separation_weight: 0.7
-    distance_weight: 0.8
 
-    proximity_threshold: 1.5
+    still_alive_radius: 1.5
     improvement_ratio: 0.4
 
 r3/explorer:
@@ -42,9 +50,10 @@ r3/explorer:
     robot_frame: r3/base_link
     odom_frame: r3/odom
 
-    policy: 1
+    proximity_policy: 0
+    proximity_weight: 0.8
+    separation_policy: 1
     separation_weight: 0.7
-    distance_weight: 0.8
 
-    proximity_threshold: 1.5
+    still_alive_radius: 1.5
     improvement_ratio: 0.4

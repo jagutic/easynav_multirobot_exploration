@@ -9,14 +9,14 @@ ProcessGoal::ProcessGoal(const std::string &name, const BT::NodeConfig &conf)
     : BT::SyncActionNode(name, conf) {
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
 
-  node_->declare_parameter("proximity_threshold", 0.5);
+  node_->declare_parameter("still_alive_radius", 0.5);
   node_->declare_parameter("improvement_ratio", 0.5);
 
-  node_->get_parameter("proximity_threshold", proximity_threshold_);
+  node_->get_parameter("still_alive_radius", still_alive_radius_);
   node_->get_parameter("improvement_ratio", improvement_ratio_);
 
   RCLCPP_INFO(node_->get_logger(), "** ProcessGoal **");
-  RCLCPP_INFO(node_->get_logger(), "Proximity threshold: %.2f m", proximity_threshold_);
+  RCLCPP_INFO(node_->get_logger(), "Still alive radius: %.2f m", still_alive_radius_);
   RCLCPP_INFO(node_->get_logger(), "Improvement ratio: %.2f", improvement_ratio_);
 }
 
@@ -50,7 +50,7 @@ ProcessGoal::stillAlive(const Pose &pose, const std::vector<Point> &poses)
     [&pose, this](const Point &p) {
       double dx = pose.position.x - p.x;
       double dy = pose.position.y - p.y;
-      return (dx * dx + dy * dy) < (proximity_threshold_ * proximity_threshold_);
+      return (dx * dx + dy * dy) < (still_alive_radius_ * still_alive_radius_);
     });
 }
 

@@ -17,8 +17,12 @@
 namespace easynav_multirobot_exploration
 {
 
-#define POLICY_NEAREST_FRONTIER 0
-#define POLICY_BETTER_FRONTIER 1
+#define EUCLIDEAN_PROXIMITY_POLICY 0
+#define REAL_PROXIMITY_POLICY 1
+
+#define NO_SEPARATION_POLICY 0
+#define POSITION_SEPARATION_POLICY 1
+#define GOAL_SEPARATION_POLICY 2
 
 // Type aliases for cleaner ROS 2 message handling
 using geometry_msgs::msg::Pose;
@@ -56,41 +60,49 @@ public:
   {
     return BT::PortsList(
       {
-        BT::InputPort<Pose>("robot_pose"),                     // Current location of the robot
-        BT::InputPort<std::vector<Pose>>("peers_robot_pose"),        // Current locations of peer robots
-        BT::InputPort<std::vector<Point>>("robot_frontier"),   // List of candidate frontier points
-        BT::OutputPort<PoseWithCost>("frontier_goal")                 // The selected navigation target
+        BT::InputPort<Pose>("robot_pose"),                     // Current robot pose
+        BT::InputPort<std::vector<Pose>>("peers_robot_pose"),  // Current poses of peer robots
+        BT::InputPort<std::vector<Pose>>("peers_robot_goal"),  // Current goals of peer robots
+        BT::InputPort<std::vector<Point>>("robot_frontier"),   // Candidate frontier points
+        BT::OutputPort<PoseWithCost>("frontier_goal")          // Selected frontier goal
       });
   }
 
 private:
   /**
-   * @brief Helper function to determine the nearest frontier point.
-   * @param current_pose The current position of the robot.
-   * @param frontier A vector of points representing the identified frontiers.
-   * @return The selected Pose to be sent to the navigation stack with its cost.
+   * @brief Returns a function to calculate proximity based on the selected policy.
+   * @param pose The current pose of the robot.
+   * @return A function that computes the distance from the robot to a given point.
    */
-  PoseWithCost calc_closest_goal(
-    const Pose & current_pose,
-    const std::vector<Point> & frontier);
+  std::function<double(const geometry_msgs::msg::Point &)> get_proximity_calculator(
+    const geometry_msgs::msg::Pose & pose);
+
+  /**
+   * @brief Returns a function to calculate separation based on the selected policy.
+   * @param peers A vector of poses representing peer robots.
+   * @return A function that computes the distance from a given point to the closest peer robot.
+   */
+  std::function<double(const geometry_msgs::msg::Point &)> get_separation_calculator(
+    const std::vector<geometry_msgs::msg::Pose> & peers);
 
   /**
    * @brief Helper function to determine the best frontier point based on a cost function.
    * @param current_pose The current position of the robot.
    * @param frontier A vector of points representing the identified frontiers.
-   * @param peers_pose A vector of poses representing the locations of peer robots.
+   * @param peers A vector of poses representing the positions or goals of peer robots, depending on the separation policy.
    * @return The selected Pose to be sent to the navigation stack with its cost.
    */
-  PoseWithCost calc_best_goal(
+  PoseWithCost get_best_goal(
     const Pose & current_pose,
-    const std::vector<Pose> & peers_pose,
-    const std::vector<Point> & frontier
+    const std::vector<Point> & frontier,
+    const std::vector<Pose> & peers = {}
   );
 
   rclcpp::Node::SharedPtr node_;
 
-  int policy_;
-  double distance_weight_;
+  int proximity_policy_;
+  int separation_policy_;
+  double proximity_weight_;
   double separation_weight_;
 };
 
