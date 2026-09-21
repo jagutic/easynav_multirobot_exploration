@@ -1,83 +1,128 @@
 #include "easynav_multirobot_exploration/GetExplorationData.hpp"
 
-namespace easynav_multirobot_exploration
-{
+namespace easynav_multirobot_exploration {
 
-GetExplorationData::GetExplorationData(
-  const std::string & name,
-  const BT::NodeConfig & conf)
-: BT::SyncActionNode(name, conf),
-  tf_buffer_(),
-  tf_listener_(tf_buffer_) // Initialize the listener to automatically populate the buffer
+GetExplorationData::GetExplorationData(const std::string &name,
+                                       const BT::NodeConfig &conf)
+    : BT::SyncActionNode(name, conf), tf_buffer_(),
+      tf_listener_(tf_buffer_) // Initialize the listener to automatically
+                               // populate the buffer
 {
-  // Grab the ROS node and robot prefix from the blackboard to construct the TF frame names later
+  // Grab the ROS node and robot prefix from the blackboard to construct the TF
+  // frame names later
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** GetExplorationData **");
 
   // Initialize the global TF node to listen global tf tree
   global_tf_node_ = std::make_shared<rclcpp::Node>(
-    "global_tf_node_listener", "/",
-    rclcpp::NodeOptions().use_global_arguments(false));
-  global_tf_listener_ = std::make_unique<tf2_ros::TransformListener>(global_tf_buffer_,
-      global_tf_node_);
+      "global_tf_node_listener", "/",
+      rclcpp::NodeOptions().use_global_arguments(false));
 
-  // Update frontier through topic
+  global_tf_listener_ = std::make_unique<tf2_ros::TransformListener>(
+      global_tf_buffer_, global_tf_node_);
+
+  // Publishers and Subscribers
+  goals_pub_ = node_->create_publisher<Marker>(
+      "goals_topic", rclcpp::QoS(10).durability_volatile().reliable());
+
+  goals_sub_ = node_->create_subscription<Marker>(
+      "goals_topic", rclcpp::QoS(10).durability_volatile().reliable(),
+      [&](const Marker::SharedPtr marker) {
+        PoseStamped pose_stamped;
+        pose_stamped.header = marker->header;
+        pose_stamped.pose = marker->pose;
+        last_goals[marker->ns] = pose_stamped;
+      });
+
+  my_goal_sub_ = node_->create_subscription<PoseStamped>(
+      "my_goal_topic", rclcpp::QoS(10).durability_volatile().reliable(),
+      [&](const PoseStamped::SharedPtr pose_stamped) {
+        last_my_goal_ = pose_stamped;
+      });
+
   frontier_sub_ = node_->create_subscription<Marker>(
-    "frontier_topic", rclcpp::QoS(10).durability_volatile().reliable(),
-    [&](const Marker::SharedPtr marker) {
-      last_frontier_ = marker;
-    }
-  );
+      "frontier_topic", rclcpp::QoS(10).durability_volatile().reliable(),
+      [&](const Marker::SharedPtr marker) { last_frontier_ = marker; });
 }
 
-BT::NodeStatus
-GetExplorationData::tick()
-{
+BT::NodeStatus GetExplorationData::tick() {
   if (!last_frontier_) {
     RCLCPP_WARN(node_->get_logger(), "Not enough exploration data");
     return BT::NodeStatus::FAILURE;
   }
 
+  // Publish my actual goal to common topic
+  if (last_my_goal_) {
+    Marker my_goal;
+    my_goal.ns = node_->get_namespace();
+    my_goal.pose = last_my_goal_->pose;
+    my_goal.header.stamp = last_my_goal_->header.stamp;
+    goals_pub_->publish(my_goal);
+  }
+
+  // Collect and save data
   try {
     // Get my pose
     std::string map_frame = config().blackboard->get<std::string>("map_frame");
-    std::string robot_frame = config().blackboard->get<std::string>("robot_frame");
+    std::string robot_frame =
+        config().blackboard->get<std::string>("robot_frame");
 
     Pose pose = getPose(map_frame, robot_frame, tf_buffer_);
-    RCLCPP_DEBUG(node_->get_logger(), "Robot at: (%.2f, %.2f)",
-                pose.position.x, pose.position.y);
+    RCLCPP_DEBUG(node_->get_logger(), "Robot at: (%.2f, %.2f)", pose.position.x,
+                 pose.position.y);
+
+    // Get peers present or future position if needed
+    std::vector<Pose> peers_pose = getPeersPose();
+    std::vector<Pose> peers_goals = getPeersGoals();
 
     // Save data in BB
     setOutput("pose", pose);
     setOutput("frontier", last_frontier_->points);
+    setOutput("peers_pose", peers_pose);
+    setOutput("peers_goals", peers_goals);
 
-    std::vector<Pose> peers = getPeersPose();
-    setOutput("peers_pose", peers);
-    
-    RCLCPP_INFO(node_->get_logger(),
-      "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu",
-      pose.position.x, pose.position.y, peers.size(), last_frontier_->points.size()
-    );
+    RCLCPP_INFO(
+        node_->get_logger(),
+        "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu",
+        pose.position.x, pose.position.y, peers_pose.size(),
+        last_frontier_->points.size());
     return BT::NodeStatus::SUCCESS;
 
-  } catch (const tf2::TransformException & ex) {
+  } catch (const tf2::TransformException &ex) {
     RCLCPP_ERROR(node_->get_logger(), "TF failed: %s", ex.what());
     return BT::NodeStatus::FAILURE;
   }
 }
 
-Pose
-GetExplorationData::getPose(
-  const std::string & parent_frame,
-  const std::string & child_frame,
-  tf2::BufferCore & tf_buffer)
-{
+std::vector<Pose> GetExplorationData::getPeersGoals() {
+  std::vector<Pose> peer_goals;
+
+  for (const auto &goal_pair : last_goals) {
+    if (goal_pair.first == node_->get_namespace()) {
+      // Skip my own goal
+      continue;
+    }
+
+    // Add to list if its not too old
+    if (node_->get_clock()->now() - rclcpp::Time(goal_pair.second.header.stamp) < PEERS_GOALS_TIMEOUT) {
+      peer_goals.push_back(goal_pair.second.pose);
+    }
+  }
+
+  return peer_goals;
+}
+
+Pose GetExplorationData::getPose(const std::string &parent_frame,
+                                 const std::string &child_frame,
+                                 tf2::BufferCore &tf_buffer) {
   Pose pose;
   geometry_msgs::msg::TransformStamped tf_msg;
 
   // Request the latest available transform from parent to child frame
-  // Using TimePointZero avoids timing sync issues by just giving us the most recent TF
-  tf_msg = tf_buffer.lookupTransform(parent_frame, child_frame, tf2::TimePointZero);
+  // Using TimePointZero avoids timing sync issues by just giving us the most
+  // recent TF
+  tf_msg =
+      tf_buffer.lookupTransform(parent_frame, child_frame, tf2::TimePointZero);
 
   // Map the raw TF translation and rotation into a standard Pose message
   pose.position.x = tf_msg.transform.translation.x;
@@ -88,9 +133,7 @@ GetExplorationData::getPose(
   return pose;
 }
 
-std::vector<Pose>
-GetExplorationData::getPeersPose()
-{
+std::vector<Pose> GetExplorationData::getPeersPose() {
   std::vector<Pose> peer_poses;
 
   // Get the TF frame tree as YAML from the GLOBAL buffer
@@ -102,22 +145,27 @@ GetExplorationData::getPeersPose()
 
   // Extract child frames of the global map frame
   std::vector<std::string> peers_robot_frames;
-  std::vector<std::string> peers_map_frames = extractChildFrames(tf_yaml, GLOBAL_MAP_FRAME);
+  std::vector<std::string> peers_map_frames =
+      extractChildFrames(tf_yaml, GLOBAL_MAP_FRAME);
 
   // Recursively extract robot frames from each discovered map frame
-  for (const auto & peer_map_frame : peers_map_frames) {
-    std::vector<std::string> peers_robot_frame = extractChildFrames(tf_yaml, peer_map_frame);
-    peers_robot_frames.insert(peers_robot_frames.end(), peers_robot_frame.begin(),
-        peers_robot_frame.end());
+  for (const auto &peer_map_frame : peers_map_frames) {
+    std::vector<std::string> peers_robot_frame =
+        extractChildFrames(tf_yaml, peer_map_frame);
+    peers_robot_frames.insert(peers_robot_frames.end(),
+                              peers_robot_frame.begin(),
+                              peers_robot_frame.end());
   }
 
   // For each discovered peer robot frame, get the relative pose
   std::string map_frame = config().blackboard->get<std::string>("map_frame");
-  std::string robot_frame = config().blackboard->get<std::string>("robot_frame");
+  std::string robot_frame =
+      config().blackboard->get<std::string>("robot_frame");
 
-  for (const auto & peer_robot_frame : peers_robot_frames) {
+  for (const auto &peer_robot_frame : peers_robot_frames) {
     // Skip if it's the current robot's map frame
-    if (peer_robot_frame == robot_frame) continue;
+    if (peer_robot_frame == robot_frame)
+      continue;
 
     // Use the global TF buffer to get the pose
     try {
@@ -125,30 +173,31 @@ GetExplorationData::getPeersPose()
       peer_poses.push_back(peer_pose);
 
       RCLCPP_DEBUG(node_->get_logger(), "Peer robot frame %s at: (%.2f, %.2f)",
-                  peer_robot_frame.c_str(), peer_pose.position.x, peer_pose.position.y);
+                   peer_robot_frame.c_str(), peer_pose.position.x,
+                   peer_pose.position.y);
 
-    } catch (const tf2::TransformException & ex) {
+    } catch (const tf2::TransformException &ex) {
       RCLCPP_ERROR(node_->get_logger(), "Could not get transform for %s: %s",
-                  peer_robot_frame.c_str(), ex.what());
+                   peer_robot_frame.c_str(), ex.what());
     }
   }
   return peer_poses;
 }
 
 std::vector<std::string>
-GetExplorationData::extractChildFrames(
-  const std::string & yaml_str,
-  const std::string & parent_frame)
-{
+GetExplorationData::extractChildFrames(const std::string &yaml_str,
+                                       const std::string &parent_frame) {
   std::vector<std::string> child_frames;
   std::istringstream stream(yaml_str);
   std::string line;
   std::string current_frame;
 
-  // Detects a frame declaration (name that ends with ':' and starts at column 0)
+  // Detects a frame declaration (name that ends with ':' and starts at column
+  // 0)
   std::regex frame_regex("^\\s*['\"]?([^'\"\\s:]+)['\"]?:\\s*$");
 
-  // Extracts parent name from "parent: 'name'" or "parent: name" (handles both quote types)
+  // Extracts parent name from "parent: 'name'" or "parent: name" (handles both
+  // quote types)
   std::regex parent_regex("^\\s*parent:\\s*['\"]?([^'\"]+)['\"]?\\s*$");
 
   std::smatch match;
@@ -172,9 +221,8 @@ GetExplorationData::extractChildFrames(
 
 } // namespace easynav_multirobot_exploration
 
-
 #include "behaviortree_cpp/bt_factory.h"
-BT_REGISTER_NODES(factory)
-{
-  factory.registerNodeType<easynav_multirobot_exploration::GetExplorationData>("GetExplorationData");
+BT_REGISTER_NODES(factory) {
+  factory.registerNodeType<easynav_multirobot_exploration::GetExplorationData>(
+      "GetExplorationData");
 }

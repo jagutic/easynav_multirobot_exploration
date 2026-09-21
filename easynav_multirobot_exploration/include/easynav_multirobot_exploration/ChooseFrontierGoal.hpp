@@ -54,17 +54,17 @@ public:
 
   /**
    * @brief Defines the input and output ports required for the blackboard.
-   * @return BT::PortsList containing robot_pose, robot_frontier, and frontier_goal.
+   * @return BT::PortsList containing robot_pose, frontier_points, and frontier_goal.
    */
   static BT::PortsList providedPorts()
   {
     return BT::PortsList(
       {
-        BT::InputPort<Pose>("robot_pose"),                     // Current robot pose
-        BT::InputPort<std::vector<Pose>>("peers_robot_pose"),  // Current poses of peer robots
-        BT::InputPort<std::vector<Pose>>("peers_robot_goal"),  // Current goals of peer robots
-        BT::InputPort<std::vector<Point>>("robot_frontier"),   // Candidate frontier points
-        BT::OutputPort<PoseWithCost>("frontier_goal")          // Selected frontier goal
+        BT::InputPort<Pose>("robot_pose"),                      // Current robot pose
+        BT::InputPort<std::vector<Pose>>("robot_peers_pose"),   // Current poses of peer robots
+        BT::InputPort<std::vector<Pose>>("robot_peers_goals"),  // Current goals of peer robots
+        BT::InputPort<std::vector<Point>>("frontier_points"),   // Candidate frontier points
+        BT::OutputPort<PoseWithCost>("frontier_goal")           // Selected frontier goal
       });
   }
 

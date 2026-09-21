@@ -153,8 +153,12 @@ Collection of Gazebo environments used for multi-robot validation:
 
 - Reactive goals.
  
-- Reinforcement Learning for exploration behaviour.?
-
 - Automatic multiplexor map coordination.
 
+de baja a alta resolucion
+
+- Reinforcement Learning for exploration behaviour.?
+
 - Goals blacklist.?
+
+- Reducir latencia selecionando excluivamente poses o goals de peers.

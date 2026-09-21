@@ -87,29 +87,33 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
     break;
   
   case POSITION_SEPARATION_POLICY:
-    result = getInput("peers_robot_pose", robot_peers);
-      if (!result.has_value()) {
-        RCLCPP_ERROR(node_->get_logger(), "No peers pose input");
-        return BT::NodeStatus::FAILURE;
-      }
+    result = getInput("robot_peers_pose", robot_peers);
+
+    if (!result.has_value()) {
+      RCLCPP_ERROR(node_->get_logger(), "No peers pose input");
+      return BT::NodeStatus::FAILURE;
+    }
+    if (robot_peers.empty()) {
+      RCLCPP_INFO(node_->get_logger(), "No peers for separation");
+    }
     break;
 
   case GOAL_SEPARATION_POLICY:
-    result = getInput("peers_robot_goal", robot_peers);
-      if (!result.has_value()) {
-        RCLCPP_ERROR(node_->get_logger(), "No peers goal input");
-        return BT::NodeStatus::FAILURE;
-      }
+    result = getInput("robot_peers_goal", robot_peers);
+
+    if (!result.has_value()) {
+      RCLCPP_ERROR(node_->get_logger(), "No peers goal input");
+      return BT::NodeStatus::FAILURE;
+    }
+    if (robot_peers.empty()) {
+      RCLCPP_INFO(node_->get_logger(), "No peers for separation");
+    }
     break;
 
   default:
     RCLCPP_ERROR(node_->get_logger(),
                  "Wrong separation policy, not choosing frontier goal");
     return BT::NodeStatus::FAILURE;
-  }
-
-  if (robot_peers.empty()) {
-    RCLCPP_INFO(node_->get_logger(), "No peers for separation");
   }
 
   // Choose and set the best frontier goal

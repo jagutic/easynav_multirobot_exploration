@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <sstream>
+#include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
 #include "behaviortree_cpp/action_node.h"
@@ -24,9 +25,12 @@ namespace easynav_multirobot_exploration
 #define GLOBAL_MAP_FRAME "map"
 
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Point;
 using visualization_msgs::msg::Marker;
 
+using namespace std::chrono_literals;
+constexpr auto PEERS_GOALS_TIMEOUT = 5s;
 
 /**
  * @class GetExplorationData
@@ -62,12 +66,23 @@ public:
     return BT::PortsList(
       {
         BT::OutputPort<Pose>("pose"),
+        BT::OutputPort<std::vector<Point>>("frontier"),
         BT::OutputPort<std::vector<Pose>>("peers_pose"),
-        BT::OutputPort<std::vector<Point>>("frontier")
+        BT::OutputPort<std::vector<Pose>>("peers_goals")
       });
   }
 
 private:
+  /**
+   * @brief Parsea el YAML de frames para encontrar hijos de un frame padre.
+   * @param yaml_str String YAML del árbol de frames.
+   * @param parent_frame Frame padre a buscar.
+   * @return Vector con los frame_ids que son hijos directos del padre.
+   */
+  std::vector<std::string> extractChildFrames(
+    const std::string & yaml_str,
+    const std::string & parent_frame);
+
   /**
    * @brief Obtiene la pose desde un frame padre a un frame hijo.
    * @param tf_buffer Buffer de TF2 para realizar las consultas de transformaciones.
@@ -89,25 +104,27 @@ private:
   std::vector<Pose> getPeersPose();
 
   /**
-   * @brief Parsea el YAML de frames para encontrar hijos de un frame padre.
-   * @param yaml_str String YAML del árbol de frames.
-   * @param parent_frame Frame padre a buscar.
-   * @return Vector con los frame_ids que son hijos directos del padre.
+   * 
    */
-  std::vector<std::string> extractChildFrames(
-    const std::string & yaml_str,
-    const std::string & parent_frame);
+  std::vector<Pose> getPeersGoals();
 
   rclcpp::Node::SharedPtr node_;                          ///< Shared pointer to the ROS 2 node used for logging.
   tf2::BufferCore tf_buffer_;                             ///< Local buffer for TF tree within robot namespace.
   tf2_ros::TransformListener tf_listener_;                ///< Local listener that populates the TF buffer.
 
-  rclcpp::Node::SharedPtr global_tf_node_;          ///< Global node (at root namespace) for TF access.
-  tf2::BufferCore global_tf_buffer_;                      ///< Global buffer for accessing /tf without namespace.
-  std::unique_ptr<tf2_ros::TransformListener> global_tf_listener_;  ///< Global listener with global node.
+  rclcpp::Node::SharedPtr global_tf_node_;                                ///< Global node (at root namespace) for TF access.
+  tf2::BufferCore global_tf_buffer_;                                      ///< Global buffer for accessing /tf without namespace.
+  std::unique_ptr<tf2_ros::TransformListener> global_tf_listener_;        ///< Global listener with global node.
 
-  Marker::SharedPtr last_frontier_;                       ///< Last frontier saved from topic
-  rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;  ///< Shared pointer to subscriber to frontier topic.
+  Marker::SharedPtr last_frontier_;                                 ///< Last frontier saved from topic
+  rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;            ///< Shared pointer to subscriber to frontier topic.
+
+  std::map<std::string, PoseStamped> last_goals;                   ///< Last goals saved from topic
+  rclcpp::Publisher<Marker>::SharedPtr goals_pub_;                 ///< Shared pointer to publisher for goals topic.
+  rclcpp::Subscription<Marker>::SharedPtr goals_sub_;              ///< Shared pointer to subscriber to goals topic.
+
+  PoseStamped::SharedPtr last_my_goal_;                            ///< Last goal saved from topic
+  rclcpp::Subscription<PoseStamped>::SharedPtr my_goal_sub_;       ///< Shared pointer to subscriber to goal topic.
 };
 
 } // namespace easynav_multirobot_exploration
