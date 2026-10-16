@@ -34,6 +34,8 @@ GoToPose::tick()
         RCLCPP_ERROR(node_->get_logger(), "Failed to send goal");
         return BT::NodeStatus::FAILURE;
       }
+
+      RCLCPP_INFO(node_->get_logger(), "Not moving yet");
       return BT::NodeStatus::RUNNING;
 
     // Send goal if necessary and get feedback

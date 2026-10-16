@@ -66,14 +66,14 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
   }
 
   // Get BB frontier
-  std::vector<Point> robot_frontier;
-  result = getInput("robot_frontier", robot_frontier);
+  std::vector<Point> frontier_points;
+  result = getInput("frontier_points", frontier_points);
 
   if (!result.has_value()) {
     RCLCPP_ERROR(node_->get_logger(), "No frontier");
     return BT::NodeStatus::FAILURE;
   }
-  if (robot_frontier.empty()) {
+  if (frontier_points.empty()) {
     RCLCPP_INFO(node_->get_logger(),
                 "Frontier empty, not choosing frontier goal");
     return BT::NodeStatus::FAILURE;
@@ -99,7 +99,7 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
     break;
 
   case GOAL_SEPARATION_POLICY:
-    result = getInput("robot_peers_goal", robot_peers);
+    result = getInput("robot_peers_goals", robot_peers);
 
     if (!result.has_value()) {
       RCLCPP_ERROR(node_->get_logger(), "No peers goal input");
@@ -117,7 +117,7 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
   }
 
   // Choose and set the best frontier goal
-  auto frontier_goal = get_best_goal(robot_pose, robot_frontier, robot_peers);
+  auto frontier_goal = get_best_goal(robot_pose, frontier_points, robot_peers);
   setOutput("frontier_goal", frontier_goal);
 
   RCLCPP_INFO(node_->get_logger(), "Best frontier candidate, with cost: %.2f",

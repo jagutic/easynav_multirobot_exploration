@@ -55,7 +55,7 @@ def generate_launch_description():
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static'),
             ('goals_topic', '/exploration_goals'),
-            ('my_goal_topic', 'goal_pose'),
+            ('my_goal_topic', 'easynav_manager_info'),
             ('frontier_topic', 'maps_manager_node/frontier/points'),
         ],
     )

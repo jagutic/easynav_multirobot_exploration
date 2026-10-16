@@ -65,14 +65,21 @@ FrontierMapsManager::update(NavState & nav_state)
   EASYNAV_TRACE_EVENT;
 
   // Wait until we have robot position
-  if (!nav_state.has("robot_pose") || !nav_state.has("map.dynamic")) {return;}
+  if (!nav_state.has("robot_pose")) {
+    RCLCPP_WARN(get_node()->get_logger(), "Waiting for robot pose");
+    return;
+  }
+  if (!nav_state.has("map")) {
+    RCLCPP_WARN(get_node()->get_logger(), "Waiting for map");
+    return;
+  }
 
   const auto & robot_pose = nav_state.get<nav_msgs::msg::Odometry>("robot_pose");
 
   // Wait until we have map
-  const auto & fixed_map = nav_state.get<Costmap2D>("map.dynamic");
+  const auto & fixed_map = nav_state.get<Costmap2D>("map");
   if (fixed_map.getSizeInCellsX() == 0 || fixed_map.getSizeInCellsY() == 0) {
-    RCLCPP_DEBUG(get_node()->get_logger(), "No map yet");
+    RCLCPP_WARN(get_node()->get_logger(), "No map yet");
     return;
   }
 

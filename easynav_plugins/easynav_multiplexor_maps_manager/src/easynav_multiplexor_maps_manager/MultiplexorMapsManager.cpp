@@ -134,6 +134,7 @@ MultiplexorMapsManager::update(NavState & nav_state)
   muxed_map_.touch();
   nav_state.set("map.base", muxed_map_);
 
+  // Pub map msg
   const auto & tf_info = RTTFBuffer::getInstance()->get_tf_info();
   rclcpp::Time map_stamp = nav_state.get<rclcpp::Time>("map_time");
 
@@ -144,6 +145,7 @@ MultiplexorMapsManager::update(NavState & nav_state)
   muxed_map_msg.header.stamp = map_stamp;
   muxed_map_pub_->publish(muxed_map_msg);
 
+  // Set global map frame
   try {
     geometry_msgs::msg::Pose pose;
     geometry_msgs::msg::TransformStamped tf_msg;

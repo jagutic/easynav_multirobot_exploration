@@ -11,6 +11,7 @@
 #include "behaviortree_cpp/action_node.h"
 #include "visualization_msgs/msg/marker.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "easynav_interfaces/msg/goal_manager_info.hpp"
 
 // TF
 #include <tf2/utils.hpp>
@@ -28,9 +29,10 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Point;
 using visualization_msgs::msg::Marker;
+using easynav_interfaces::msg::GoalManagerInfo;
 
 using namespace std::chrono_literals;
-constexpr auto PEERS_GOALS_TIMEOUT = 5s;
+constexpr auto PEERS_GOALS_TIMEOUT = 10s;
 
 /**
  * @class GetExplorationData
@@ -104,7 +106,8 @@ private:
   std::vector<Pose> getPeersPose();
 
   /**
-   * 
+   * @brief Obtiene las metas de todos los robots peer.
+   * @return Vector de metas de otros robots.
    */
   std::vector<Pose> getPeersGoals();
 
@@ -122,9 +125,10 @@ private:
   std::map<std::string, PoseStamped> last_goals;                   ///< Last goals saved from topic
   rclcpp::Publisher<Marker>::SharedPtr goals_pub_;                 ///< Shared pointer to publisher for goals topic.
   rclcpp::Subscription<Marker>::SharedPtr goals_sub_;              ///< Shared pointer to subscriber to goals topic.
-
-  PoseStamped::SharedPtr last_my_goal_;                            ///< Last goal saved from topic
-  rclcpp::Subscription<PoseStamped>::SharedPtr my_goal_sub_;       ///< Shared pointer to subscriber to goal topic.
+  
+  Marker my_goal_;                                                  ///< This robot's exploration-goal marker.
+  PoseStamped::SharedPtr last_my_goal_;                                ///< Last goal saved from topic
+  rclcpp::Subscription<GoalManagerInfo>::SharedPtr my_goal_sub_;       ///< Shared pointer to subscriber to goal topic.
 };
 
 } // namespace easynav_multirobot_exploration

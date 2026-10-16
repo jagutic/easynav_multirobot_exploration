@@ -10,7 +10,7 @@
 r1/explorer:
   ros__parameters:
     use_sim_time: true
-    freq: 2.0 # hz
+    freq: 0.5 # hz
 
     map_frame: r1/map
     robot_frame: r1/base_link
@@ -18,7 +18,7 @@ r1/explorer:
 
     proximity_policy: 0
     proximity_weight: 0.8
-    separation_policy: 1
+    separation_policy: 2
     separation_weight: 0.7
 
     still_alive_radius: 1.5
@@ -27,7 +27,7 @@ r1/explorer:
 r2/explorer:
   ros__parameters:
     use_sim_time: true
-    freq: 2.0 # hz
+    freq: 0.5 # hz
 
     map_frame: r2/map
     robot_frame: r2/base_link
@@ -35,7 +35,7 @@ r2/explorer:
 
     proximity_policy: 0
     proximity_weight: 0.8
-    separation_policy: 1
+    separation_policy: 2
     separation_weight: 0.7
 
     still_alive_radius: 1.5
@@ -44,7 +44,7 @@ r2/explorer:
 r3/explorer:
   ros__parameters:
     use_sim_time: true
-    freq: 2.0 # hz
+    freq: 0.5 # hz
 
     map_frame: r3/map
     robot_frame: r3/base_link
@@ -52,7 +52,7 @@ r3/explorer:
 
     proximity_policy: 0
     proximity_weight: 0.8
-    separation_policy: 1
+    separation_policy: 2
     separation_weight: 0.7
 
     still_alive_radius: 1.5

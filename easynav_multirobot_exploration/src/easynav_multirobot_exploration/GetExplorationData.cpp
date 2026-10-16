@@ -13,6 +13,29 @@ GetExplorationData::GetExplorationData(const std::string &name,
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** GetExplorationData **");
 
+  // Initialize the marker
+  my_goal_.ns = node_->get_namespace();
+  my_goal_.id = 0;
+  my_goal_.type = Marker::TRIANGLE_LIST;
+  my_goal_.action = Marker::ADD;
+  my_goal_.scale.x = 0.5;
+  my_goal_.scale.y = 0.5;
+  my_goal_.scale.z = 0.5;
+  my_goal_.color.r = 0.0;
+  my_goal_.color.g = 1.0;
+  my_goal_.color.b = 1.0;
+  my_goal_.color.a = 1.0;
+
+  Point vertex;
+  vertex.x = -0.25;
+  vertex.y = -0.2;
+  my_goal_.points.push_back(vertex);
+  vertex.x = 0.25;
+  my_goal_.points.push_back(vertex);
+  vertex.x = 0.0;
+  vertex.y = 0.3;
+  my_goal_.points.push_back(vertex);
+
   // Initialize the global TF node to listen global tf tree
   global_tf_node_ = std::make_shared<rclcpp::Node>(
       "global_tf_node_listener", "/",
@@ -34,10 +57,14 @@ GetExplorationData::GetExplorationData(const std::string &name,
         last_goals[marker->ns] = pose_stamped;
       });
 
-  my_goal_sub_ = node_->create_subscription<PoseStamped>(
+  my_goal_sub_ = node_->create_subscription<GoalManagerInfo>(
       "my_goal_topic", rclcpp::QoS(10).durability_volatile().reliable(),
-      [&](const PoseStamped::SharedPtr pose_stamped) {
-        last_my_goal_ = pose_stamped;
+      [&](const GoalManagerInfo::SharedPtr gmi) {
+        if (gmi->goals.goals.empty()) {
+          last_my_goal_.reset();
+          return;
+        }
+        last_my_goal_ = std::make_shared<PoseStamped>(gmi->goals.goals[0]);
       });
 
   frontier_sub_ = node_->create_subscription<Marker>(
@@ -53,11 +80,9 @@ BT::NodeStatus GetExplorationData::tick() {
 
   // Publish my actual goal to common topic
   if (last_my_goal_) {
-    Marker my_goal;
-    my_goal.ns = node_->get_namespace();
-    my_goal.pose = last_my_goal_->pose;
-    my_goal.header.stamp = last_my_goal_->header.stamp;
-    goals_pub_->publish(my_goal);
+    my_goal_.pose = last_my_goal_->pose;
+    my_goal_.header = last_my_goal_->header;
+    goals_pub_->publish(my_goal_);
   }
 
   // Collect and save data
@@ -106,6 +131,9 @@ std::vector<Pose> GetExplorationData::getPeersGoals() {
     // Add to list if its not too old
     if (node_->get_clock()->now() - rclcpp::Time(goal_pair.second.header.stamp) < PEERS_GOALS_TIMEOUT) {
       peer_goals.push_back(goal_pair.second.pose);
+      RCLCPP_INFO(node_->get_logger(), "Peer %s goal added at: (%.2f, %.2f)",
+                  goal_pair.first.c_str(), goal_pair.second.pose.position.x,
+                  goal_pair.second.pose.position.y);
     }
   }
 
