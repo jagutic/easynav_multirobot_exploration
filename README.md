@@ -49,9 +49,6 @@ rosdep install --from-paths src --ignore-src -r -y
 
 **3. Build the packages:**
 ```bash
-# Slam toolbox
-colcon build --packages-select slam_toolbox --cmake-args   -DCMAKE_MODULE_PATH=~/qt_bridge   -DFORCE_QT6=ON   -DCMAKE_BUILD_TYPE=Release
-
 # Skip navmap pkgs, not used
 colcon build --packages-skip easynav_navmap_maps_manager easynav_navmap_planner easynav_navmap_localizer
 ```
