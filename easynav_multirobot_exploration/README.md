@@ -27,13 +27,20 @@ Launches the SLAM toolbox isolated within a specific robot's namespace, using RO
 * **`use_lifecycle_manager`** (default: `false`): Enable bond connection during node activation.
 * **`slam_params_file`** (default: `config/slam_namespaced.params.yaml`): Full path to the ROS 2 parameters file to use for the slam_toolbox node.
 
-### 3. `multirobot_sim.launch.py`
+### 3. `navigation_system.launch.py`
+Starts the EasyNav navigation system and configures the map multiplexor using the robot namespaces and poses from a simulation configuration file.
+* **`namespace`** (default: `''`): Namespace for the navigation node and its topics.
+* **`use_sim_time`** (default: `true`): Use simulation/Gazebo clock.
+* **`navigation_config`** (default: `config/navigation_costmap.params.yaml`): ROS 2 parameters for the navigation system.
+* **`robots_config`** (default: `config/sim/maze_small.params.yaml`): Simulation YAML containing robot namespaces and initial poses.
+
+### 4. `multirobot_sim.launch.py`
 Spawns the Gazebo simulation environment and the robot models.
 * **`gui`** (default: `true`): Set to `false` to run Gazebo headless.
 * **`world`** (default: `hospital`): Selects the simulation world. Options: `hospital`, `maze`.
 * **`size`** (default: `big`): Modifies the scale/version of the selected world. Options: `small`, `big`.
 
-### 4. `rviz_namespaced.launch.py`
+### 5. `rviz_namespaced.launch.py`
 Opens an RViz2 instance pre-configured to listen to a specific robot's TF tree and topics.
 * **`namespace`** (required): The namespace to visualize.
 * **`use_sim_time`** (default: `true`): Time context.
@@ -47,7 +54,7 @@ The autonomous exploration is driven by BTs defined in the `behavior_trees/` dir
 ### Core BT Nodes Provided:
 * **`GetExplorationData` (Action):** Fetches current robot pose, frontier points, and map data from the TF tree and costmap via `NavState`.
 * **`ChooseFrontierGoal` (Action):** Evaluates available frontiers and selects the optimal next goal (nearest or best-cost policy). Outputs a `PoseWithCost` (`exploration_interfaces::msg::PoseWithCost`) containing the target pose and its associated cost.
-* **`ProcessGoal` (Action):** Stateful decision filter between goal selection and navigation. Implements three complementary mechanisms: (1) **failed-goal blacklist** — when `GoToPose` writes a `nav_failed_pose` to the blackboard, that position is avoided for a configurable TTL; (2) **goal persistence** — the current goal is kept while it still exists in the frontier, preventing oscillation between similar-cost frontiers; (3) **relative improvement ratio** — the goal only changes if the new candidate satisfies `new_cost < current_cost * improvement_ratio`, making the threshold scale-invariant.
+* **`ProcessGoal` (Action):** Adds goal dynamics between candidate selection and navigation. It keeps the committed goal while a frontier remains within `still_alive_radius`, avoiding unnecessary switches as frontier costs fluctuate. It switches to the best candidate when the current frontier disappears, or when that candidate improves the cost by at least the margin set by `improvement_ratio`. The comparison handles positive and negative costs separately so that lower costs remain preferable in both cases.
 * **`GoToPose` (Action):** Interfaces with the `easynav` GoalManagerClient to send navigation goals reactively — resending on every tick if the goal has changed, with same-goal detection to avoid redundant sends. On navigation failure, writes the failed goal pose to the blackboard (`nav_failed_pose`) for `ProcessGoal` to blacklist.
 * **`IsExplored` (Condition):** Evaluates if the environment is fully mapped. Currently returns SUCCESS when frontier received is empty.
 

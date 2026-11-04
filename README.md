@@ -82,24 +82,15 @@ ros2 launch easynav_multirobot_exploration slam_namespaced.launch.py namespace:=
 ros2 launch easynav_multirobot_exploration slam_namespaced.launch.py namespace:=r2
 ```
 
-### Start EasyNav for each robot to be able to navigate
-Use ```use_sim_time:=true``` or ```use_sim_time:=false``` to alternate between simulation and real robots. 
-By default is set to 'true' (simulation).
+### Start EasyNav navigation for each robot
+Launch the navigation system once per robot, setting its namespace. `use_sim_time` defaults to `true` for simulation; set it to `false` for real robots.
 
 ```bash
 # Terminal 1 (robot r1)
-ros2 run easynav_system system_main \
---ros-args \
---params-file ./src/easynav_multirobot_exploration/easynav_multirobot_exploration/config/navigation_costmap.params.yaml \
--r __ns:=/r1 \
--r /tf:=tf -r /tf_static:=tf_static
+ros2 launch easynav_multirobot_exploration navigation_system.launch.py namespace:=r1
 
 # Terminal 2 (robot r2)
-ros2 run easynav_system system_main \
---ros-args \
---params-file ./src/easynav_multirobot_exploration/easynav_multirobot_exploration/config/navigation_costmap.params.yaml \
--r __ns:=/r2 \
--r /tf:=tf -r /tf_static:=tf_static
+ros2 launch easynav_multirobot_exploration navigation_system.launch.py namespace:=r2
 ```
 
 ### Launch Exploration behaviour for each robot
@@ -161,25 +152,17 @@ The package `exploration_interfaces` defines the ROS 2 message types used intern
 | `PoseWithCost` | `geometry_msgs/Pose pose`, `float64 cost` | Bundles a navigation target pose with its selection cost, used to pass goals between `ChooseFrontierGoal` and `ProcessGoal`. |
 
 ### Simulation Environments
-Collection of Gazebo environments used for multi-robot validation:
-- **Hospital**: The largest and most complex environment for stress-testing path planning.
-- **Maze**: Designed for testing wall-following and frontier logic in tight spaces.
-- **Maze (Small version)**: Fast-iteration environment for quick tests.
+Multi-robot validation currently uses the Maze environment in three sizes:
+- **Small**: `maze_small.world` with `maze_small.params.yaml`.
+- **Medium**: `maze_medium.world` with `maze_medium.params.yaml`.
+- **Big**: `maze_big.world` with `maze_big.params.yaml`.
 
 ### TO-DO
 
-- Goal Separation Metric
-
 - Real Proximity Metric
-
-- Reactive goals.
  
-- Automatic multiplexor map coordination.
-
-de baja a alta resolucion
+- Automatic multiplexor map coordination.(de baja a alta resolucion)
 
 - Reinforcement Learning for exploration behaviour.?
 
 - Goals blacklist.?
-
-- Reducir latencia selecionando excluivamente poses o goals de peers.
