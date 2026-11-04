@@ -4,11 +4,13 @@
 #include <string>
 #include <limits>
 #include <cmath>
+#include <optional>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose.hpp"
-#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include "exploration_interfaces/msg/pose_with_cost.hpp"
 
 #include "behaviortree_cpp/action_node.h"
@@ -28,6 +30,7 @@ namespace easynav_multirobot_exploration
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Point;
 using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
 using exploration_interfaces::msg::PoseWithCost;
 
 /**
@@ -82,8 +85,14 @@ private:
    * @param peers A vector of poses representing peer robots.
    * @return A function that computes the distance from a given point to the closest peer robot.
    */
-  std::function<double(const geometry_msgs::msg::Point &)> get_separation_calculator(
-    const std::vector<geometry_msgs::msg::Pose> & peers);
+  std::function<std::optional<std::pair<double, Pose>>(const geometry_msgs::msg::Point &)>
+    get_separation_calculator(const std::vector<geometry_msgs::msg::Pose> & peers);
+
+  void fill_cost_markers(
+    const Pose & pose,
+    const Point & goal,
+    double proximity_cost,
+    const std::optional<std::pair<double, Pose>> & separation);
 
   /**
    * @brief Helper function to determine the best frontier point based on a cost function.
@@ -99,6 +108,9 @@ private:
   );
 
   rclcpp::Node::SharedPtr node_;
+
+  MarkerArray cost_markers_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr cost_markers_pub_;
 
   int proximity_policy_;
   int separation_policy_;

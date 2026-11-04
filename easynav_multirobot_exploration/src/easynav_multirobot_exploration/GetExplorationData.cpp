@@ -13,29 +13,6 @@ GetExplorationData::GetExplorationData(const std::string &name,
   node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_INFO(node_->get_logger(), "** GetExplorationData **");
 
-  // Initialize the marker
-  my_goal_.ns = node_->get_namespace();
-  my_goal_.id = 0;
-  my_goal_.type = Marker::TRIANGLE_LIST;
-  my_goal_.action = Marker::ADD;
-  my_goal_.scale.x = 0.5;
-  my_goal_.scale.y = 0.5;
-  my_goal_.scale.z = 0.5;
-  my_goal_.color.r = 0.0;
-  my_goal_.color.g = 1.0;
-  my_goal_.color.b = 1.0;
-  my_goal_.color.a = 1.0;
-
-  Point vertex;
-  vertex.x = -0.25;
-  vertex.y = -0.2;
-  my_goal_.points.push_back(vertex);
-  vertex.x = 0.25;
-  my_goal_.points.push_back(vertex);
-  vertex.x = 0.0;
-  vertex.y = 0.3;
-  my_goal_.points.push_back(vertex);
-
   // Initialize the global TF node to listen global tf tree
   global_tf_node_ = std::make_shared<rclcpp::Node>(
       "global_tf_node_listener", "/",
@@ -78,7 +55,7 @@ BT::NodeStatus GetExplorationData::tick() {
     return BT::NodeStatus::FAILURE;
   }
 
-  // Publish my actual goal to common topic
+  // Publish my goal to common topic
   if (last_my_goal_) {
     my_goal_.pose = last_my_goal_->pose;
     my_goal_.header = last_my_goal_->header;
@@ -87,16 +64,15 @@ BT::NodeStatus GetExplorationData::tick() {
 
   // Collect and save data
   try {
-    // Get my pose
-    std::string map_frame = config().blackboard->get<std::string>("map_frame");
-    std::string robot_frame =
-        config().blackboard->get<std::string>("robot_frame");
+    std::string map_frame, robot_frame;
 
+    map_frame = config().blackboard->get<std::string>("map_frame");
+    robot_frame = config().blackboard->get<std::string>("robot_frame");
+    
+    // Get my pose relative to map frame
     Pose pose = getPose(map_frame, robot_frame, tf_buffer_);
-    RCLCPP_DEBUG(node_->get_logger(), "Robot at: (%.2f, %.2f)", pose.position.x,
-                 pose.position.y);
 
-    // Get peers present or future position if needed
+    // Get peers present and future position
     std::vector<Pose> peers_pose = getPeersPose();
     std::vector<Pose> peers_goals = getPeersGoals();
 
@@ -107,10 +83,12 @@ BT::NodeStatus GetExplorationData::tick() {
     setOutput("peers_goals", peers_goals);
 
     RCLCPP_INFO(
-        node_->get_logger(),
-        "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu",
-        pose.position.x, pose.position.y, peers_pose.size(),
-        last_frontier_->points.size());
+      node_->get_logger(),
+      "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu",
+      pose.position.x, pose.position.y, peers_pose.size(),
+      last_frontier_->points.size()
+    );
+
     return BT::NodeStatus::SUCCESS;
 
   } catch (const tf2::TransformException &ex) {
@@ -131,9 +109,12 @@ std::vector<Pose> GetExplorationData::getPeersGoals() {
     // Add to list if its not too old
     if (node_->get_clock()->now() - rclcpp::Time(goal_pair.second.header.stamp) < PEERS_GOALS_TIMEOUT) {
       peer_goals.push_back(goal_pair.second.pose);
-      RCLCPP_INFO(node_->get_logger(), "Peer %s goal added at: (%.2f, %.2f)",
-                  goal_pair.first.c_str(), goal_pair.second.pose.position.x,
-                  goal_pair.second.pose.position.y);
+
+      RCLCPP_DEBUG(
+        node_->get_logger(), "Peer %s goal added at: (%.2f, %.2f)",
+        goal_pair.first.c_str(), goal_pair.second.pose.position.x,
+        goal_pair.second.pose.position.y
+      );
     }
   }
 
@@ -185,11 +166,12 @@ std::vector<Pose> GetExplorationData::getPeersPose() {
                               peers_robot_frame.end());
   }
 
-  // For each discovered peer robot frame, get the relative pose
-  std::string map_frame = config().blackboard->get<std::string>("map_frame");
-  std::string robot_frame =
-      config().blackboard->get<std::string>("robot_frame");
+  std::string map_frame, robot_frame;
 
+  map_frame = config().blackboard->get<std::string>("map_frame");
+  robot_frame = config().blackboard->get<std::string>("robot_frame");
+  
+  // For each discovered peer robot frame, get the relative pose
   for (const auto &peer_robot_frame : peers_robot_frames) {
     // Skip if it's the current robot's map frame
     if (peer_robot_frame == robot_frame)

@@ -49,6 +49,46 @@ ChooseFrontierGoal::ChooseFrontierGoal(const std::string &name,
     separation_policy_ = NO_SEPARATION_POLICY;
   }
 
+  cost_markers_ = MarkerArray();
+
+  Marker proximity_marker;
+  proximity_marker.header.frame_id = config().blackboard->get<std::string>("map_frame");
+  proximity_marker.ns = "proximity_cost";
+  proximity_marker.type = Marker::ARROW;
+  proximity_marker.action = Marker::ADD;
+  proximity_marker.scale.x = 0.06;
+  proximity_marker.scale.y = 0.12;
+  proximity_marker.scale.z = 0.18;
+  proximity_marker.color.r = 0.0F;
+  proximity_marker.color.g = 1.0F;
+  proximity_marker.color.b = 0.0F;
+  proximity_marker.color.a = 1.0F;
+
+  Marker separation_marker = proximity_marker;
+  separation_marker.ns = "separation_cost";
+  separation_marker.color.r = 1.0F;
+  separation_marker.color.g = 0.0F;
+  separation_marker.color.b = 0.0F;
+
+  Marker proximity_text = proximity_marker;
+  proximity_text.type = Marker::TEXT_VIEW_FACING;
+  proximity_text.pose.orientation.w = 1.0;
+  proximity_text.scale.x = 0.0;
+  proximity_text.scale.y = 0.0;
+  proximity_text.scale.z = 0.22;
+
+  Marker separation_text = proximity_text;
+  separation_text.ns = "separation_cost";
+  separation_text.color = separation_marker.color;
+
+  cost_markers_.markers.push_back(proximity_marker);
+  cost_markers_.markers.push_back(proximity_text);
+  cost_markers_.markers.push_back(separation_marker);
+  cost_markers_.markers.push_back(separation_text);
+
+  cost_markers_pub_ = node_->create_publisher<MarkerArray>(
+      "cost_markers", rclcpp::QoS(10).durability_volatile().reliable());
+
   // Inform about weights
   RCLCPP_INFO(node_->get_logger(), "Proximity weight: %.2f", proximity_weight_);
   RCLCPP_INFO(node_->get_logger(), "Separation weight: %.2f",
@@ -146,35 +186,43 @@ ChooseFrontierGoal::get_proximity_calculator(const geometry_msgs::msg::Pose & po
   }
 }
 
-std::function<double(const geometry_msgs::msg::Point &)> 
+std::function<std::optional<std::pair<double, Pose>>(const geometry_msgs::msg::Point &)> 
 ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers)
 {
   switch (separation_policy_) {
     case NO_SEPARATION_POLICY:
-      return [](const geometry_msgs::msg::Point &) -> double {
-        return 0.0;
+      return [](const geometry_msgs::msg::Point &)
+          -> std::optional<std::pair<double, Pose>> {
+        return std::nullopt;
       };
 
     case POSITION_SEPARATION_POLICY:
     case GOAL_SEPARATION_POLICY:
-      return [&peers](const geometry_msgs::msg::Point & pt) -> double {
-        if (peers.empty()) return 0.0;
+        return [&peers](const geometry_msgs::msg::Point & pt)
+          -> std::optional<std::pair<double, Pose>> {
+        if (peers.empty()) {
+          return std::nullopt;
+        }
 
-        double min_dist_sq = std::numeric_limits<double>::max();
+        double min_distance = std::numeric_limits<double>::max();
+        Pose closest_peer;
         for (const auto & peer : peers) {
-          double dx = pt.x - peer.position.x;
-          double dy = pt.y - peer.position.y;
-          double dist_sq = dx * dx + dy * dy;
-          if (dist_sq < min_dist_sq) {
-            min_dist_sq = dist_sq;
+          const double distance = std::hypot(
+              pt.x - peer.position.x, pt.y - peer.position.y);
+          if (distance < min_distance) {
+            min_distance = distance;
+            closest_peer = peer;
           }
         }
-        return std::sqrt(min_dist_sq);
+        return std::pair<double, Pose>{min_distance, closest_peer};
       };
 
     default:
       RCLCPP_ERROR(node_->get_logger(), "Unknown separation policy");
-      return [](const geometry_msgs::msg::Point &) { return 0.0; };
+      return [](const geometry_msgs::msg::Point &)
+          -> std::optional<std::pair<double, Pose>> {
+        return std::nullopt;
+      };
   }
 }
 
@@ -196,15 +244,23 @@ PoseWithCost ChooseFrontierGoal::get_best_goal(
   double min_cost = std::numeric_limits<double>::max();
 
   for (size_t i = 0; i < frontier.size(); ++i) {
-    double dist_robot = calculate_proximity(frontier[i]);
-    double dist_peer = calculate_separation(frontier[i]);
+    auto proximity = calculate_proximity(frontier[i]);
+    auto separation = calculate_separation(frontier[i]);
 
-    // Combined cost: minimize distance to the robot while maximizing the
-    // distance to the closest teammate
-    double cost = (proximity_weight_ * dist_robot) - (separation_weight_ * dist_peer);
+    double proximity_cost = proximity_weight_ * proximity;
+    double separation_cost = separation ? separation_weight_ * separation->first : 0.0;
+
+    // Minimize distance to the robot
+    // Maximize distance to the closest teammate
+    double cost = proximity_cost - separation_cost;
+
     if (cost < min_cost) {
       min_cost = cost;
       best_idx = i;
+
+      // Publish cost markers for visualization
+      fill_cost_markers(pose.position, frontier[i], proximity_cost, separation);
+      cost_markers_pub_->publish(cost_markers_);
     }
   }
 
@@ -222,6 +278,48 @@ PoseWithCost ChooseFrontierGoal::get_best_goal(
   frontier_goal.cost = min_cost;
 
   return frontier_goal;
+}
+
+void ChooseFrontierGoal::fill_cost_markers(
+    const Point &position,
+    const Point &goal,
+    double proximity_cost,
+    const std::optional<std::pair<double, Pose>> &separation) {
+
+  const auto stamp = node_->get_clock()->now();
+
+  // Proximity arrow
+  cost_markers_.markers[0].header.stamp = stamp;
+  cost_markers_.markers[0].points = {position, goal};
+
+  // Proximity text
+  cost_markers_.markers[1].header.stamp = stamp;
+  cost_markers_.markers[1].pose.position.x = (position.x + goal.x) / 2.0;
+  cost_markers_.markers[1].pose.position.y = (position.y + goal.y) / 2.0;
+  cost_markers_.markers[1].pose.position.z = (position.z + goal.z) / 2.0 + 0.25;
+  cost_markers_.markers[1].text = std::to_string(proximity_cost);
+
+  if (separation) {
+    // Separation arrow
+    const auto &peer = separation->second.position;
+    const double separation_cost = -(separation_weight_ * separation->first);
+
+    cost_markers_.markers[2].header.stamp = stamp;
+    cost_markers_.markers[2].action = Marker::ADD;
+    cost_markers_.markers[2].points = {goal, peer};
+
+    // Separation text
+    cost_markers_.markers[3].header.stamp = stamp;
+    cost_markers_.markers[3].action = Marker::ADD;
+    cost_markers_.markers[3].pose.position.x = (goal.x + peer.x) / 2.0;
+    cost_markers_.markers[3].pose.position.y = (goal.y + peer.y) / 2.0;
+    cost_markers_.markers[3].pose.position.z = (goal.z + peer.z) / 2.0 + 0.25;
+    cost_markers_.markers[3].text = std::to_string(separation_cost);
+
+  } else {
+    cost_markers_.markers[2].action = Marker::DELETE;
+    cost_markers_.markers[3].action = Marker::DELETE;
+  }
 }
 
 } // namespace easynav_multirobot_exploration
