@@ -3,7 +3,7 @@
 [![ROS 2: kilted](https://img.shields.io/badge/ROS%202-kilted-blue)](#)
 
 ## Description
-
+Extracts reachable frontier points from the current costmap, optionally groups nearby points and selects a representative point for each group, then publishes them to NavState and RViz. Points inside `proximity_radius` of the robot are discarded.
 
 ## Authors and Maintainers
 - **Authors:** 
@@ -31,9 +31,9 @@
 |---|---|---:|---|
 | `obstacle_threshold` | `int` | `FREE_SPACE (0)` | Maximum costmap value to be considered as traversable free space during the flood-fill reachability check. |
 | `proximity_radius` | `double` | `0.0` | Radius (in meters) around the robot. Frontiers within this distance are discarded to prevent the robot from targeting its immediate footprint. |
-| `clustering` | `bool` | `false` | If true, applies morphological dilation and connected components to group frontier pixels into unified centroids. |
-| `dbscan_eps_px` | `int` | `0` | (Clustering only) Pixel radius for the structuring element used to group neighboring frontier points. |
-| `dbscan_min_points` | `int` | `0` | (Clustering only) Minimum area (in pixels) required for a cluster to be considered a valid frontier. Filters out noise. |
+| `clustering` | `bool` | `false` | If true, applies morphological dilation and connected components to group frontier pixels and select a representative point for each group. |
+| `dbscan_eps_px` | `int` | `0` | (Clustering only) Pixel radius used to group neighboring frontier points. |
+| `dbscan_min_points` | `int` | `0` | (Clustering only) Minimum connected-component area in pixels required to keep a frontier cluster. |
 
 ---
 
@@ -69,7 +69,7 @@ maps_manager_node:
 | Key | Type | Access | Notes |
 |---|---|---|---|
 | `robot_pose` | `nav_msgs::msg::Odometry` | **Read** | Used as the seed point for the flood-fill reachability algorithm and proximity filtering. |
-| `map.dynamic` | `Costmap2D` | **Read** | The dynamic costmap containing `FREE_SPACE`, `LETHAL_OBSTACLE`, and `NO_INFORMATION` values. |
+| `map` | `Costmap2D` | **Read** | The costmap containing free, obstacle, and unknown cells. |
 | `frontier` | `std::vector<geometry_msgs::msg::Point>` | **Write** | The list of extracted frontier points/centroids exposed to the rest of the `easynav` system. |
 
 ---

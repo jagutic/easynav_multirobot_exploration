@@ -3,7 +3,7 @@
 [![ROS 2: kilted](https://img.shields.io/badge/ROS%202-kilted-blue)](#)
 
 ## Description
-Lazy localizer, only copies existing tf.
+Uses the existing map-to-robot TF to update `robot_pose` in NavState. It does not compute localization or publish a competing transform, allowing SLAM or another localization source to remain authoritative.
 
 ## Authors and Maintainers
 - **Authors:** 
@@ -25,7 +25,7 @@ Lazy localizer, only copies existing tf.
 ## TF Frames
 | Role | Transform | Notes |
 |---|---|---|
-| Requires | `map -> base_footprint` | Other node must locate robot. |
+| Requires | Configured map frame -> configured robot frame | Another node (for example SLAM) must publish this transform; common robot frames include `base_link` and `base_footprint`. |
 
 
 ## License

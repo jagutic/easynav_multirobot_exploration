@@ -63,11 +63,9 @@ source install/setup.bash
 ### Start the simulator
 
 ```bash
-ros2 launch easynav_multirobot_exploration multirobot_sim.launch.py
+ros2 launch easynav_multirobot_exploration multirobot_simulation.launch.py
 ```
-Use ```gui:=false``` to start gazebo headless.
-Use ```world:=hospital``` or ```world:=maze``` to use different simulations. 
-Use ```size:=small``` or ```size:=big``` to use simulations on different size. 
+Use `gui:=false` to start Gazebo headless. Select the world file with `world:=/path/to/world.world` and the robot setup with `config:=/path/to/robots.params.yaml`. The default configuration uses the small maze; the repository also includes medium, big, and hospital configurations.
 
 
 ### Launch SLAM robot mapping and localization
@@ -99,10 +97,10 @@ By default is set to 'true' (simulation).
 
 ```bash
 # Terminal 1 (robot r1)
-ros2 launch easynav_multirobot_exploration exploration.launch.py namespace:=r1
+ros2 launch easynav_multirobot_exploration exploration_behaviour.launch.py namespace:=r1
 
 # Terminal 2 (robot r2)
-ros2 launch easynav_multirobot_exploration exploration.launch.py namespace:=r2
+ros2 launch easynav_multirobot_exploration exploration_behaviour.launch.py namespace:=r2
 ```
 
 ### Launch RViz instances for visualization
@@ -116,6 +114,7 @@ ros2 launch easynav_multirobot_exploration rviz_namespaced.launch.py namespace:=
 # Terminal 2 (robot r2)
 ros2 launch easynav_multirobot_exploration rviz_namespaced.launch.py namespace:=r2
 ```
+The namespaced RViz configuration displays the frontier marker published at `/<robot>/maps_manager_node/frontier/points` and the exploration-cost markers at `/<robot>/cost_markers`. Candidate goals are shared between robots on `/exploration_goals`; the merged map is available at `/<robot>/maps_manager_node/multiplexor/map`.
 
 
 ### Tips & Gotchas
@@ -135,12 +134,12 @@ robot maintains its own TF tree.
 
 - **Multiplexor MapsManager**: Works **over** Costmap MapsManager. Subscribes to each robot’s local map topic from the configured namespaces, then uses **OpenCV** to merge multiple `OccupancyGrid` costmaps into a single shared global map. It anchors the merged world around a fixed robot namespace, handles each robot’s relative pose offsets, and writes the final result into `map.base` so the rest of the `easynav` stack can consume a unified base map. Also publishes the fused `OccupancyGrid` for RViz debugging and shared visualization across the fleet.
 
-- **Frontier MapsManager**: Works **over** Costmap MapsManager. Using dynamic map saved at `navstate` (blackboard), extract frontier between free space and the rest of the map using **OpenCV** morphological filters. Uses **DBSCAN clustering** to group frontier points. Publishes them for globla use and saves them in `navstate` for debbuging.
+- **Frontier MapsManager**: Works **over** Costmap MapsManager. Extracts reachable frontiers from the current costmap using **OpenCV**, optionally groups them into representative points, and filters points within `proximity_radius` of the robot. The frontier points are stored in `navstate` and published as a marker for RViz.
 
 ### Exploration Behaviour
 The autonomous decision-making flow is orchestrated using a **reactive Behavior Tree** (powered by BehaviorTree.CPP). Instead of pre-calculating a global exploration path, the robot continuously adapts to the environment in real-time.
 
-- **The Exploration Loop:** The system cyclically fetches the latest frontier points and robot poses from the blackboard, applies a configurable frontier-scoring policy (`NEAREST` or `BEST_COST`) to select the optimal target, and dispatches the goal to the `easynav` navigation stack via a `PoseWithCost` message. A cost-hysteresis filter (`ProcessGoal`) prevents oscillations in goal selection. The tree reacts instantly to frontier changes: if a better goal appears mid-navigation, it re-routes the robot without waiting for the current goal to complete.
+- **The Exploration Loop:** The system fetches frontier points, the robot pose, and peer poses/goals, then scores every frontier using independently configured proximity and separation terms. The weighted cost is `proximity_weight * proximity - separation_weight * separation`; proximity can use Euclidean or real-distance mode, while separation can be disabled or measured from peer positions or goals. `ProcessGoal` keeps the current target while its frontier remains within `still_alive_radius`, switching when it disappears or a candidate improves the cost by `improvement_ratio`. The selected `PoseWithCost` is sent to the `easynav` navigation stack.
 
 >*Note: For a detailed technical breakdown of the specific BT action and condition nodes (e.g., `ChooseFrontierGoal`, `ProcessGoal`, `GoToPose`), please refer to the [easynav_multirobot_exploration package README](easynav_multirobot_exploration/README.md).*
 
@@ -159,10 +158,15 @@ Multi-robot validation currently uses the Maze environment in three sizes:
 
 ### TO-DO
 
+V2:
 - Real Proximity Metric
  
 - Automatic multiplexor map coordination.(de baja a alta resolucion)
 
-- Reinforcement Learning for exploration behaviour.?
+V3:
+- NavMap adaptation
 
+
+??:
+- Reinforcement Learning for exploration behaviour.?
 - Goals blacklist.?

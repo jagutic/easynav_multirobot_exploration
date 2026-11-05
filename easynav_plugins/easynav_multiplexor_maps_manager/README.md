@@ -3,7 +3,7 @@
 [![ROS 2: kilted](https://img.shields.io/badge/ROS%202-kilted-blue)](#)
 
 ## Description
-
+Merges each configured robot's `OccupancyGrid` into a shared map using its configured initial pose relative to a fixed robot namespace. The result is stored in NavState for the navigation stack and published for RViz.
 
 ## Authors and Maintainers
 - **Authors:** 
@@ -34,7 +34,7 @@
 | `<namespace>.x` | `double` | `0.0` | Initial relative X position of the specific robot with respect to the world. |
 | `<namespace>.y` | `double` | `0.0` | Initial relative Y position of the specific robot with respect to the world. |
 | `<namespace>.Y` | `double` | `0.0` | Initial relative Yaw (theta) orientation of the specific robot with respect to the world. |
-| `<namespace>.topic` | `string` | *Required* | The specific map topic name (without the namespace prefix) to subscribe to for this robot. |
+| `<namespace>.topic` | `string` | *Required* | Map topic name for this robot, without the namespace prefix (for example, `local_map`). |
 
 ---
 
@@ -73,15 +73,14 @@ maps_manager_node:
 ### Subscriptions and Publications
 | Direction | Topic | Type | Purpose | QoS |
 |---|---|---|---|---|
-| Subscription | `/<namespace>/<topic>` | `nav_msgs/msg/OccupancyGrid` | Dynamically subscribes to the map topic of each robot defined in `robot_namespaces`. | `depth=1, transient_local, reliable` |
+| Subscription | `/<namespace>/<topic>` | `nav_msgs/msg/OccupancyGrid` | Subscribes to each configured robot's map topic. | `depth=1, volatile, best_effort` |
 | Publisher | `<node_fqn>/<plugin_name>/map` | `nav_msgs/msg/OccupancyGrid` | Publishes the final merged global map for visualization (e.g., RViz). | `depth=1, transient_local, reliable` |
 
 
 ## NavState Keys (Blackboard)
 | Key | Type | Access | Notes |
 |---|---|---|---|
-| `map.static` | `Costmap2D` | **Write** | The final multiplexed map is written here so the rest of the navigation stack can use it. |
-| `map.static.update` | `bool` | **Write** | Flag set to `true` whenever a new multiplexed map has been successfully generated. |
+| `map.base` | `Costmap2D` | **Write** | The final multiplexed map used by the rest of the navigation stack. |
 | `map_time` | `rclcpp::Time` | **Read** | Timestamp used to stamp the outgoing merged `OccupancyGrid` message. |
 
 ---
@@ -89,7 +88,7 @@ maps_manager_node:
 ## TF Frames
 | Role | Transform | Notes |
 |---|---|---|
-| Publishes | — | This manager does not broadcast TF; costmaps use their internal `frame_id`. |
+| Publishes | Global map -> fixed robot map; map -> robot | Establishes the fixed map anchor and broadcasts the current robot transform used by the shared map. |
 
 ---
 

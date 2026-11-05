@@ -13,7 +13,7 @@ This is the core orchestration package for the Multi-Robot Exploration system ba
 
 This package provides highly parameterized launch files to support multi-robot scalability. All nodes are pushed into their respective namespaces to avoid topic collisions.
 
-### 1. `exploration.launch.py`
+### 1. `exploration_behaviour.launch.py`
 Initializes the Behavior Tree executor (`explorer` node) that drives the autonomous exploration logic.
 * **`namespace`** (default: `''`): Namespace for the node and its topics.
 * **`params_file`** (default: `config/explorer.params.yaml`): Absolute path to the parameter file.
@@ -34,16 +34,18 @@ Starts the EasyNav navigation system and configures the map multiplexor using th
 * **`navigation_config`** (default: `config/navigation_costmap.params.yaml`): ROS 2 parameters for the navigation system.
 * **`robots_config`** (default: `config/sim/maze_small.params.yaml`): Simulation YAML containing robot namespaces and initial poses.
 
-### 4. `multirobot_sim.launch.py`
+### 4. `multirobot_simulation.launch.py`
 Spawns the Gazebo simulation environment and the robot models.
 * **`gui`** (default: `true`): Set to `false` to run Gazebo headless.
-* **`world`** (default: `hospital`): Selects the simulation world. Options: `hospital`, `maze`.
-* **`size`** (default: `big`): Modifies the scale/version of the selected world. Options: `small`, `big`.
+* **`world`** (default: the small maze world file): Absolute path to the Gazebo world file.
+* **`config`** (default: `config/sim/maze_small.params.yaml`): Robot spawn and initial-pose configuration. Use the matching world and robot configuration files for other environments.
 
 ### 5. `rviz_namespaced.launch.py`
 Opens an RViz2 instance pre-configured to listen to a specific robot's TF tree and topics.
 * **`namespace`** (required): The namespace to visualize.
 * **`use_sim_time`** (default: `true`): Time context.
+
+The exploration launch remaps frontier input to `<namespace>/maps_manager_node/frontier/points`, shares peer goals through `/exploration_goals`, and publishes the selected goal's cost markers on `<namespace>/cost_markers`. The navigation system publishes the merged map on `<namespace>/maps_manager_node/multiplexor/map`.
 
 ---
 
@@ -52,11 +54,11 @@ Opens an RViz2 instance pre-configured to listen to a specific robot's TF tree a
 The autonomous exploration is driven by BTs defined in the `behavior_trees/` directory. The current implementation focuses on a reactive closest-frontier approach.
 
 ### Core BT Nodes Provided:
-* **`GetExplorationData` (Action):** Fetches current robot pose, frontier points, and map data from the TF tree and costmap via `NavState`.
-* **`ChooseFrontierGoal` (Action):** Evaluates available frontiers and selects the optimal next goal (nearest or best-cost policy). Outputs a `PoseWithCost` (`exploration_interfaces::msg::PoseWithCost`) containing the target pose and its associated cost.
-* **`ProcessGoal` (Action):** Adds goal dynamics between candidate selection and navigation. It keeps the committed goal while a frontier remains within `still_alive_radius`, avoiding unnecessary switches as frontier costs fluctuate. It switches to the best candidate when the current frontier disappears, or when that candidate improves the cost by at least the margin set by `improvement_ratio`. The comparison handles positive and negative costs separately so that lower costs remain preferable in both cases.
-* **`GoToPose` (Action):** Interfaces with the `easynav` GoalManagerClient to send navigation goals reactively — resending on every tick if the goal has changed, with same-goal detection to avoid redundant sends. On navigation failure, writes the failed goal pose to the blackboard (`nav_failed_pose`) for `ProcessGoal` to blacklist.
-* **`IsExplored` (Condition):** Evaluates if the environment is fully mapped. Currently returns SUCCESS when frontier received is empty.
+* **`GetExplorationData` (Action):** Reads the frontier marker, the robot pose from TF, peer poses from the global TF tree, and peer goals from `/exploration_goals`.
+* **`ChooseFrontierGoal` (Action):** Scores all available frontier points using independently selected proximity and separation metrics. It combines them with `proximity_weight` and `separation_weight` and outputs a `PoseWithCost` (`exploration_interfaces::msg::PoseWithCost`). It also publishes cost arrows and labels on `cost_markers` for RViz.
+* **`ProcessGoal` (Action):** Keeps the committed goal while its frontier remains within `still_alive_radius`. It switches when that frontier disappears or when the candidate cost improves by the margin set by `improvement_ratio`; positive and negative costs are handled separately.
+* **`GoToPose` (Action):** Sends goals through the `easynav` GoalManagerClient, avoids resending an unchanged goal, and reports navigation completion or failure to the Behavior Tree.
+* **`IsExplored` (Condition):** Returns SUCCESS when the frontier list is empty.
 
 ### BT structure:
 <img width="1053" height="519" alt="imagen" src="https://github.com/user-attachments/assets/a001ce1f-c6ae-4a86-ba1d-2138bcc6af19" />
@@ -75,9 +77,8 @@ This is the core configuration for the `easynav_system`. It defines how the cost
 ### 2. `explorer.params.yaml`
 Parameters specifically for the Behavior Tree execution node (`explorer`).
 * **`bt_xml_file`**: Default path to the Behavior Tree logic.
-* **Goal Selection**: Policy selector (`policy`) and weights (`distance_weight`, `separation_weight`) for the frontier scoring function.
-* **Goal Stability** (`ProcessGoal`): `goal_proximity_threshold` (m), `improvement_ratio` (0–1), `failed_goal_blacklist_ttl` (s).
-* **IsExplored Model**: Path and confidence thresholds for the CNN-based exploration completion classifier.
+* **Frontier scoring**: `proximity_policy` (`0`: Euclidean, `1`: Real), `proximity_weight`, `separation_policy` (`0`: none, `1`: peer position, `2`: peer goal), and `separation_weight`. The two weighted terms are combined for each candidate; the default configuration uses Euclidean proximity and goal-based separation. The Real proximity implementation is currently a placeholder.
+* **Goal stability** (`ProcessGoal`): `still_alive_radius` (m) and `improvement_ratio` (0–1).
 
 ### 3. `slam_namespaced.params.yaml`
 Custom parameters for the `slam_toolbox` (Sync mode).
@@ -90,7 +91,7 @@ Custom parameters for the `slam_toolbox` (Sync mode).
 You can override any of these files during launch by passing the `params_file` or `slam_params_file` arguments:
 
 ```bash
-ros2 launch easynav_multirobot_exploration exploration.launch.py \
+ros2 launch easynav_multirobot_exploration exploration_behaviour.launch.py \
   params_file:=/path/to/your/custom_explorer.params.yaml
 ```
 
@@ -101,7 +102,7 @@ ros2 launch easynav_multirobot_exploration exploration.launch.py \
 
 ## C++ Nodes & Executables
 
-* **`explorer`**: The main executable spun up by `exploration.launch.py`. It registers all custom BT nodes, loads the XML tree from the `behavior_trees/` directory, and ticks the tree at a fixed rate, passing the injected parameters directly into the BehaviorTree blackboard.
+* **`explorer`**: The main executable spun up by `exploration_behaviour.launch.py`. It registers all custom BT nodes, loads the XML tree from the `behavior_trees/` directory, and ticks the tree at a fixed rate, passing the injected parameters directly into the BehaviorTree blackboard.
 
 ---
 
