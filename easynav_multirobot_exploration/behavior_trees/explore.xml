@@ -2,8 +2,9 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="explore">
     <ReactiveSequence>
-      <GetExplorationData frontier="{f}"
-                          pose="{p}"
+      <GetExplorationData map="{m}"
+                          pose="{p}"                    
+                          frontier="{f}"
                           peers_pose="{pp}"
                           peers_goals="{pg}"/>
       <ReactiveFallback>
@@ -13,6 +14,7 @@
                               robot_peers_pose="{pp}"
                               robot_peers_goals="{pg}"
                               frontier_points="{f}"
+                              frontier_map="{m}"
                               frontier_goal="{fg}"/>
           <ProcessGoal goal_with_cost="{fg}"
                        goals_list="{f}"
@@ -36,6 +38,8 @@
                   type="std::vector&lt;geometry_msgs::msg::Pose&gt;"/>
       <input_port name="frontier_points"
                   type="std::vector&lt;geometry_msgs::msg::Point&gt;"/>
+      <input_port name="frontier_map"
+                  type="nav_msgs::msg::OccupancyGrid"/>
       <output_port name="frontier_goal"
                    type="exploration_interfaces::msg::PoseWithCost"/>
     </Action>
@@ -49,6 +53,8 @@
                    type="std::vector&lt;geometry_msgs::msg::Pose&gt;"/>
       <output_port name="peers_goals"
                    type="std::vector&lt;geometry_msgs::msg::Pose&gt;"/>
+      <output_port name="map"
+                   type="nav_msgs::msg::OccupancyGrid"/>
     </Action>
     <Action ID="GoToPose"
             editable="true">

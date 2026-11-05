@@ -47,11 +47,19 @@ GetExplorationData::GetExplorationData(const std::string &name,
   frontier_sub_ = node_->create_subscription<Marker>(
       "frontier_topic", rclcpp::QoS(10).durability_volatile().reliable(),
       [&](const Marker::SharedPtr marker) { last_frontier_ = marker; });
+
+  map_sub_ = node_->create_subscription<OccupancyGrid>(
+      "map_topic", rclcpp::QoS(10).durability_volatile().reliable(),
+      [&](const OccupancyGrid::SharedPtr map) { last_map_ = map; });
 }
 
 BT::NodeStatus GetExplorationData::tick() {
   if (!last_frontier_) {
-    RCLCPP_WARN(node_->get_logger(), "Not enough exploration data");
+    RCLCPP_WARN(node_->get_logger(), "Not enough exploration data (frontier)");
+    return BT::NodeStatus::FAILURE;
+  }
+  if (!last_map_) {
+    RCLCPP_WARN(node_->get_logger(), "Not enough exploration data (map)");
     return BT::NodeStatus::FAILURE;
   }
 
@@ -78,15 +86,16 @@ BT::NodeStatus GetExplorationData::tick() {
 
     // Save data in BB
     setOutput("pose", pose);
+    setOutput("map", *last_map_);
     setOutput("frontier", last_frontier_->points);
     setOutput("peers_pose", peers_pose);
     setOutput("peers_goals", peers_goals);
 
     RCLCPP_INFO(
       node_->get_logger(),
-      "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu",
+      "Data-> Robot at: (%.2f, %.2f). Peers found: %zu, Frontier points: %zu, Map size: %d x %d",
       pose.position.x, pose.position.y, peers_pose.size(),
-      last_frontier_->points.size()
+      last_frontier_->points.size(), last_map_->info.width, last_map_->info.height
     );
 
     return BT::NodeStatus::SUCCESS;

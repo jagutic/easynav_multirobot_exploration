@@ -17,7 +17,9 @@
   <buildtool_depend>tf2_geometry_msgs</buildtool_depend>
   <buildtool_depend>easynav_system</buildtool_depend>
   <buildtool_depend>exploration_interfaces</buildtool_depend>
+  <buildtool_depend>easynav_costmap_common</buildtool_depend>
   <buildtool_depend>visualization_msgs</buildtool_depend>
+  <exec_depend>easynav_costmap_planner</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

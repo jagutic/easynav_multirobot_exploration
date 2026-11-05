@@ -16,6 +16,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(easynav_system REQUIRED)
+find_package(easynav_costmap_common REQUIRED)
 find_package(exploration_interfaces REQUIRED)
 
 add_library(choose_frontier_goal_bt_node SHARED src/${PROJECT_NAME}/ChooseFrontierGoal.cpp)
@@ -43,6 +44,7 @@ foreach(bt_plugin ${plugin_libs})
     rclcpp::rclcpp
     behaviortree_cpp::behaviortree_cpp
     easynav_system::easynav_system
+    easynav_costmap_common::easynav_costmap_common
     tf2::tf2
     tf2_ros::tf2_ros
     ${nav_msgs_TARGETS}

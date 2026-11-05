@@ -28,6 +28,7 @@ namespace easynav_multirobot_exploration
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Point;
+using nav_msgs::msg::OccupancyGrid;
 using visualization_msgs::msg::Marker;
 using easynav_interfaces::msg::GoalManagerInfo;
 
@@ -68,6 +69,7 @@ public:
     return BT::PortsList(
       {
         BT::OutputPort<Pose>("pose"),
+        BT::OutputPort<OccupancyGrid>("map"),
         BT::OutputPort<std::vector<Point>>("frontier"),
         BT::OutputPort<std::vector<Pose>>("peers_pose"),
         BT::OutputPort<std::vector<Pose>>("peers_goals")
@@ -121,6 +123,9 @@ private:
 
   Marker::SharedPtr last_frontier_;                                 ///< Last frontier saved from topic
   rclcpp::Subscription<Marker>::SharedPtr frontier_sub_;            ///< Shared pointer to subscriber to frontier topic.
+
+  OccupancyGrid::SharedPtr last_map_;                                 ///< Last map saved from topic
+  rclcpp::Subscription<OccupancyGrid>::SharedPtr map_sub_;            ///< Shared pointer to subscriber to map topic.
 
   std::map<std::string, PoseStamped> last_goals;                   ///< Last goals saved from topic
   rclcpp::Publisher<Marker>::SharedPtr goals_pub_;                 ///< Shared pointer to publisher for goals topic.

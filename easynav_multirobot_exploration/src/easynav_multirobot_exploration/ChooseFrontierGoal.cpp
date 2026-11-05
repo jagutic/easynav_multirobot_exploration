@@ -49,6 +49,26 @@ ChooseFrontierGoal::ChooseFrontierGoal(const std::string &name,
     separation_policy_ = NO_SEPARATION_POLICY;
   }
 
+  // Get from pluginlib the planner to compute the real proximity cost
+  auto planner_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("proximity_cost_planner_node");
+  planner_node->configure();
+  planner_node->activate();
+
+  planner_ = loader_.createSharedInstance("easynav_costmap_planner/CostmapPlanner");
+  planner_->initialize(node, "proximity_cost_planner", "");
+
+  // Markers for cost visualization
+  init_cost_markers();
+  cost_markers_pub_ = node_->create_publisher<MarkerArray>(
+      "cost_markers", rclcpp::QoS(10).durability_volatile().reliable());
+
+  RCLCPP_INFO(node_->get_logger(), "Planner loaded: %s", planner_->getName().c_str());
+  RCLCPP_INFO(node_->get_logger(), "Proximity weight: %.2f", proximity_weight_);
+  RCLCPP_INFO(node_->get_logger(), "Separation weight: %.2f",
+              separation_weight_);
+}
+
+void ChooseFrontierGoal::init_cost_markers() {
   cost_markers_ = MarkerArray();
 
   Marker proximity_marker;
@@ -85,14 +105,6 @@ ChooseFrontierGoal::ChooseFrontierGoal(const std::string &name,
   cost_markers_.markers.push_back(proximity_text);
   cost_markers_.markers.push_back(separation_marker);
   cost_markers_.markers.push_back(separation_text);
-
-  cost_markers_pub_ = node_->create_publisher<MarkerArray>(
-      "cost_markers", rclcpp::QoS(10).durability_volatile().reliable());
-
-  // Inform about weights
-  RCLCPP_INFO(node_->get_logger(), "Proximity weight: %.2f", proximity_weight_);
-  RCLCPP_INFO(node_->get_logger(), "Separation weight: %.2f",
-              separation_weight_);
 }
 
 BT::NodeStatus ChooseFrontierGoal::tick() {
@@ -116,6 +128,19 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
   if (frontier_points.empty()) {
     RCLCPP_INFO(node_->get_logger(),
                 "Frontier empty, not choosing frontier goal");
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // Get BB map
+  OccupancyGrid frontier_map;
+  result = getInput("frontier_map", frontier_map);
+
+  if (!result.has_value()) {
+    RCLCPP_ERROR(node_->get_logger(), "No frontier map");
+    return BT::NodeStatus::FAILURE;
+  }
+  if (frontier_map.data.empty()) {
+    RCLCPP_ERROR(node_->get_logger(), "Frontier map is empty");
     return BT::NodeStatus::FAILURE;
   }
 
@@ -157,7 +182,7 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
   }
 
   // Choose and set the best frontier goal
-  auto frontier_goal = get_best_goal(robot_pose, frontier_points, robot_peers);
+  auto frontier_goal = get_best_goal(robot_pose, robot_peers, frontier_points, frontier_map);
   setOutput("frontier_goal", frontier_goal);
 
   RCLCPP_INFO(node_->get_logger(), "Best frontier candidate, with cost: %.2f",
@@ -166,28 +191,63 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
 }
 
 std::function<double(const geometry_msgs::msg::Point &)> 
-ChooseFrontierGoal::get_proximity_calculator(const geometry_msgs::msg::Pose & pose)
+ChooseFrontierGoal::get_proximity_calculator(
+  const geometry_msgs::msg::Pose & pose_origin,
+  const OccupancyGrid & map)
 {
   switch (proximity_policy_) {
     case EUCLIDEAN_PROXIMITY_POLICY:
-      return [&pose](const geometry_msgs::msg::Point & pt) -> double {
-        return std::hypot(pt.x - pose.position.x, pt.y - pose.position.y);
+      return [&pose_origin](const geometry_msgs::msg::Point & dest) -> double {
+        return std::hypot(dest.x - pose_origin.position.x, dest.y - pose_origin.position.y);
       };
 
     case REAL_PROXIMITY_POLICY:
-      return [this, &pose](const geometry_msgs::msg::Point & pt) -> double {
-        // TODO
-        return 0.0;
+      return [this, &pose_origin](const geometry_msgs::msg::Point & dest) -> double {
+        easynav::NavState ns;
+
+        // Use temporary navstate for plugin
+        auto costmap = std::make_shared<easynav::Costmap2D>(map);
+        ns.set<easynav::Costmap2D>("map", costmap);
+
+        // Set odom
+        nav_msgs::msg::Odometry odom;
+        odom.header.frame_id = map.header.frame_id;
+        odom.pose.pose = pose_origin;
+        ns.set<nav_msgs::msg::Odometry>("robot_pose", odom);
+
+        // Set goal
+        nav_msgs::msg::Goals goals;
+        goals.header.frame_id = map.header.frame_id;
+
+        geometry_msgs::msg::PoseStamped goal;
+        goal.header = goals.header;
+        goal.pose = dest;
+        goals.goals.push_back(goal);
+        ns.set<nav_msgs::msg::Goals>("goals", goals);
+
+        // Get path and compute its length
+        planner_->force_update(ns);
+
+        if (!ns.has("path")) return -1.0;
+        const auto & path = ns.get<nav_msgs::msg::Path>("path");
+        if (path.poses.empty()) return -1.0;
+
+        double len = 0.0;
+        for (size_t i = 1; i < path.poses.size(); ++i) {
+          len += std::hypot(path.poses[i].pose.position.x - path.poses[i-1].pose.position.x,
+                            path.poses[i].pose.position.y - path.poses[i-1].pose.position.y);
+        }
+        return len;
       };
 
     default:
       RCLCPP_ERROR(node_->get_logger(), "Unknown proximity policy");
-      return [](const geometry_msgs::msg::Point &) { return 0.0; };
+      return [](const geometry_msgs::msg::Point &) { return -1.0; };
   }
 }
 
 std::function<std::optional<std::pair<double, Pose>>(const geometry_msgs::msg::Point &)> 
-ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers)
+ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers_origin)
 {
   switch (separation_policy_) {
     case NO_SEPARATION_POLICY:
@@ -198,17 +258,17 @@ ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers)
 
     case POSITION_SEPARATION_POLICY:
     case GOAL_SEPARATION_POLICY:
-        return [&peers](const geometry_msgs::msg::Point & pt)
+        return [&peers_origin](const geometry_msgs::msg::Point & dest)
           -> std::optional<std::pair<double, Pose>> {
-        if (peers.empty()) {
+        if (peers_origin.empty()) {
           return std::nullopt;
         }
 
         double min_distance = std::numeric_limits<double>::max();
         Pose closest_peer;
-        for (const auto & peer : peers) {
+        for (const auto & peer : peers_origin) {
           const double distance = std::hypot(
-              pt.x - peer.position.x, pt.y - peer.position.y);
+              dest.x - peer.position.x, dest.y - peer.position.y);
           if (distance < min_distance) {
             min_distance = distance;
             closest_peer = peer;
@@ -228,12 +288,13 @@ ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers)
 
 PoseWithCost ChooseFrontierGoal::get_best_goal(
     const geometry_msgs::msg::Pose &pose,
+    const std::vector<Pose> &peers,
     const std::vector<geometry_msgs::msg::Point> &frontier,
-    const std::vector<Pose> &peers) {
+    const OccupancyGrid &map) {
 
   // Proximity policy
   std::function<double(const geometry_msgs::msg::Point &)> calculate_proximity;
-  calculate_proximity = get_proximity_calculator(pose);
+  calculate_proximity = get_proximity_calculator(pose, map);
 
   // Separation policy
   std::function<double(const geometry_msgs::msg::Point &)> calculate_separation;
@@ -247,6 +308,13 @@ PoseWithCost ChooseFrontierGoal::get_best_goal(
     auto proximity = calculate_proximity(frontier[i]);
     auto separation = calculate_separation(frontier[i]);
 
+    // Skip failed proximity calculations
+    if (proximity < 0) {
+      RCLCPP_WARN(node_->get_logger(), "Proximity calculation failed for frontier point %zu", i);
+      continue;
+    }
+
+    // Get weighed cost, separation is 0.0 when no not applied
     double proximity_cost = proximity_weight_ * proximity;
     double separation_cost = separation ? separation_weight_ * separation->first : 0.0;
 
