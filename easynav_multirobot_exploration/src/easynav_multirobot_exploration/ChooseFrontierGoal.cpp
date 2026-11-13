@@ -1,5 +1,8 @@
 #include "easynav_multirobot_exploration/ChooseFrontierGoal.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+
 namespace easynav_multirobot_exploration {
 
 ChooseFrontierGoal::ChooseFrontierGoal(const std::string &name,
@@ -13,11 +16,19 @@ ChooseFrontierGoal::ChooseFrontierGoal(const std::string &name,
   node_->declare_parameter("separation_policy", NO_SEPARATION_POLICY);
   node_->declare_parameter("proximity_weight", 1.0);
   node_->declare_parameter("separation_weight", 1.0);
+  node_->declare_parameter<std::string>("planner_plugin", "easynav_costmap_planner/CostmapPlanner");
 
   node_->get_parameter("proximity_policy", proximity_policy_);
   node_->get_parameter("separation_policy", separation_policy_);
   node_->get_parameter("proximity_weight", proximity_weight_);
   node_->get_parameter("separation_weight", separation_weight_);
+  const std::string plugin_name = node_->get_parameter("planner_plugin").as_string();
+
+  if (proximity_weight_ < 0.0 || separation_weight_ < 0.0) {
+    RCLCPP_ERROR(node_->get_logger(), "Proximity and separation weights must be non-negative");
+    throw std::invalid_argument(
+        "Proximity and separation weights must be non-negative");
+  }
 
   // Inform about proximity and separation policies
   switch (proximity_policy_) {
@@ -50,12 +61,14 @@ ChooseFrontierGoal::ChooseFrontierGoal(const std::string &name,
   }
 
   // Get from pluginlib the planner to compute the real proximity cost
-  auto planner_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("proximity_cost_planner_node");
-  planner_node->configure();
-  planner_node->activate();
+  try {
+    planner_ = loader_.createSharedInstance(plugin_name);
+    planner_->initialize(planner_node, "proximity_cost_planner", "");
 
-  planner_ = loader_.createSharedInstance("easynav_costmap_planner/CostmapPlanner");
-  planner_->initialize(node, "proximity_cost_planner", "");
+  } catch (const pluginlib::PluginlibException & e) {
+    RCLCPP_ERROR(node_->get_logger(), "No se pudo cargar el plugin '%s': %s", plugin_name.c_str(), e.what());
+    throw;
+  }
 
   // Markers for cost visualization
   init_cost_markers();
@@ -181,12 +194,16 @@ BT::NodeStatus ChooseFrontierGoal::tick() {
     return BT::NodeStatus::FAILURE;
   }
 
-  // Choose and set the best frontier goal
-  auto frontier_goal = get_best_goal(robot_pose, robot_peers, frontier_points, frontier_map);
-  setOutput("frontier_goal", frontier_goal);
+  // Fill candidates and choose the best frontier goal
+  auto candidates = fill_candidates(robot_pose, robot_peers, frontier_points, frontier_map);
+  auto frontier_goal = get_best_goal(robot_pose, frontier_map, candidates);
+  if (!frontier_goal) {
+    return BT::NodeStatus::FAILURE;
+  }
+  setOutput("frontier_goal", *frontier_goal);
 
   RCLCPP_INFO(node_->get_logger(), "Best frontier candidate, with cost: %.2f",
-              frontier_goal.cost);
+              frontier_goal->cost);
   return BT::NodeStatus::SUCCESS;
 }
 
@@ -197,27 +214,34 @@ ChooseFrontierGoal::get_proximity_calculator(
 {
   switch (proximity_policy_) {
     case EUCLIDEAN_PROXIMITY_POLICY:
-      return [&pose_origin](const geometry_msgs::msg::Point & dest) -> double {
-        return std::hypot(dest.x - pose_origin.position.x, dest.y - pose_origin.position.y);
+      return [this, &pose_origin](const geometry_msgs::msg::Point & dest) -> double {
+        double euclidean_distance = std::hypot(dest.x - pose_origin.position.x, dest.y - pose_origin.position.y);
+        return euclidean_distance * proximity_weight_;
       };
 
-    case REAL_PROXIMITY_POLICY:
-      return [this, &pose_origin](const geometry_msgs::msg::Point & dest) -> double {
+    case REAL_PROXIMITY_POLICY: {
+      if (map.data.empty()) {
+        RCLCPP_ERROR(node_->get_logger(), "Map is empty, cannot compute real proximity");
+        return [](const geometry_msgs::msg::Point &) { return -1.0; };
+      }
+
+      auto costmap = std::make_shared<easynav::Costmap2D>(map);
+      const auto map_frame = map.header.frame_id;
+
+      return [this, &pose_origin, costmap, map_frame](const geometry_msgs::msg::Point & dest) -> double {
         easynav::NavState ns;
 
-        // Use temporary navstate for plugin
-        auto costmap = std::make_shared<easynav::Costmap2D>(map);
         ns.set<easynav::Costmap2D>("map", costmap);
 
         // Set odom
         nav_msgs::msg::Odometry odom;
-        odom.header.frame_id = map.header.frame_id;
+        odom.header.frame_id = map_frame;
         odom.pose.pose = pose_origin;
         ns.set<nav_msgs::msg::Odometry>("robot_pose", odom);
 
         // Set goal
         nav_msgs::msg::Goals goals;
-        goals.header.frame_id = map.header.frame_id;
+        goals.header.frame_id = map_frame;
 
         geometry_msgs::msg::PoseStamped goal;
         goal.header = goals.header;
@@ -228,17 +252,24 @@ ChooseFrontierGoal::get_proximity_calculator(
         // Get path and compute its length
         planner_->force_update(ns);
 
-        if (!ns.has("path")) return -1.0;
+        if (!ns.has("path")) {
+          RCLCPP_ERROR(node_->get_logger(), "Planner did not produce a path");
+          return -1.0;
+        }
         const auto & path = ns.get<nav_msgs::msg::Path>("path");
-        if (path.poses.empty()) return -1.0;
+        if (path.poses.empty()) {
+          RCLCPP_ERROR(node_->get_logger(), "Planner returned an empty path");
+          return -1.0;
+        }
 
         double len = 0.0;
         for (size_t i = 1; i < path.poses.size(); ++i) {
           len += std::hypot(path.poses[i].pose.position.x - path.poses[i-1].pose.position.x,
                             path.poses[i].pose.position.y - path.poses[i-1].pose.position.y);
         }
-        return len;
+        return len * proximity_weight_;
       };
+    }
 
     default:
       RCLCPP_ERROR(node_->get_logger(), "Unknown proximity policy");
@@ -247,7 +278,8 @@ ChooseFrontierGoal::get_proximity_calculator(
 }
 
 std::function<std::optional<std::pair<double, Pose>>(const geometry_msgs::msg::Point &)> 
-ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers_origin)
+ChooseFrontierGoal::get_separation_calculator(
+  const std::vector<Pose> & peers_origin)
 {
   switch (separation_policy_) {
     case NO_SEPARATION_POLICY:
@@ -258,7 +290,7 @@ ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers_or
 
     case POSITION_SEPARATION_POLICY:
     case GOAL_SEPARATION_POLICY:
-        return [&peers_origin](const geometry_msgs::msg::Point & dest)
+      return [this, &peers_origin](const geometry_msgs::msg::Point & dest)
           -> std::optional<std::pair<double, Pose>> {
         if (peers_origin.empty()) {
           return std::nullopt;
@@ -274,7 +306,7 @@ ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers_or
             closest_peer = peer;
           }
         }
-        return std::pair<double, Pose>{min_distance, closest_peer};
+        return std::pair<double, Pose>{min_distance * separation_weight_, closest_peer};
       };
 
     default:
@@ -286,37 +318,73 @@ ChooseFrontierGoal::get_separation_calculator(const std::vector<Pose> & peers_or
   }
 }
 
-PoseWithCost ChooseFrontierGoal::get_best_goal(
-    const geometry_msgs::msg::Pose &pose,
+std::vector<ChooseFrontierGoal::Candidate> ChooseFrontierGoal::fill_candidates(
+    const Pose &pose,
     const std::vector<Pose> &peers,
-    const std::vector<geometry_msgs::msg::Point> &frontier,
+    const std::vector<Point> &frontier,
     const OccupancyGrid &map) {
 
-  // Proximity policy
-  std::function<double(const geometry_msgs::msg::Point &)> calculate_proximity;
-  calculate_proximity = get_proximity_calculator(pose, map);
+  auto calculate_separation = get_separation_calculator(peers);
 
-  // Separation policy
-  std::function<double(const geometry_msgs::msg::Point &)> calculate_separation;
-  calculate_separation = get_separation_calculator(peers);
-
-  // Select best frontier point based on combined cost function
-  size_t best_idx = 0;
-  double min_cost = std::numeric_limits<double>::max();
+  // Fill candidates list
+  std::vector<Candidate> candidates;
+  candidates.reserve(frontier.size());
 
   for (size_t i = 0; i < frontier.size(); ++i) {
-    auto proximity = calculate_proximity(frontier[i]);
     auto separation = calculate_separation(frontier[i]);
+    double separation_value = separation ? separation->first : 0.0;
+    double lower_bound = 0.0;
+    
+    // Calculate lower bound only when needed
+    if (proximity_policy_ == REAL_PROXIMITY_POLICY) {
 
-    // Skip failed proximity calculations
-    if (proximity < 0) {
-      RCLCPP_WARN(node_->get_logger(), "Proximity calculation failed for frontier point %zu", i);
-      continue;
+      // Using euclidean distance as lower bound if calculted for efficiency
+      double proximity_euclidean_value = proximity_weight_ * std::hypot(
+        frontier[i].x - pose.position.x, frontier[i].y - pose.position.y);
+
+      lower_bound = proximity_euclidean_value - separation_value;
     }
 
-    // Get weighed cost, separation is 0.0 when no not applied
-    double proximity_cost = proximity_weight_ * proximity;
-    double separation_cost = separation ? separation_weight_ * separation->first : 0.0;
+    // Fill candidate with its lower bound, but without proximity yet
+    candidates.push_back({frontier[i], lower_bound, separation});
+  }
+
+  // Avoid sorting if not neccessary
+  if (proximity_policy_ == REAL_PROXIMITY_POLICY) {
+    std::stable_sort(candidates.begin(), candidates.end(),
+        [](const Candidate &a, const Candidate &b) {
+          return a.lower_bound < b.lower_bound;
+        });
+  }
+  return candidates;
+}
+
+std::optional<PoseWithCost> ChooseFrontierGoal::get_best_goal(
+    const Pose &pose,
+    const OccupancyGrid &map,
+    std::vector<Candidate> &candidates) {
+
+  auto calculate_proximity = get_proximity_calculator(pose, map);
+
+  // Select best frontier point based on combined cost function
+  Point best_point;
+  bool found_candidate = false;
+  double min_cost = std::numeric_limits<double>::max();
+
+  for (auto &candidate : candidates) {
+
+    // Early exit if the lower bound of the candidate is greater than the minimum cost found
+    if (proximity_policy_ == REAL_PROXIMITY_POLICY && candidate.lower_bound >= min_cost) {
+      break;
+    }
+
+    // Calculate proximity cost for the candidate
+    double separation_cost = candidate.separation ? candidate.separation->first : 0.0;
+    double proximity_cost = calculate_proximity(candidate.point);
+    if (proximity_cost < 0.0) {
+      RCLCPP_ERROR(node_->get_logger(), "Invalid proximity cost for candidate");
+      continue;
+    }
 
     // Minimize distance to the robot
     // Maximize distance to the closest teammate
@@ -324,22 +392,29 @@ PoseWithCost ChooseFrontierGoal::get_best_goal(
 
     if (cost < min_cost) {
       min_cost = cost;
-      best_idx = i;
+      best_point = candidate.point;
+      found_candidate = true;
 
       // Publish cost markers for visualization
-      fill_cost_markers(pose.position, frontier[i], proximity_cost, separation);
+      fill_cost_markers(
+        pose.position, candidate.point, proximity_cost, candidate.separation);
       cost_markers_pub_->publish(cost_markers_);
     }
   }
 
+  if (!found_candidate) {
+    RCLCPP_ERROR(node_->get_logger(), "No frontier candidate has a valid proximity cost");
+    return std::nullopt;
+  }
+
   // Fill message
   PoseWithCost frontier_goal;
-  frontier_goal.pose.position.x = frontier[best_idx].x;
-  frontier_goal.pose.position.y = frontier[best_idx].y;
+  frontier_goal.pose.position.x = best_point.x;
+  frontier_goal.pose.position.y = best_point.y;
 
   // Orient toward the goal (vector from robot to frontier)
-  double yaw = std::atan2(frontier[best_idx].y - pose.position.y,
-                          frontier[best_idx].x - pose.position.x);
+  double yaw = std::atan2(best_point.y - pose.position.y,
+                          best_point.x - pose.position.x);
 
   frontier_goal.pose.orientation.z = std::sin(yaw / 2.0);
   frontier_goal.pose.orientation.w = std::cos(yaw / 2.0);
@@ -370,7 +445,7 @@ void ChooseFrontierGoal::fill_cost_markers(
   if (separation) {
     // Separation arrow
     const auto &peer = separation->second.position;
-    const double separation_cost = -(separation_weight_ * separation->first);
+    const double separation_cost = - separation->first;
 
     cost_markers_.markers[2].header.stamp = stamp;
     cost_markers_.markers[2].action = Marker::ADD;

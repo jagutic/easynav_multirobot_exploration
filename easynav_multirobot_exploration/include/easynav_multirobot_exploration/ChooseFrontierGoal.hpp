@@ -79,12 +79,22 @@ public:
 
 private:
   /**
+   * @brief Internal structure to hold candidate frontier information.
+    * Proximity is present when it was computed cheaply; otherwise it is deferred.
+   */
+  struct Candidate {
+    Point point;
+    double lower_bound;
+    std::optional<std::pair<double, Pose>> separation;
+  };
+
+  /**
    * @brief Returns a function to calculate proximity based on the selected policy.
    * @param pose The current pose of the robot.
    * @return A function that computes the distance from the robot to a given point.
    */
   std::function<double(const geometry_msgs::msg::Point &)>
-    get_proximity_calculator(const geometry_msgs::msg::Pose & pose);
+    get_proximity_calculator(const geometry_msgs::msg::Pose & pose, const OccupancyGrid & map);
 
   /**
    * @brief Returns a function to calculate separation based on the selected policy.
@@ -115,18 +125,30 @@ private:
   );
 
   /**
-   * @brief Helper function to determine the best frontier point based on a cost function.
-   * @param current_pose The current position of the robot.
-   * @param peers A vector of poses representing the positions or goals of peer robots, depending on the separation policy.
-   * @param frontier A vector of points representing the identified frontiers.
-   * @param map The occupancy grid representing the environment.
-   * @return The selected Pose to be sent to the navigation stack with its cost.
+   * @brief Prepares a list of candidate frontier points with their associated costs.
+   * @param pose The current pose of the robot.
+   * @param peers A vector of poses representing peer robots.
+   * @param frontier A vector of detected frontier points.
+   * @param map The occupancy grid used for proximity calculations.
+   * @return A vector of Candidate structures containing frontier points and their costs.
    */
-  PoseWithCost get_best_goal(
+  std::vector<Candidate> fill_candidates(
     const Pose & pose,
-    const std::vector<Pose> & peers = {},
+    const std::vector<Pose> & peers,
     const std::vector<Point> & frontier,
-    const OccupancyGrid & map = {}
+    const OccupancyGrid & map
+  );
+
+  /**
+   * @brief Selects the best prepared candidate and evaluates deferred proximity.
+   * @param pose The current pose of the robot.
+   * @param candidates Frontier candidates prepared by fill_candidates.
+   * @return The selected goal and its combined cost.
+   */
+  std::optional<PoseWithCost> get_best_goal(
+    const Pose & pose,
+    const OccupancyGrid & map,
+    std::vector<Candidate> & candidates
   );
 
   rclcpp::Node::SharedPtr node_;
@@ -135,7 +157,6 @@ private:
 
   pluginlib::ClassLoader<easynav::PlannerMethodBase> loader_{"easynav_core", "easynav::PlannerMethodBase"};
   std::shared_ptr<easynav::PlannerMethodBase> planner_;
-  std::shared_ptr<easynav::Costmap2D> costmap_;
 
   int proximity_policy_;
   int separation_policy_;

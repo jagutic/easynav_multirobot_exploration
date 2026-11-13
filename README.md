@@ -158,9 +158,7 @@ Multi-robot validation currently uses the Maze environment in three sizes:
 
 ### TO-DO
 
-V2:
-- Real Proximity Metric
- 
+V2: 
 - Automatic multiplexor map coordination.(de baja a alta resolucion)
 
 V3:
